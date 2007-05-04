@@ -1,0 +1,13 @@
+GAME MILESTONE ONE - WALKING
+============================
+
+FUNCTIONAL SPECIFICATION
+------------------------
+
+A program should exist which displays on the screen a window
+containing a background image and one sprite which can be directed to
+move in eight directions with the keyboard.
+
+The implementation should be based on the Twisted main loop and Pygame
+graphics technology. The CPU should not be overly taxed.
+
