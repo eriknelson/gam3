@@ -31,12 +31,23 @@ class Window(object):
     @ivar display: Something like L{pygame.display}.
     @ivar views: List of current child views.
     @ivar screen: The L{pygame.Surface} which will be drawn to.
+    @ivar _paintCall: C{None} or the L{IDelayedCall} provider for a pending
+        C{paint} call.
     """
 
     def __init__(self, scheduler=lambda x, y: None, display=pygame.display):
         self.schedule = scheduler
         self.display = display
         self.views = []
+        self._paintCall = None
+
+
+    def dirty(self):
+        """
+        Mark the view as out of date and schedule a re-paint.
+        """
+        if self._paintCall is None:
+            self._paintCall = self.schedule(0, self.paint)
 
 
     def add(self, view):
@@ -45,7 +56,7 @@ class Window(object):
         """
         view.setParent(self)
         self.views.append(view)
-        self.schedule(0, self.paint)
+        self.dirty()
 
 
     def draw(self, image, position):
@@ -54,11 +65,16 @@ class Window(object):
         """
         self.screen.blit(image, position)
 
+
     def paint(self):
         """
         Call C{paint} on all views which have been directly added to
         this Window.
         """
+        if self._paintCall is not None:
+            if self._paintCall.active():
+                self._paintCall.cancel()
+            self._paintCall = None
         for view in self.views:
             view.paint()
         self.display.flip()
@@ -102,6 +118,7 @@ class PlayerView(object):
         # is friday the 13th)
         self.image = loadImage(
             FilePath(__file__).sibling("data").child("player.png"))
+        self.player.addObserver(self)
 
 
     def setParent(self, parent):
@@ -118,3 +135,11 @@ class PlayerView(object):
         Paint an image of the player at the player's current location.
         """
         self.parent.draw(self.image, self.player.position)
+
+
+    def moved(self, what, previousPosition):
+        """
+        Handle movement events from C{self.player} by dirtying our parent so a
+        redraw will occur.
+        """
+        self.parent.dirty()

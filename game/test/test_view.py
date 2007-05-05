@@ -77,9 +77,13 @@ class MockWindow(object):
 
     @ivar draws: A list of two-tuples giving the arguments to all
     calls to the C{draw} method.
+
+    @ivar dirtied: An integer giving the number of calls to the C{dirty}
+    method.
     """
     def __init__(self):
         self.draws = []
+        self.dirtied = 0
 
 
     def draw(self, image, position):
@@ -87,6 +91,13 @@ class MockWindow(object):
         Record an attempt to render an image at a particular location.
         """
         self.draws.append((image, position))
+
+
+    def dirty(self):
+        """
+        Record an attempt to dirty the window.
+        """
+        self.dirtied += 1
 
 
 
@@ -113,6 +124,45 @@ class WindowTests(TestCase):
         self.assertIdentical(view.parent, self.window)
 
 
+    def test_dirty(self):
+        """
+        Dirtying a L{Window} should schedule a painting of the entire scene.
+        """
+        self.window.dirty()
+        self.assertEqual(len(self.clock.calls), 1)
+        call = self.clock.calls[0]
+        self.assertEqual(call.getTime(), 0)
+        self.assertEqual(call.func, self.window.paint)
+
+
+    def test_duplicateDirty(self):
+        """
+        Dirtying a L{Window} again before the painting for a previous C{dirty}
+        call has happened should not schedule a new call.
+        """
+        self.window.dirty()
+        self.window.dirty()
+        self.assertEqual(len(self.clock.calls), 1)
+        call = self.clock.calls[0]
+        self.assertEqual(call.getTime(), 0)
+        self.assertEqual(call.func, self.window.paint)
+
+
+    def test_dirtiedAgain(self):
+        """
+        Dirtying a L{Window} again after the painting for a previous C{dirty}
+        call has happened should schedule a new call.
+        """
+        self.window.dirty()
+        self.clock.advance(1)
+        self.assertEqual(self.clock.calls, [])
+        self.window.dirty()
+        self.assertEqual(len(self.clock.calls), 1)
+        call = self.clock.calls[0]
+        self.assertEqual(call.getTime(), 1)
+        self.assertEqual(call.func, self.window.paint)
+
+
     def test_addDirties(self):
         """
         Adding a child should schedule painting of the entire scene.
@@ -123,6 +173,16 @@ class WindowTests(TestCase):
         call = self.clock.calls[0]
         self.assertEqual(call.getTime(), 0)
         self.assertEqual(call.func, self.window.paint)
+
+
+    def test_explicitPaintCancelsDirtyPaint(self):
+        """
+        Calling L{Window.paint} explicitly before the painting for a previous
+        C{dirty} call has happened should cancel the pending paint call.
+        """
+        self.window.dirty()
+        self.window.paint()
+        self.assertEqual(self.clock.calls, [])
 
 
     def test_paint(self):
@@ -159,16 +219,17 @@ class WindowTests(TestCase):
 
 
 class PlayerViewTests(TestCase):
+    def setUp(self):
+        self.player = Player((3, 2))
+        self.view = PlayerView(self.player)
+
 
     def test_initialization(self):
         """
         L{PlayerView} should take the player model as an argument to
         the initializer.
         """
-        # XXX replace this with an object that has an addObserver method.
-        o = object()
-        pv = PlayerView(o)
-        self.assertIdentical(pv.player, o)
+        self.assertIdentical(self.view.player, self.player)
 
 
     def test_setParent(self):
@@ -176,9 +237,8 @@ class PlayerViewTests(TestCase):
         Calling L{PlayerView.setParent} should set the C{parent}
         attribute of the player view.
         """
-        pv = PlayerView(None)
-        pv.setParent(2)
-        self.assertEqual(pv.parent, 2)
+        self.view.setParent(2)
+        self.assertEqual(self.view.parent, 2)
 
 
     def test_paint(self):
@@ -186,12 +246,22 @@ class PlayerViewTests(TestCase):
         Calling L{PlayerView.paint} should draw an image object to the
         window.
         """
-        player = Player((3, 2))
         window = MockWindow()
-        playerView = PlayerView(player)
-        playerView.setParent(window)
-        playerView.paint()
-        self.assertEqual(window.draws, [(playerView.image, (3, 2))])
+        self.view.setParent(window)
+        self.view.paint()
+        self.assertEqual(window.draws, [(self.view.image, (3, 2))])
+
+
+    def test_movementDirties(self):
+        """
+        When the player model is moved, the view object should dirty its
+        window.
+        """
+        window = MockWindow()
+        self.view.setParent(window)
+        self.player.move((1, 0))
+        self.assertEqual(window.dirtied, 1)
+
 
 
 class ImageTests(TestCase):
