@@ -21,6 +21,7 @@ def loadImage(path):
     return pygame.image.load(path.path)
 
 
+
 class Window(object):
     """
     A top-level PyGame-based window. This acts as a container for
@@ -75,6 +76,7 @@ class Window(object):
             if self._paintCall.active():
                 self._paintCall.cancel()
             self._paintCall = None
+        self.screen.fill((0, 0, 0))
         for view in self.views:
             view.paint()
         self.display.flip()

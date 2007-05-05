@@ -30,9 +30,10 @@ class PlayerTests(TestCase):
 
     def test_initial_position(self):
         """
-        The player should be displayed at the top-left corner of the window.
+        The player image should be displayed at the top-left corner of the
+        window.
         """
-        player = Player((0,0))
+        player = Player((0, 0))
 
         window = Window(reactor.callLater)
         pview = PlayerView(player)
@@ -40,3 +41,41 @@ class PlayerTests(TestCase):
 
         return window.go()
 
+
+    def test_moves_around(self):
+        """
+        The player image should move back and forth between the top left and
+        top right of the window.
+        """
+        player = Player((0, 0))
+        window = Window(reactor.callLater)
+        view = PlayerView(player)
+        window.add(view)
+
+        interval = 0.005
+        def sched(what):
+            call[0] = reactor.callLater(interval, what)
+
+        def moveLeft():
+            if player.position[0] >= 320 - view.image.get_size()[0]:
+                sched(moveRight)
+            else:
+                player.move((1, 0))
+                sched(moveLeft)
+
+        def moveRight():
+            if player.position[0] <= 0:
+                sched(moveLeft)
+            else:
+                player.move((-1, 0))
+                sched(moveRight)
+
+        call = [reactor.callLater(0, moveLeft)]
+
+
+        def stop(ignored):
+            call[0].cancel()
+
+        d = window.go()
+        d.addCallback(stop)
+        return d

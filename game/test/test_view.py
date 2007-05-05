@@ -19,9 +19,13 @@ class MockSurface(object):
 
     @ivar blits: A list of two-tuples giving the arguments to all
     calls to the C{blit} method.
+
+    @ivar fills: A list of three-tuples giving the colors passed to the C{fill}
+    method.
     """
     def __init__(self):
         self.blits = []
+        self.fills = []
 
 
     def blit(self, surface, position):
@@ -29,6 +33,13 @@ class MockSurface(object):
         Record an attempt to blit another surface onto this one.
         """
         self.blits.append((surface, position))
+
+
+    def fill(self, color):
+        """
+        Record an attempt to fill the entire surface with a particular color.
+        """
+        self.fills.append(color)
 
 
 
@@ -62,6 +73,7 @@ class MockView(object):
         Set the C{parent} attribute.
         """
         self.parent = parent
+
 
     def paint(self):
         """
@@ -113,6 +125,8 @@ class WindowTests(TestCase):
         self.clock = Clock()
         self.window = Window(scheduler=self.clock.callLater,
                              display=self.display)
+        self.surface = MockSurface()
+        self.window.screen = self.surface
 
 
     def test_add(self):
@@ -198,11 +212,12 @@ class WindowTests(TestCase):
         self.assertEqual(view2.painted, True)
 
 
-    def test_paintFlips(self):
+    def test_paintFlipsAndClears(self):
         """
-        Painting a window should flip the display.
+        Painting a window should flip the display and fill it with black.
         """
         self.window.paint()
+        self.assertEqual(self.surface.fills, [(0, 0, 0)])
         self.assertEqual(self.display.flipped, 1)
 
 
@@ -215,7 +230,6 @@ class WindowTests(TestCase):
         image = object()
         self.window.draw(image, (13, -1))
         self.assertEqual(self.window.screen.blits, [(image, (13, -1))])
-
 
 
 class PlayerViewTests(TestCase):
