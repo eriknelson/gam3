@@ -4,31 +4,40 @@ class Player(object):
     """
     An object with a position.
 
-    @ivar position: A tuple of (x,y), specifying position of player.
+    @ivar _lastPosition: A tuple of (x,y), specifying the last computed
+    position of player.
 
-    @ivar observers: A list of objects which will be notified about state
-    changes on this instance.
+    @ivar seconds: A no-argument callable which returns the current time in
+    seconds.
     """
 
-    def __init__(self, position):
-        self.position = position
-        self.observers = []
+    def __init__(self, position, seconds):
+        self._lastPosition = position
+        self._lastDirectionChange = seconds()
+        self.seconds = seconds
+        self.direction = 0j
 
 
-    def move(self, offset):
+    def getPosition(self):
         """
-        Add the given offset to the current position.
+        Retrieve the current position.
 
-        @param offset: The vector to add to this player's current position.
+        @return: A two-tuple of ints giving the current position of the player.
         """
-        posx, posy = self.position
-        self.position = (posx + offset[0], posy + offset[1])
-        for observer in self.observers:
-            observer.moved(self, (posx, posy))
+        x, y = self._lastPosition
+        now = self.seconds()
+        elapsedTime = now - self._lastDirectionChange
+        s = self.direction * elapsedTime
+        return x + s.imag, y + s.real
 
 
-    def addObserver(self, observer):
+    def setDirection(self, direction):
         """
-        Notify the given object when this player's position changes.
+        Change the direction of movement of this player.
+
+        @param direction: One of the constants C{NORTH}, C{SOUTH}, etc, or
+        C{None} if there is no movement.
         """
-        self.observers.append(observer)
+        self._lastPosition = self.getPosition()
+        self._lastDirectionChange = self.seconds()
+        self.direction = direction

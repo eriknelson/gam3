@@ -1,49 +1,74 @@
 from twisted.trial import unittest
 
+from game.direction import NORTH, WEST, SOUTH, EAST
 from game.player import Player
+from game.test.util import PlayerCreationMixin
 
 
-class PlayerTests(unittest.TestCase):
+
+# XXX Test that the position is ints
+
+class PlayerTests(unittest.TestCase, PlayerCreationMixin):
     """
     There should be an object which has a position and can be moved in
     eight directions.
     """
-
-    def test_position(self):
+    def test_getPosition(self):
         """
         Players have a position attribute which is initialized based on
         initializer parameters.
         """
-        player = Player((0, 0))
-        self.assertEqual(player.position, (0, 0))
+        player = self.makePlayer((0, 0))
+        self.assertEqual(player.getPosition(), (0, 0))
 
 
-    def test_move(self):
+    def test_setDirection(self):
         """
-        L{Player.move} should accept an vector which will be applied
-        to the player's position.
+        L{Player.setDirection} should accept a vector which sets the direction
+        of the player's movement.
         """
-        player = Player((2, 3))
-        player.move((1, -2))
-        self.assertEqual(player.position, (3, 1))
+        player = self.makePlayer((3, 2))
+        player.setDirection(NORTH + EAST)
+        self.assertEqual(player.direction, NORTH + EAST)
+        player.setDirection(SOUTH)
+        self.assertEqual(player.direction, SOUTH)
 
 
-    def test_movementObservation(self):
+    def test_getPositionWithoutMovementAfterTimePasses(self):
         """
-        L{Player.move} should notify an observer that the movement occurred.
+        Directionless L{Player}s should remain stationary.
         """
-        startPosition = (3, 2)
-        player = Player(startPosition)
+        position = (2, 3)
+        player = self.makePlayer(position)
+        self.advanceTime(10)
+        self.assertEqual(player.getPosition(), position)
 
-        class MovementObserver(object):
-            def __init__(self):
-                self.movements = []
 
-            def moved(self, what, previousPosition):
-                self.movements.append((what, previousPosition, what.position))
-        observer = MovementObserver()
+    def test_getPositionWithMovementAfterTimePasses(self):
+        """
+        Directed L{Player}s should change position.
+        """
+        x, y = 3, -2
+        player = self.makePlayer((x, y))
+        player.setDirection(WEST)
+        self.advanceTime(1)
+        self.assertEqual(player.getPosition(), (x - 1, y))
 
-        # XXX Should this be addMovementObserver?
-        player.addObserver(observer)
-        player.move((-2, 1))
-        self.assertEqual(observer.movements, [(player, startPosition, (1, 3))])
+
+    def test_getPositionWithMovementAfterTimePassesTwice(self):
+        """
+        Twice-directed players should have an accurate position after each
+        change in direction after some time passes.
+        """
+        x, y = 3, -2
+        player = self.makePlayer((x, y))
+        player.setDirection(EAST)
+        self.advanceTime(1)
+        self.assertEqual(player.getPosition(), (x + 1, y))
+
+        player.setDirection(NORTH)
+        self.advanceTime(1)
+        self.assertEquals(player.getPosition(), (x + 1, y + 1))
+
+
+    # XXX: Add a test for ceasing to move.

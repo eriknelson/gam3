@@ -83,6 +83,9 @@ class Window(object):
 
 
     def iterate(self):
+        """
+        Handle currently available pygame input events.
+        """
         for event in pygame.event.get():
             if event.type == pygame.locals.QUIT:
                 self.call.stop()
@@ -120,7 +123,6 @@ class PlayerView(object):
         # is friday the 13th)
         self.image = loadImage(
             FilePath(__file__).sibling("data").child("player.png"))
-        self.player.addObserver(self)
 
 
     def setParent(self, parent):
@@ -136,12 +138,6 @@ class PlayerView(object):
         """
         Paint an image of the player at the player's current location.
         """
-        self.parent.draw(self.image, self.player.position)
+        self.parent.draw(self.image, self.player.getPosition())
 
 
-    def moved(self, what, previousPosition):
-        """
-        Handle movement events from C{self.player} by dirtying our parent so a
-        redraw will occur.
-        """
-        self.parent.dirty()

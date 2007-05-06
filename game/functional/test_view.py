@@ -52,6 +52,8 @@ class PlayerTests(TestCase):
         view = PlayerView(player)
         window.add(view)
 
+        # XXX There should be a thing for translating model coordinates into
+        # view coordinates and stuff.
         interval = 0.005
         def sched(what):
             call[0] = reactor.callLater(interval, what)

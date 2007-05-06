@@ -11,6 +11,7 @@ from twisted.python.filepath import FilePath
 
 from game.view import Window, PlayerView, loadImage
 from game.player import Player
+from game.test.util import PlayerCreationMixin
 
 
 class MockSurface(object):
@@ -232,9 +233,9 @@ class WindowTests(TestCase):
         self.assertEqual(self.window.screen.blits, [(image, (13, -1))])
 
 
-class PlayerViewTests(TestCase):
+class PlayerViewTests(TestCase, PlayerCreationMixin):
     def setUp(self):
-        self.player = Player((3, 2))
+        self.player = self.makePlayer((3, 2))
         self.view = PlayerView(self.player)
 
 
@@ -264,17 +265,6 @@ class PlayerViewTests(TestCase):
         self.view.setParent(window)
         self.view.paint()
         self.assertEqual(window.draws, [(self.view.image, (3, 2))])
-
-
-    def test_movementDirties(self):
-        """
-        When the player model is moved, the view object should dirty its
-        window.
-        """
-        window = MockWindow()
-        self.view.setParent(window)
-        self.player.move((1, 0))
-        self.assertEqual(window.dirtied, 1)
 
 
 
