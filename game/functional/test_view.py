@@ -25,7 +25,7 @@ class PlayerTests(TestCase):
     def tearDown(self):
         if not raw_input("Did it work?").lower().startswith('y'):
             self.fail("User specified test failure")
-
+        self.environment.stop() # clean up pending calls
 
     def test_tedium(self):
         """

@@ -57,9 +57,9 @@ class EnvironmentTests(TestCase):
         the scheduler.
         """
         self.clock.advance(0.5)
-        self.assertEquals(self.environment.seconds(), 0)
+        self.assertEqual(self.environment.seconds(), 0)
         self.clock.advance(0.5)
-        self.assertEquals(self.environment.seconds(), 1)
+        self.assertEqual(self.environment.seconds(), 1)
 
     def test_subsecond_granularity(self):
         """
@@ -67,6 +67,16 @@ class EnvironmentTests(TestCase):
         """
         environment = Environment(2, self.clock.callLater)
         self.clock.advance(0.5)
-        self.assertEquals(environment.seconds(), 0.5)
+        self.assertEqual(environment.seconds(), 0.5)
         self.clock.advance(0.5)
-        self.assertEquals(environment.seconds(), 1)
+        self.assertEqual(environment.seconds(), 1)
+
+
+    def test_stop(self):
+        """
+        There should be a way to stop the environment thus cancelling
+        all scheduled calls.
+        """
+        self.assertEqual(len(self.clock.calls), 1)
+        self.environment.stop()
+        self.assertEqual(self.clock.calls, [])

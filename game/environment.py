@@ -17,12 +17,14 @@ class Environment(Clock):
         return 0 for 0.5 seconds, then 0.5 for 0.5 seconds, then 1 for
         0.5 seconds, and so on. This number directly represents the
         B{model} frames per second.
+
+    @ivar _call: The result of the latest call to C{scheduler}.
     """
     def __init__(self, granularity, scheduler):
         Clock.__init__(self)
         self.granularity = granularity
         self.scheduler = scheduler
-        scheduler(1.0 / granularity, self._update)
+        self._call = scheduler(1.0 / granularity, self._update)
 
 
     def _update(self):
@@ -30,4 +32,10 @@ class Environment(Clock):
         Advance the simulation time by one second.
         """
         self.advance(1.0 / self.granularity)
-        self.scheduler(1.0 / self.granularity, self._update)
+        self._call = self.scheduler(1.0 / self.granularity, self._update)
+
+    def stop(self):
+        """
+        Stop the simulated advancement of time. Clean up all pending calls.
+        """
+        self._call.cancel()
