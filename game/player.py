@@ -9,11 +9,15 @@ class Player(object):
 
     @ivar seconds: A no-argument callable which returns the current time in
     seconds.
+
+    @ivar movementVelocity: The distance which can be covered when the player
+    is in motion (probably in something like cm/sec, if x and y are in cm.
     """
 
-    def __init__(self, position, seconds):
+    def __init__(self, position, movementVelocity, seconds):
         self._lastPosition = position
         self._lastDirectionChange = seconds()
+        self.movementVelocity = movementVelocity
         self.seconds = seconds
         self.direction = 0j
 
@@ -27,7 +31,7 @@ class Player(object):
         x, y = self._lastPosition
         now = self.seconds()
         elapsedTime = now - self._lastDirectionChange
-        s = self.direction * elapsedTime
+        s = self.direction * elapsedTime * self.movementVelocity
         return x + s.imag, y + s.real
 
 
