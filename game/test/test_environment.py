@@ -19,7 +19,7 @@ class EnvironmentTests(TestCase):
         deterministic.
         """
         self.clock = Clock()
-        self.environment = Environment(self.clock.callLater)
+        self.environment = Environment(1, self.clock.callLater)
 
 
     def test_initialTime(self):
