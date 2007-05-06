@@ -55,6 +55,18 @@ class PlayerTests(unittest.TestCase, PlayerCreationMixin):
         self.assertEqual(player.getPosition(), (x - 1, y))
 
 
+    def test_greaterVelocityResultsInGreaterDisplacement(self):
+        """
+        A L{Player} which is moving more quickly should travel further.
+        """
+        x, y = 2, 0
+        velocity = 5
+        player = self.makePlayer((x, y), movementVelocity=velocity)
+        player.setDirection(EAST)
+        self.advanceTime(1)
+        self.assertEqual(player.getPosition(), (x + velocity, y))
+
+
     def test_getPositionWithMovementAfterTimePassesTwice(self):
         """
         Twice-directed players should have an accurate position after each

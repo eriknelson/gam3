@@ -82,13 +82,13 @@ class Window(object):
         self.display.flip()
 
 
-    def iterate(self):
+    def _handleInput(self):
         """
         Handle currently available pygame input events.
         """
         for event in pygame.event.get():
             if event.type == pygame.locals.QUIT:
-                self.call.stop()
+                self._inputCall.stop()
 
 
     def go(self):
@@ -101,9 +101,13 @@ class Window(object):
         self.screen = self.display.set_mode((320, 240),
                                             pygame.locals.DOUBLEBUF)
 
-        self.call = LoopingCall(self.iterate)
-        finishedDeferred = self.call.start(0.04)
+        self._renderCall = LoopingCall(self.paint)
+        self._renderCall.start(0.01)
+        self._inputCall = LoopingCall(self._handleInput)
+        finishedDeferred = self._inputCall.start(0.04)
+        finishedDeferred.addCallback(lambda ign: self._renderCall.stop())
         finishedDeferred.addCallback(lambda ign: self.display.quit())
+
         return finishedDeferred
 
 
