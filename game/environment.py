@@ -1,4 +1,3 @@
-
 """
 Model code for the substrate the game world inhabits.
 """
@@ -12,7 +11,12 @@ class Environment(Clock):
     @ivar scheduler: A callable like L{IReactorTime.callLater} which will be
     used to update the model time.
 
-    @ivar granularity: The number of times to update the model time per second.
+    @ivar granularity: The number of times to update the model time
+        per second. That is, the number of "instants" per
+        second. e.g., specifying 2 would make calls to seconds()
+        return 0 for 0.5 seconds, then 0.5 for 0.5 seconds, then 1 for
+        0.5 seconds, and so on. This number directly represents the
+        B{model} frames per second.
     """
     def __init__(self, granularity, scheduler):
         Clock.__init__(self)

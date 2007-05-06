@@ -50,3 +50,23 @@ class EnvironmentTests(TestCase):
             self.clock.advance(1)
         self.assertEqual(self.environment.seconds(), 3)
 
+    def test_granularity(self):
+        """
+        The C{granularity} parameter to L{Environment} should specify
+        the number of times to update the model per second, based on
+        the scheduler.
+        """
+        self.clock.advance(0.5)
+        self.assertEquals(self.environment.seconds(), 0)
+        self.clock.advance(0.5)
+        self.assertEquals(self.environment.seconds(), 1)
+
+    def test_subsecond_granularity(self):
+        """
+        Same as L{test_granularity}, but with subsecond granularity.
+        """
+        environment = Environment(2, self.clock.callLater)
+        self.clock.advance(0.5)
+        self.assertEquals(environment.seconds(), 0.5)
+        self.clock.advance(0.5)
+        self.assertEquals(environment.seconds(), 1)
