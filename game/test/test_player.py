@@ -83,4 +83,22 @@ class PlayerTests(unittest.TestCase, PlayerCreationMixin):
         self.assertEquals(player.getPosition(), (x + 1, y + 1))
 
 
-    # XXX: Add a test for ceasing to move.
+    def test_stop(self):
+        """
+        Setting the player's direction to C{None} should make the
+        player cease moving.
+        """
+        x, y = 49, 27
+        player = self.makePlayer((x, y))
+        player.setDirection(None)
+        self.advanceTime(1)
+        self.assertEqual(player.getPosition(), (x, y))
+
+        player.setDirection(EAST)
+        self.advanceTime(1)
+        self.assertEqual(player.getPosition(), (x + 1, y))
+
+        player.setDirection(None)
+        self.advanceTime(1)
+        self.assertEqual(player.getPosition(), (x + 1, y))
+

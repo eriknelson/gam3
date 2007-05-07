@@ -248,15 +248,26 @@ class WindowTests(TestCase):
         self.assertEquals(self.window.controller, controller)
 
 
-    def test_controllerGetsEvents(self):
+    def test_controllerGetsKeyDownEvents(self):
         """
-        The controller should be called with keyDown events.
+        The controller should be called with key-down events.
         """
         controller = MockController()
         self.window.submitTo(controller)
         self.event.events = [Event(pygame.KEYDOWN, key=pygame.K_LEFT)]
         self.window.handleInput()
-        self.assertEquals(controller.keys, [LEFT])
+        self.assertEquals(controller.downs, [LEFT])
+
+
+    def test_controllerGetsKeyUpEvents(self):
+        """
+        The controller should be called with key-up events.
+        """
+        controller = MockController()
+        self.window.submitTo(controller)
+        self.event.events = [Event(pygame.KEYUP, key=pygame.K_LEFT)]
+        self.window.handleInput()
+        self.assertEquals(controller.ups, [LEFT])
 
 
 class MockEventSource(object):
@@ -278,15 +289,25 @@ class MockEventSource(object):
 class MockController(object):
     """
     A controller which records events.
+
+    @ivar downs: The recorded key-down events.
+    @ivar ups: The recorded key-up events.
     """
     def __init__(self):
-        self.keys = []
+        self.downs = []
+        self.ups = []
 
     def keyDown(self, key):
         """
         Record a key-down event.
         """
-        self.keys.append(key)
+        self.downs.append(key)
+
+    def keyUp(self, key):
+        """
+        Record a key-up event.
+        """
+        self.ups.append(key)
 
 
 class PlayerViewTests(TestCase, PlayerCreationMixin):

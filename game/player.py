@@ -42,6 +42,8 @@ class Player(object):
         @param direction: One of the constants C{NORTH}, C{SOUTH}, etc, or
         C{None} if there is no movement.
         """
+        if direction is None:
+            direction = 0j
         self._lastPosition = self.getPosition()
         self._lastDirectionChange = self.seconds()
         self.direction = direction

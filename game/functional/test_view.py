@@ -61,6 +61,7 @@ class PlayerTests(TestCase):
         self.player.setDirection(EAST)
         return window.go()
 
+
     def test_input_directs_player(self):
         """
         The arrow keys should direct the player in eight directions.

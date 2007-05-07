@@ -26,6 +26,7 @@ class PlayerControllerTests(TestCase, PlayerCreationMixin):
         it doesn't know about.
         """
         self.controller.keyDown(object())
+        self.controller.keyUp(object())
 
 
     def _directionTest(self, keys, direction):
@@ -39,6 +40,9 @@ class PlayerControllerTests(TestCase, PlayerCreationMixin):
         for key in keys:
             self.controller.keyDown(key)
         self.assertEqual(self.player.direction, direction)
+        for key in keys:
+            self.controller.keyUp(key)
+        self.assertEquals(self.player.direction, 0)
 
 
     def test_moveWest(self):
@@ -102,3 +106,6 @@ class PlayerControllerTests(TestCase, PlayerCreationMixin):
         """
         self._directionTest([DOWN, RIGHT], SOUTH + EAST)
 #         self._directionTest([RIGHT, DOWN], SOUTH + EAST)
+
+    # XXX Test that PRESS-RIGHT, PRESS-DOWN, RELEASE-DOWN leaves the
+    # player going EAST.

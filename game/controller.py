@@ -39,3 +39,9 @@ class PlayerController(object):
         if direction:
             direction = self.player.direction + KEYS_TO_DIRECTIONS[key]
             self.player.setDirection(direction)
+
+    def keyUp(self, key):
+        direction = KEYS_TO_DIRECTIONS.get(key)
+        if direction:
+            # XXX This should take into consideration the *current* direction.
+            self.player.setDirection(None)

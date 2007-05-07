@@ -98,6 +98,8 @@ class Window(object):
                 self._inputCall.stop()
             elif self.controller and event.type == pygame.KEYDOWN:
                 self.controller.keyDown(event.key)
+            elif self.controller and event.type == pygame.KEYUP:
+                self.controller.keyUp(event.key)
 
 
     def submitTo(self, controller):
