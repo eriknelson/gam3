@@ -7,6 +7,8 @@ from game.environment import Environment
 from game.direction import EAST
 from game.player import Player
 
+from game.controller import PlayerController
+
 from game.view import Window
 from game.view import PlayerView
 
@@ -23,9 +25,9 @@ class PlayerTests(TestCase):
 
 
     def tearDown(self):
+        self.environment.stop() # clean up pending calls
         if not raw_input("Did it work?").lower().startswith('y'):
             self.fail("User specified test failure")
-        self.environment.stop() # clean up pending calls
 
     def test_tedium(self):
         """
@@ -57,4 +59,14 @@ class PlayerTests(TestCase):
         view = PlayerView(self.player)
         window.add(view)
         self.player.setDirection(EAST)
+        return window.go()
+
+    def test_input_directs_player(self):
+        """
+        The arrow keys should direct the player in eight directions.
+        """
+        window = Window(reactor.callLater)
+        view = PlayerView(self.player)
+        window.add(view)
+        window.submitTo(PlayerController(self.player))
         return window.go()

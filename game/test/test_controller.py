@@ -20,6 +20,14 @@ class PlayerControllerTests(TestCase, PlayerCreationMixin):
         self.controller = PlayerController(self.player)
 
 
+    def test_ignore_unknown_keys(self):
+        """
+        The PlayerController should not flip out if it gets a key that
+        it doesn't know about.
+        """
+        self.controller.keyDown(object())
+
+
     def _directionTest(self, keys, direction):
         """
         Test helper for intercardinal direction setting, e.g. northeast,

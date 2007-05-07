@@ -9,9 +9,13 @@ from twisted.trial.unittest import TestCase
 from twisted.internet.task import Clock
 from twisted.python.filepath import FilePath
 
+import pygame
+from pygame.event import Event
+
 from game.view import Window, PlayerView, loadImage
 from game.player import Player
 from game.test.util import PlayerCreationMixin
+from game.controller import LEFT
 
 
 class MockSurface(object):
@@ -124,8 +128,10 @@ class WindowTests(TestCase):
         """
         self.display = MockDisplay()
         self.clock = Clock()
+        self.event = MockEventSource()
         self.window = Window(scheduler=self.clock.callLater,
-                             display=self.display)
+                             display=self.display,
+                             event=self.event)
         self.surface = MockSurface()
         self.window.screen = self.surface
 
@@ -231,6 +237,56 @@ class WindowTests(TestCase):
         image = object()
         self.window.draw(image, (13, -1))
         self.assertEqual(self.window.screen.blits, [(image, (13, -1))])
+
+
+    def test_submitTo(self):
+        """
+        It should be possible to set the window's controller.
+        """
+        controller = object()
+        self.window.submitTo(controller)
+        self.assertEquals(self.window.controller, controller)
+
+
+    def test_controllerGetsEvents(self):
+        """
+        The controller should be called with keyDown events.
+        """
+        controller = MockController()
+        self.window.submitTo(controller)
+        self.event.events = [Event(pygame.KEYDOWN, key=pygame.K_LEFT)]
+        self.window.handleInput()
+        self.assertEquals(controller.keys, [LEFT])
+
+
+class MockEventSource(object):
+    """
+    An object that is supposed to look like L{pygame.event}.
+
+    @ivar events: The events to return from L{get}.
+    """
+
+    def __init__(self):
+        self.events = []
+
+    def get(self):
+        """Return the previously specified events.
+        """
+        return self.events
+
+
+class MockController(object):
+    """
+    A controller which records events.
+    """
+    def __init__(self):
+        self.keys = []
+
+    def keyDown(self, key):
+        """
+        Record a key-down event.
+        """
+        self.keys.append(key)
 
 
 class PlayerViewTests(TestCase, PlayerCreationMixin):

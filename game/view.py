@@ -29,18 +29,25 @@ class Window(object):
 
     @ivar schedule: Something like
         L{twisted.internet.interfaces.IReactorTime.callLater}.
-    @ivar display: Something like L{pygame.display}.
     @ivar views: List of current child views.
     @ivar screen: The L{pygame.Surface} which will be drawn to.
     @ivar _paintCall: C{None} or the L{IDelayedCall} provider for a pending
         C{paint} call.
+    @ivar controller: The current controller.
+
+    @ivar display: Something like L{pygame.display}.
+    @ivar event: Something like L{pygame.event}.
     """
 
-    def __init__(self, scheduler=lambda x, y: None, display=pygame.display):
+    def __init__(self, scheduler=lambda x, y: None,
+                 display=pygame.display,
+                 event=pygame.event):
         self.schedule = scheduler
         self.display = display
         self.views = []
         self._paintCall = None
+        self.controller = None
+        self.event = event
 
 
     def dirty(self):
@@ -82,13 +89,23 @@ class Window(object):
         self.display.flip()
 
 
-    def _handleInput(self):
+    def handleInput(self):
         """
         Handle currently available pygame input events.
         """
-        for event in pygame.event.get():
+        for event in self.event.get():
             if event.type == pygame.locals.QUIT:
                 self._inputCall.stop()
+            elif self.controller and event.type == pygame.KEYDOWN:
+                self.controller.keyDown(event.key)
+
+
+    def submitTo(self, controller):
+        """
+        Specify the given controller as the one to receive further
+        events.
+        """
+        self.controller = controller
 
 
     def go(self):
@@ -103,7 +120,7 @@ class Window(object):
 
         self._renderCall = LoopingCall(self.paint)
         self._renderCall.start(0.01)
-        self._inputCall = LoopingCall(self._handleInput)
+        self._inputCall = LoopingCall(self.handleInput)
         finishedDeferred = self._inputCall.start(0.04)
         finishedDeferred.addCallback(lambda ign: self._renderCall.stop())
         finishedDeferred.addCallback(lambda ign: self.display.quit())

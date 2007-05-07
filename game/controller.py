@@ -4,13 +4,13 @@
 Input handling.
 """
 
+from pygame import (K_LEFT as LEFT,
+                    K_RIGHT as RIGHT,
+                    K_UP as UP,
+                    K_DOWN as DOWN)
+
 from game.direction import WEST, EAST, NORTH, SOUTH
 
-
-LEFT = 'left'
-RIGHT = 'right'
-UP = 'up'
-DOWN = 'down'
 
 KEYS_TO_DIRECTIONS = {
     LEFT: WEST,
@@ -35,5 +35,7 @@ class PlayerController(object):
         """
         Set C{self.player} into motion in response to arrow keys being pressed.
         """
-        direction = self.player.direction + KEYS_TO_DIRECTIONS[key]
-        self.player.setDirection(direction)
+        direction = KEYS_TO_DIRECTIONS.get(key)
+        if direction:
+            direction = self.player.direction + KEYS_TO_DIRECTIONS[key]
+            self.player.setDirection(direction)
