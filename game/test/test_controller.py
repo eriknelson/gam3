@@ -74,14 +74,12 @@ class PlayerControllerTests(TestCase, PlayerCreationMixin):
         return self._directionTest([DOWN], SOUTH)
 
 
-    # XXX: Uncomment second assertions (and make it pass by doing whatever else
-    # you need to do as long as that assertion remains, you idioRt)
     def test_moveNortheast(self):
         """
         Similar to L{test_moveWest}, but for northeasterly movement.
         """
         self._directionTest([UP, RIGHT], NORTH + EAST)
-#         self._directionTest([RIGHT, UP], NORTH + EAST)
+        self._directionTest([RIGHT, UP], NORTH + EAST)
 
 
     def test_moveNorthwest(self):
@@ -89,7 +87,7 @@ class PlayerControllerTests(TestCase, PlayerCreationMixin):
         Similar to L{test_moveWest}, but for northwesterly movement.
         """
         self._directionTest([UP, LEFT], NORTH + WEST)
-#         self._directionTest([LEFT, UP], NORTH + WEST)
+        self._directionTest([LEFT, UP], NORTH + WEST)
 
 
     def test_moveSouthwest(self):
@@ -97,7 +95,7 @@ class PlayerControllerTests(TestCase, PlayerCreationMixin):
         Similar to L{test_moveWest}, but for southwesterly movement.
         """
         self._directionTest([DOWN, LEFT], SOUTH + WEST)
-#         self._directionTest([LEFT, DOWN], SOUTH + WEST)
+        self._directionTest([LEFT, DOWN], SOUTH + WEST)
 
 
     def test_moveSoutheast(self):
@@ -105,7 +103,7 @@ class PlayerControllerTests(TestCase, PlayerCreationMixin):
         Similar to L{test_moveWest}, but for southeasterly movement.
         """
         self._directionTest([DOWN, RIGHT], SOUTH + EAST)
-#         self._directionTest([RIGHT, DOWN], SOUTH + EAST)
+        self._directionTest([RIGHT, DOWN], SOUTH + EAST)
 
     # XXX Test that PRESS-RIGHT, PRESS-DOWN, RELEASE-DOWN leaves the
     # player going EAST.
