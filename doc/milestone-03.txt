@@ -1,0 +1,16 @@
+GAME MILESTONE THREE - TERRAIN
+==============================
+
+FUNCTIONAL SPECIFICATION
+------------------------
+
+The player should be able to move over a world with scenery and props (such as
+hedgerows and puddles).  The player should be rendered on top of the scenery at
+the position he occupies with transparency.
+
+IMPLEMENTATION
+--------------
+
+The terrain should be rendered based on a model which facilitates easy
+placement of scenery and other world features and is conducive to a mobile
+viewport.
