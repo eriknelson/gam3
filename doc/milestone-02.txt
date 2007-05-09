@@ -1,0 +1,30 @@
+GAME MILESTONE TWO - MOVING GOOD
+================================
+
+FUNCTIONAL SPECIFICATION
+------------------------
+
+Movement is possible with the arrow keys: left for west, right for east, up for
+north, down for south, with pairwise combinations allowed for keys which are
+not in opposite directions to move in the inter-cardinal directions.
+
+When an arrow key is held and an opposite arrow key is pressed, movement should
+switch to be in the direction of the second arrow key.  When the second arrow
+key is released, movement should resume in the original direction, if the first
+key is still depressed.  On the other hand, if the first arrow key is released
+before the second arrow key, movement in the second direction should not stop.
+
+When an arrow key is held and an arrow key on the opposite axis is pressed,
+movement should change from the original cardinal direction to the inter-
+cardinal direction between the two keys.  When either key is subsequently
+released, movement should henceforth be in the direction of the remaining held
+key.
+
+IN OTHER WORDS DUMMIES, the direction of movement should always reflect the
+currently held keys, with conflicting directions resolved in favor of the most
+recently pressed key.
+
+IMPLEMENTATION
+--------------
+
+No specific implementation requirements.
