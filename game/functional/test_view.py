@@ -40,7 +40,7 @@ class PlayerTests(TestCase):
 
     def test_initial_position(self):
         """
-        The player image should be displayed at the top-left corner of the
+        The player image should be displayed at the bottom-left corner of the
         window.
         """
         window = Window(reactor.callLater)
@@ -52,8 +52,8 @@ class PlayerTests(TestCase):
 
     def test_moves_around(self):
         """
-        The player image should move from the top left of the screen to the top
-        right of the screen.
+        The player image should move from the bottom left of the screen to the
+        bottom right of the screen.
         """
         window = Window(reactor.callLater)
         view = PlayerView(self.player)
