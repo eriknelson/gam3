@@ -22,6 +22,44 @@ def loadImage(path):
 
 
 
+class Viewport(object):
+    """
+    Represent the location and size of the view onto the world.
+
+    This object serves primarily to convert between model and view coordinates.
+
+    @ivar modelPosition: two-tuple of ints giving the model position which
+    corresponds to the bottom right corner of the view.
+
+    @ivar viewSize: two-tuple of ints giving the width and height of the view.
+    """
+    def __init__(self, modelPosition, viewSize):
+        """
+        Initialize the Viewport.
+
+        @param modelPosition: Value for C{modelPosition} attribute.
+        @param viewSize: Value for C{viewSize} attribute.
+        """
+        self.modelPosition = modelPosition
+        self.viewSize = viewSize
+
+
+    def modelToView(self, position):
+        """
+        Convert the given model coordinates into view coordinates.
+
+        @param position: A two-tuple of ints giving a position in the model
+        coordinate system.
+
+        @return: A two-tuple of ints giving a position in the view coordinate
+        system.
+        """
+        return (
+            position[0] - self.modelPosition[0],
+            self.viewSize[1] - (position[1] - self.modelPosition[1]))
+
+
+
 class Window(object):
     """
     A top-level PyGame-based window. This acts as a container for
@@ -39,9 +77,11 @@ class Window(object):
     @ivar event: Something like L{pygame.event}.
     """
 
-    def __init__(self, scheduler=lambda x, y: None,
+    def __init__(self,
+                 scheduler=lambda x, y: None,
                  display=pygame.display,
                  event=pygame.event):
+        self.viewport = Viewport((0, 0), (320, 240))
         self.schedule = scheduler
         self.display = display
         self.views = []
@@ -71,7 +111,8 @@ class Window(object):
         """
         Render an image at a position.
         """
-        self.screen.blit(image, position)
+        x, y = self.viewport.modelToView(position)
+        self.screen.blit(image, (x, y - image.get_size()[1]))
 
 
     def paint(self):
@@ -117,7 +158,7 @@ class Window(object):
         @return: A Deferred that fires when this window is closed by the user.
         """
         pygame.init()
-        self.screen = self.display.set_mode((320, 240),
+        self.screen = self.display.set_mode(self.viewport.viewSize,
                                             pygame.locals.DOUBLEBUF)
 
         self._renderCall = LoopingCall(self.paint)

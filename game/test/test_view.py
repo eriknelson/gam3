@@ -12,10 +12,28 @@ from twisted.python.filepath import FilePath
 import pygame
 from pygame.event import Event
 
-from game.view import Window, PlayerView, loadImage
+from game.view import Viewport, Window, PlayerView, loadImage
 from game.player import Player
 from game.test.util import PlayerCreationMixin
 from game.controller import LEFT
+
+
+class MockImage(object):
+    """
+    An object that is supposed to look like the thing returned by L{loadImage}.
+
+    @ivar size: A two-tuple of ints giving the pixel dimensions of this image.
+    """
+    def __init__(self, size):
+        self.size = size
+
+
+    def get_size(self):
+        """
+        Return the size of this image.
+        """
+        return self.size
+
 
 
 class MockSurface(object):
@@ -115,6 +133,29 @@ class MockWindow(object):
         Record an attempt to dirty the window.
         """
         self.dirtied += 1
+
+
+
+class ViewportTests(TestCase):
+    """
+    Tests for L{Viewport}.
+    """
+    def test_modelToView(self):
+        """
+        L{Viewport.modelToView} should convert model coordinates to view
+        coordinates based on the the model coordinates given to
+        L{Viewport.__init__}.
+        """
+        view = Viewport((10, 20), (320, 240))
+        self.assertEqual(
+            view.modelToView((10, 20)),
+            (0, 240))
+        self.assertEqual(
+            view.modelToView((10, 40)),
+            (0, 220))
+        self.assertEqual(
+            view.modelToView((20, 40)),
+            (10, 220))
 
 
 
@@ -233,10 +274,17 @@ class WindowTests(TestCase):
         Drawing an image at a location should blit it onto the screen
         at the correct position.
         """
+        imageSize = (3, 8)
+        drawPosition = (13, -1)
+        viewSize = (32, 24)
+        self.window.viewport.viewSize = viewSize
         self.window.screen = MockSurface()
-        image = object()
-        self.window.draw(image, (13, -1))
-        self.assertEqual(self.window.screen.blits, [(image, (13, -1))])
+        image = MockImage(imageSize)
+        self.window.draw(image, drawPosition)
+        self.assertEqual(
+            self.window.screen.blits,
+            [(image, (drawPosition[0],
+                      viewSize[1] - drawPosition[1] - imageSize[1]))])
 
 
     def test_submitTo(self):
