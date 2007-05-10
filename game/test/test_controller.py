@@ -105,5 +105,107 @@ class PlayerControllerTests(TestCase, PlayerCreationMixin):
         self._directionTest([DOWN, RIGHT], SOUTH + EAST)
         self._directionTest([RIGHT, DOWN], SOUTH + EAST)
 
+
+    def test_moveEastThenWest(self):
+        """
+        Holding left and then holding right should make the player go east.
+        """
+        self.controller.keyDown(LEFT)
+        self.controller.keyDown(RIGHT)
+        self.assertEqual(self.player.direction, EAST)
+
+
+    def test_moveEastThenWestThenDropEast(self):
+        """
+        Holding left, then holding right, then releasing left, should
+        leave the player moving EAST.
+        """
+        self.controller.keyDown(LEFT)
+        self.controller.keyDown(RIGHT)
+        self.controller.keyUp(LEFT)
+        self.assertEqual(self.player.direction, EAST)
+
+
+    def test_moveWestThenEastThenDropEast(self):
+        """
+        Holding left, then holding right, then releasing right, should
+        leave the player moving WEST.
+        """
+        self.controller.keyDown(LEFT)
+        self.controller.keyDown(RIGHT)
+        self.controller.keyUp(RIGHT)
+        self.assertEqual(self.player.direction, WEST)
+
+
+    def test_moveWestThenEastThenNorth(self):
+        """
+        Holding left, then holding right, then holding up should leave
+        the player moving NORTH + EAST.
+
+        NOTE: This will not actually work in many hardware
+        configurations, probably because either keyboard hardware does
+        not send enough simultaneous keydown events or the keyboard
+        driver does not handle them.
+
+        """
+        self.controller.keyDown(LEFT)
+        self.controller.keyDown(RIGHT)
+        self.controller.keyDown(UP)
+        self.assertEqual(self.player.direction, NORTH + EAST)
+
+
+
+class CalculateDirectionTest(TestCase, PlayerCreationMixin):
+    """
+    There should be a method for figuring out a direction based on
+    currently-pressed keys (including the order they were pressed in).
+    """
+
+    def setUp(self):
+        """
+        Set up a player and a controller.
+        """
+        self.player = self.makePlayer((2, 4))
+        self.controller = PlayerController(self.player)
+
+
+    def test_calculateNoDirection(self):
+        """
+        No inputs should equal no movement.
+        """
+        self.assertEqual(self.controller.calculateDirection([]), None)
+
+
+    def test_calculateDirectionCardinal(self):
+        """
+        Any arrow key in isolation should return the appropriate
+        cardinal direction.
+        """
+        self.assertEqual(self.controller.calculateDirection([RIGHT]), EAST)
+        self.assertEqual(self.controller.calculateDirection([LEFT]), WEST)
+        self.assertEqual(self.controller.calculateDirection([UP]), NORTH)
+        self.assertEqual(self.controller.calculateDirection([DOWN]), SOUTH)
+
+
+    def test_calculateDirectionIntercardinal(self):
+        """
+        Any non-opposing arrow keys held simultaneously should produce
+        the intercardinal direction between their associated
+        directions.
+        """
+        directions = [((UP, RIGHT), NORTH + EAST),
+                      ((UP, LEFT), NORTH + WEST),
+                      ((DOWN, LEFT), SOUTH + WEST),
+                      ((DOWN, RIGHT), SOUTH + EAST),
+                      ]
+
+        for arrows, answer in directions:
+            self.assertEqual(self.controller.calculateDirection(arrows), answer)
+            self.assertEqual(
+                self.controller.calculateDirection(reversed(arrows)), answer)
+
+
+
+
     # XXX Test that PRESS-RIGHT, PRESS-DOWN, RELEASE-DOWN leaves the
     # player going EAST.
