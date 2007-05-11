@@ -1,0 +1,28 @@
+GAME MILESTONE FOUR - NETWORK
+=============================
+
+FUNCTIONAL SPECIFICATION
+------------------------
+
+An instance of a game client should be able to connect to a previously deployed
+game server.  It should be assigned control of a player such that it can move
+the player around (see milestones 1 and 2).  Movements undertaken in this way
+should be visible to other instances of the game client connected to the same
+game server.
+
+IMPLEMENTATION
+--------------
+
+The server has model objects representing each player in the world.  Whenever
+the direction of a player changes on the server side, the server informs all
+clients who can observe that player of that player's position and new
+direction.
+
+Any player model object on the server can have its direction changed by a
+message from the client who controls that player.
+
+Each client has a model object for each player.  On the client who controls a
+player, that player's model has an observer which relays direction changes to
+the server.  All player models have a controller which relays network messages
+about position and direction to the model.  Network information takes
+precedence over local state.
