@@ -20,6 +20,7 @@ class Player(object):
     object.
     """
 
+    # XXX: This shouldn't be public. (make it a property without a setter?)
     direction = None
 
     def __init__(self, position, movementVelocity, seconds):
