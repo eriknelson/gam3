@@ -10,16 +10,24 @@ class Player(object):
     @ivar seconds: A no-argument callable which returns the current time in
     seconds.
 
+    @ivar direction: C{NORTH}, C{EAST} the additive inverse of one of these, or
+    the sum of any two non-additive-inverse of these four values.
+
     @ivar movementVelocity: The distance which can be covered when the player
     is in motion (probably in something like cm/sec, if x and y are in cm.
+
+    @ivar observers: A C{list} of objects notified about state changes of this
+    object.
     """
+
+    direction = None
 
     def __init__(self, position, movementVelocity, seconds):
         self._lastPosition = position
         self._lastDirectionChange = seconds()
         self.movementVelocity = movementVelocity
         self.seconds = seconds
-        self.direction = 0j
+        self.observers = []
 
 
     def getPosition(self):
@@ -31,19 +39,30 @@ class Player(object):
         x, y = self._lastPosition
         now = self.seconds()
         elapsedTime = now - self._lastDirectionChange
-        s = self.direction * elapsedTime * self.movementVelocity
+        s = (self.direction or 0j) * elapsedTime * self.movementVelocity
         return x + s.imag, y + s.real
 
 
     def setDirection(self, direction):
         """
-        Change the direction of movement of this player.
+        Change the direction of movement of this player and notify any
+        observers by invoking their C{directionChanged} method with no
+        arguments.
 
         @param direction: One of the constants C{NORTH}, C{SOUTH}, etc, or
         C{None} if there is no movement.
         """
-        if direction is None:
-            direction = 0j
         self._lastPosition = self.getPosition()
         self._lastDirectionChange = self.seconds()
         self.direction = direction
+
+        for observer in self.observers:
+            observer.directionChanged()
+
+
+    def addObserver(self, observer):
+        """
+        Add the given object to the list of those notified about state changes
+        in this player.
+        """
+        self.observers.append(observer)

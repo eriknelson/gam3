@@ -5,8 +5,32 @@ from game.player import Player
 from game.test.util import PlayerCreationMixin
 
 
-
 # XXX Test that the position is ints
+
+
+class DirectionObserver(object):
+    """
+    Recorder implementation of the direction observer interface used to verify
+    that direction observation works.
+
+    @ivar changes: C{list} of three-tuples of player objects, positions, and
+    directions.  One element per call to C{directionChanged}.
+
+    @ivar player: The player on which this observer is installed.
+    """
+    def __init__(self, player):
+        self.changes = []
+        self.player = player
+
+
+    def directionChanged(self):
+        """
+        Record a direction change event for the given player.
+        """
+        self.changes.append((
+                self.player.getPosition(), self.player.direction))
+
+
 
 class PlayerTests(unittest.TestCase, PlayerCreationMixin):
     """
@@ -102,3 +126,31 @@ class PlayerTests(unittest.TestCase, PlayerCreationMixin):
         self.advanceTime(1)
         self.assertEqual(player.getPosition(), (x + 1, y))
 
+
+    def test_observeDirection(self):
+        """
+        Setting the player's direction should notify any observers registered
+        with that player of the new direction.
+        """
+
+        position = (6, 2)
+        player = self.makePlayer(position)
+        observer = DirectionObserver(player)
+        player.addObserver(observer)
+        player.setDirection(NORTH)
+        self.assertEqual(observer.changes, [(position, NORTH)])
+
+
+    def test_getPositionInsideObserver(self):
+        """
+        L{Player.getPosition} should return an accurate value when called
+        within an observer's C{directionChanged} callback.
+        """
+        position = (1, 1)
+        player = self.makePlayer(position)
+        player.setDirection(EAST)
+        self.advanceTime(1)
+        observer = DirectionObserver(player)
+        player.addObserver(observer)
+        player.setDirection(None)
+        self.assertEqual(observer.changes, [((2, 1), None)])

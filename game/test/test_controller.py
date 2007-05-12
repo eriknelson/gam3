@@ -42,7 +42,7 @@ class PlayerControllerTests(TestCase, PlayerCreationMixin):
         self.assertEqual(self.player.direction, direction)
         for key in keys:
             self.controller.keyUp(key)
-        self.assertEquals(self.player.direction, 0)
+        self.assertEqual(self.player.direction, None)
 
 
     def test_moveWest(self):
