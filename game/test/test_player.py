@@ -37,10 +37,31 @@ class PlayerTests(unittest.TestCase, PlayerCreationMixin):
     There should be an object which has a position and can be moved in
     eight directions.
     """
+    def test_setPosition(self):
+        """
+        Players have a position which can be set with C{setPosition}.
+        """
+        player = self.makePlayer((1, 2))
+        player.setPosition((-2, 1))
+        self.assertEqual(player.getPosition(), (-2, 1))
+
+
+    def test_setPositionAfterSomeMotion(self):
+        """
+        Players should be placed at the correct position if C{setPosition} is
+        called after they have been moving around a little bit.
+        """
+        player = self.makePlayer((1, 2))
+        player.setDirection(NORTH)
+        self.advanceTime(1)
+        player.setPosition((-2, 1))
+        self.assertEqual(player.getPosition(), (-2, 1))
+
+
     def test_getPosition(self):
         """
-        Players have a position attribute which is initialized based on
-        initializer parameters.
+        Players have a C{getPosition} method the initial return value of which
+        is based on initializer parameters.
         """
         player = self.makePlayer((0, 0))
         self.assertEqual(player.getPosition(), (0, 0))

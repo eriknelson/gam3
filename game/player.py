@@ -30,6 +30,14 @@ class Player(object):
         self.observers = []
 
 
+    def setPosition(self, position):
+        """
+        Absolutely reposition this player.
+        """
+        self._lastPosition = position
+        self._lastDirectionChange = self.seconds()
+
+
     def getPosition(self):
         """
         Retrieve the current position.
