@@ -28,61 +28,109 @@ class Direction(Argument):
 
 
 
-class SetPosition(Command):
+class Introduce(Command):
+    """
+    Client greeting message used to retrieve initial model state.
+    """
+
+
+class SetPositionOf(Command):
     """
     Set the position of a L{Player}.
 
+    @param identifier: The unique identifier for the player whose position will
+        be set.
     @param x: The x position.
     @param y: The y position.
     """
 
-    arguments = [('x', Integer()),
+    arguments = [('identifier', Integer()),
+                 ('x', Integer()),
                  ('y', Integer())]
 
 
-class SetDirection(Command):
+class SetDirectionOf(Command):
     """
     Set the direction of a L{Player}.
 
+    @param identifier: The unique identifier for the player whose position will
+        be set.
     @type direction: L{Direction}.
     @param direction: The new direction of the player.
     """
 
-    arguments = [('direction', Direction())]
+    arguments = [('identifier', Integer()),
+                 ('direction', Direction())]
 
 
-class NetworkPlayerController(AMP):
+class NetworkController(AMP):
     """
-    A controller which responds to AMP commands to control the L{Player}.
+    A controller which responds to AMP commands to make state changes to local
+    model objects.
 
-    @ivar player: The L{Player} object to control.
+    @ivar modelObjects: A C{dict} mapping identifiers to model objects.
     """
-    def __init__(self, player):
-        self.player = player
+    def __init__(self):
+        self.modelObjects = {}
 
 
-    def setPosition(self, x, y):
+    def addModelObject(self, identifier, modelObject):
         """
-        Set the position of C{self.player}.
+        Associate a network identifier with a model object.
+        """
+        self.modelObjects[identifier] = modelObject
+        modelObject.addObserver(lambda: self.modelObjectDirectionChanged(modelObject))
 
+
+    def objectByIdentifier(self, identifier):
+        """
+        Look up a pre-existing model object by its network identifier.
+
+        @type identifier: C{int}
+
+        @raise KeyError: If no existing model object has the given identifier.
+        """
+        return self.modelObjects[identifier]
+
+
+    def identifierByObject(self, modelObject):
+        """
+        Look up the network identifier for a given model object.
+
+        @raise KeyError:
+
+        @rtype: L{int}
+        """
+        for identifier, object in self.modelObjects.iteritems():
+            if object is modelObject:
+                return identifier
+        raise ValueError("identifierByObject passed unknown model objects")
+
+
+    def setPositionOf(self, identifier, x, y):
+        """
+        Set the position of a local model object.
+
+        @type identifier: L{int}
         @type x: L{int}
         @type y: L{int}
 
         @see SetPosition
         """
-        self.player.setPosition((x, y))
+        self.objectByIdentifier(identifier).setPosition((x, y))
         return {}
-    SetPosition.responder(setPosition)
+    SetPositionOf.responder(setPositionOf)
 
 
-    def setDirection(self, direction):
+    def setDirectionOf(self, identifier, direction):
         """
+        Set the direction of a local model object.
+
+        @type identifier: L{int}
         @type direction: One of the L{game.direction} direction constants
 
-        @see SetDirection
+        @see SetDirectionOf
         """
-        self.player.setDirection(direction)
+        self.objectByIdentifier(identifier).setDirection(direction)
         return {}
-    SetDirection.responder(setDirection)
-
-
+    SetDirectionOf.responder(setDirectionOf)
