@@ -80,3 +80,34 @@ class EnvironmentTests(TestCase):
         self.assertEqual(len(self.clock.calls), 1)
         self.environment.stop()
         self.assertEqual(self.clock.calls, [])
+
+
+    def test_createPlayer(self):
+        """
+        L{Environment.createPlayer} should instantiate a L{Player} and
+        broadcast it to all registered observers.
+        """
+        class PlayerCreationObserver(object):
+            """
+            Record player creation notifications.
+            """
+            def __init__(self):
+                self.createdPlayers = []
+
+
+            def playerCreated(self, player):
+                """
+                Record a player creation.
+                """
+                self.createdPlayers.append(player)
+
+        position = (1, 2)
+        movementVelocity = 20
+        observer = PlayerCreationObserver()
+        self.environment.addObserver(observer)
+        player = self.environment.createPlayer(position, movementVelocity)
+        self.assertEqual(observer.createdPlayers, [player])
+        self.assertEqual(player.getPosition(), position)
+        self.assertEqual(player.movementVelocity, movementVelocity)
+        self.assertEqual(player.seconds, self.environment.seconds)
+

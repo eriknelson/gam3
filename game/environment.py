@@ -4,6 +4,9 @@ Model code for the substrate the game world inhabits.
 
 from twisted.internet.task import Clock
 
+from game.player import Player
+
+
 class Environment(Clock):
     """
     The part of The World which is visible to a client.
@@ -19,12 +22,16 @@ class Environment(Clock):
         B{model} frames per second.
 
     @ivar _call: The result of the latest call to C{scheduler}.
+
+    @ivar observers: A C{list} of objects notified about state changes of this
+    object.
     """
     def __init__(self, granularity, platformCallLater):
         Clock.__init__(self)
         self.granularity = granularity
         self._platformCallLater = platformCallLater
         self._call = platformCallLater(1.0 / granularity, self._update)
+        self.observers = []
 
 
     def _update(self):
@@ -40,3 +47,30 @@ class Environment(Clock):
         Stop the simulated advancement of time. Clean up all pending calls.
         """
         self._call.cancel()
+
+
+    def addObserver(self, observer):
+        """
+        Add the given object to the list of those notified about state changes
+        in this environment.
+        """
+        self.observers.append(observer)
+
+
+    def createPlayer(self, position, movementVelocity):
+        """
+        Make a new player with the given parameters.
+
+        @type position: two-tuple of numbers
+        @param position: Where the newly created player is.
+
+        @type movementVelocity: number
+        @param movementVelocity: How fast can newly created player go?
+
+        @return: The new L{Player}
+        """
+        player = Player(position, movementVelocity, self.seconds)
+        for observer in self.observers:
+            observer.playerCreated(player)
+        return player
+
