@@ -65,6 +65,8 @@ class Window(object):
     A top-level PyGame-based window. This acts as a container for
     other view objects.
 
+#     @ivar environment: The L{game.environment.Environment} which is being
+#         displayed.
     @ivar schedule: Something like
         L{twisted.internet.interfaces.IReactorTime.callLater}.
     @ivar views: List of current child views.
@@ -78,9 +80,11 @@ class Window(object):
     """
 
     def __init__(self,
+                 environment,
                  scheduler=lambda x, y: None,
                  display=pygame.display,
                  event=pygame.event):
+        environment.addObserver(self)
         self.viewport = Viewport((0, 0), (320, 240))
         self.schedule = scheduler
         self.display = display
@@ -169,6 +173,13 @@ class Window(object):
         finishedDeferred.addCallback(lambda ign: self.display.quit())
 
         return finishedDeferred
+
+
+    def playerCreated(self, player):
+        """
+        Create a L{PlayerView}.
+        """
+        self.add(PlayerView(player))
 
 
 

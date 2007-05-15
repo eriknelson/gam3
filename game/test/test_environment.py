@@ -62,6 +62,7 @@ class EnvironmentTests(TestCase):
         self.clock.advance(0.5)
         self.assertEqual(self.environment.seconds(), 1)
 
+
     def test_subsecond_granularity(self):
         """
         Same as L{test_granularity}, but with subsecond granularity.

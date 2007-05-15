@@ -16,6 +16,7 @@ from game.view import Viewport, Window, PlayerView, loadImage
 from game.player import Player
 from game.test.util import PlayerCreationMixin
 from game.controller import LEFT
+from game.environment import Environment
 
 
 class MockImage(object):
@@ -167,10 +168,13 @@ class WindowTests(TestCase):
         """
         Create a L{Window} with a mock scheduler and display.
         """
-        self.display = MockDisplay()
+        self.granularity = 20
         self.clock = Clock()
+        self.environment = Environment(self.granularity, self.clock.callLater)
+        self.display = MockDisplay()
         self.event = MockEventSource()
-        self.window = Window(scheduler=self.clock.callLater,
+        self.window = Window(environment=self.environment,
+                             scheduler=self.clock.callLater,
                              display=self.display,
                              event=self.event)
         self.surface = MockSurface()
@@ -316,6 +320,26 @@ class WindowTests(TestCase):
         self.event.events = [Event(pygame.KEYUP, key=pygame.K_LEFT)]
         self.window.handleInput()
         self.assertEquals(controller.ups, [LEFT])
+
+
+    def test_playerCreationObservation(self):
+        """
+        The window should register itself to receive player creation events.
+        """
+        self.assertEqual(self.environment.observers, [self.window])
+
+
+    def test_playerCreated(self):
+        """
+        L{Window.playerCreated} should wrap the created player in a
+        L{PlayerView} and add it to itself.
+        """
+        player = Player((1, 2), 3, self.environment.seconds)
+        self.window.playerCreated(player)
+        self.assertEqual(len(self.window.views), 1)
+        self.assertTrue(isinstance(self.window.views[0], PlayerView))
+        self.assertIdentical(self.window.views[0].player, player)
+
 
 
 class MockEventSource(object):

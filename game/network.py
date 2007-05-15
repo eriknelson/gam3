@@ -115,7 +115,7 @@ class NetworkController(AMP):
             position = box['x'], box['y']
             movementVelocity = box['movementVelocity']
             self.environment = Environment(granularity, self.scheduler)
-            player = Player(position, movementVelocity, self.environment.seconds)
+            player = self.environment.createPlayer(position, movementVelocity)
             self.addModelObject(box['identifier'], player)
         d.addCallback(cbIntroduce)
         return d
