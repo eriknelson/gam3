@@ -8,6 +8,9 @@ from struct import pack, unpack
 
 from twisted.protocols.amp import AMP, Command, Integer, Argument
 
+from game.player import Player
+from game.environment import Environment
+
 
 class Direction(Argument):
     """
@@ -69,9 +72,16 @@ class NetworkController(AMP):
     model objects.
 
     @ivar modelObjects: A C{dict} mapping identifiers to model objects.
+
+    @ivar scheduler: A callable like L{IReactorTime.callLater} which will be
+    used to update the model time.
     """
-    def __init__(self):
+
+    environment = None
+
+    def __init__(self, scheduler):
         self.modelObjects = {}
+        self.scheduler = scheduler
 
 
     def addModelObject(self, identifier, modelObject):
@@ -79,7 +89,36 @@ class NetworkController(AMP):
         Associate a network identifier with a model object.
         """
         self.modelObjects[identifier] = modelObject
-        modelObject.addObserver(lambda: self.modelObjectDirectionChanged(modelObject))
+        modelObject.addObserver(self)
+
+
+    def directionChanged(self, modelObject):
+        """
+        Notify the network that a local model object changed direction.
+
+        @param modelObject: A
+        """
+        self.callRemote(
+            SetDirectionOf,
+            identifier=self.identifierByObject(modelObject),
+            direction=modelObject.direction)
+
+
+    def introduce(self):
+        """
+        Greet the server and register the player model object which belongs to
+        this client and remember the identifier with which it responds.
+        """
+        d = self.callRemote(Introduce)
+        def cbIntroduce(box):
+            granularity = box['granularity']
+            position = box['x'], box['y']
+            movementVelocity = box['movementVelocity']
+            self.environment = Environment(granularity, self.scheduler)
+            player = Player(position, movementVelocity, self.environment.seconds)
+            self.addModelObject(box['identifier'], player)
+        d.addCallback(cbIntroduce)
+        return d
 
 
     def objectByIdentifier(self, identifier):
@@ -97,7 +136,8 @@ class NetworkController(AMP):
         """
         Look up the network identifier for a given model object.
 
-        @raise KeyError:
+        @raise ValueError: If no network identifier is associated with the
+        given model object.
 
         @rtype: L{int}
         """

@@ -6,10 +6,10 @@ from twisted.internet.task import Clock
 
 class Environment(Clock):
     """
-    Represent a number of global model parameters.
+    The part of The World which is visible to a client.
 
-    @ivar scheduler: A callable like L{IReactorTime.callLater} which will be
-    used to update the model time.
+    @ivar _platformCallLater: A callable like L{IReactorTime.callLater} which
+    will be used to update the model time.
 
     @ivar granularity: The number of times to update the model time
         per second. That is, the number of "instants" per
@@ -20,11 +20,11 @@ class Environment(Clock):
 
     @ivar _call: The result of the latest call to C{scheduler}.
     """
-    def __init__(self, granularity, scheduler):
+    def __init__(self, granularity, platformCallLater):
         Clock.__init__(self)
         self.granularity = granularity
-        self.scheduler = scheduler
-        self._call = scheduler(1.0 / granularity, self._update)
+        self._platformCallLater = platformCallLater
+        self._call = platformCallLater(1.0 / granularity, self._update)
 
 
     def _update(self):
@@ -32,7 +32,8 @@ class Environment(Clock):
         Advance the simulation time by one second.
         """
         self.advance(1.0 / self.granularity)
-        self._call = self.scheduler(1.0 / self.granularity, self._update)
+        self._call = self._platformCallLater(1.0 / self.granularity, self._update)
+
 
     def stop(self):
         """

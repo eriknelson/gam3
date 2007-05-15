@@ -4,8 +4,10 @@ Tests for L{game.network} (Network support for Game).
 
 from twisted.trial.unittest import TestCase
 from twisted.internet.defer import Deferred
+from twisted.internet.task import Clock
 
 from game.test.util import PlayerCreationMixin
+from game.environment import Environment
 from game.network import (Direction, Introduce, SetPositionOf, SetDirectionOf,
                           NetworkController)
 from game.direction import NORTH, SOUTH, EAST, WEST
@@ -56,7 +58,8 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         self.calls = []
         self.identifier = 123
         self.player = self.makePlayer((1, 2))
-        self.controller = NetworkController()
+        self.clock = Clock()
+        self.controller = NetworkController(self.clock.callLater)
         self.controller.callRemote = self.callRemote
 
 
@@ -168,15 +171,29 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         """
         self.controller.modelObjects.clear()
 
+        x, y = (3, 2)
+        movementVelocity = 40
+        granularity = 22
         d = self.controller.introduce()
         self.assertEqual(len(self.calls), 1)
         result, command, kw = self.calls.pop()
         self.assertIdentical(command, Introduce)
         self.assertEqual(kw, {})
         self.assertEqual(self.controller.modelObjects, {})
-        result.callback({'identifier': self.identifier})
-        self.assertEqual(
-            self.controller.modelObjects, {self.identifier: self.player})
+        self.assertIdentical(self.controller.environment, None)
+        result.callback({'identifier': self.identifier,
+                         'granularity': granularity,
+                         'movementVelocity': movementVelocity,
+                         'x': x,
+                         'y': y})
+        # XXX This is *huuuuuuuuuuuuuuge*.  Make smaller units.
+        self.assertTrue(isinstance(self.controller.environment, Environment))
+        player = self.controller.modelObjects[self.identifier]
+        self.assertEqual(player.getPosition(), (x, y))
+        self.assertEqual(player.movementVelocity, movementVelocity)
+        self.assertEqual(player.seconds, self.controller.environment.seconds)
+        self.assertEqual(self.controller.environment.granularity, granularity)
+        self.assertEqual(self.controller.environment._platformCallLater, self.clock.callLater)
 
 
     def test_directionChanged(self):
@@ -186,10 +203,14 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         """
         self.controller.addModelObject(self.identifier, self.player)
         self.player.setDirection(NORTH)
+        self.assertEqual(len(self.calls), 1)
+        result, command, kw = self.calls.pop(0)
+        self.assertIdentical(command, SetDirectionOf)
         self.assertEqual(
-            self.calls,
-            [(SetDirectionOf, {"identifier": self.identifier,
-                               "direction": NORTH})])
+            kw,
+            {"identifier": self.identifier,
+             "direction": NORTH})
+
 
 
 class MockNetworkController(object):

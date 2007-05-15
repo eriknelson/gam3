@@ -66,7 +66,7 @@ class Player(object):
         self.direction = direction
 
         for observer in self.observers:
-            observer.directionChanged()
+            observer.directionChanged(self)
 
 
     def addObserver(self, observer):

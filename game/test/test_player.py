@@ -15,20 +15,19 @@ class DirectionObserver(object):
 
     @ivar changes: C{list} of three-tuples of player objects, positions, and
     directions.  One element per call to C{directionChanged}.
-
-    @ivar player: The player on which this observer is installed.
     """
-    def __init__(self, player):
+    def __init__(self):
         self.changes = []
-        self.player = player
 
 
-    def directionChanged(self):
+    def directionChanged(self, player):
         """
         Record a direction change event for the given player.
+
+        @param player: The player which changed direction.
         """
         self.changes.append((
-                self.player.getPosition(), self.player.direction))
+                player, player.getPosition(), player.direction))
 
 
 
@@ -153,13 +152,12 @@ class PlayerTests(unittest.TestCase, PlayerCreationMixin):
         Setting the player's direction should notify any observers registered
         with that player of the new direction.
         """
-
         position = (6, 2)
         player = self.makePlayer(position)
-        observer = DirectionObserver(player)
+        observer = DirectionObserver()
         player.addObserver(observer)
         player.setDirection(NORTH)
-        self.assertEqual(observer.changes, [(position, NORTH)])
+        self.assertEqual(observer.changes, [(player, position, NORTH)])
 
 
     def test_getPositionInsideObserver(self):
@@ -171,7 +169,7 @@ class PlayerTests(unittest.TestCase, PlayerCreationMixin):
         player = self.makePlayer(position)
         player.setDirection(EAST)
         self.advanceTime(1)
-        observer = DirectionObserver(player)
+        observer = DirectionObserver()
         player.addObserver(observer)
         player.setDirection(None)
-        self.assertEqual(observer.changes, [((2, 1), None)])
+        self.assertEqual(observer.changes, [(player, (2, 1), None)])
