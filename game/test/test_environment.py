@@ -20,6 +20,7 @@ class EnvironmentTests(TestCase):
         """
         self.clock = Clock()
         self.environment = Environment(1, self.clock.callLater)
+        self.environment.start()
 
 
     def test_initialTime(self):
@@ -66,10 +67,21 @@ class EnvironmentTests(TestCase):
         Same as L{test_granularity}, but with subsecond granularity.
         """
         environment = Environment(2, self.clock.callLater)
+        environment.start()
         self.clock.advance(0.5)
         self.assertEqual(environment.seconds(), 0.5)
         self.clock.advance(0.5)
         self.assertEqual(environment.seconds(), 1)
+
+
+    def test_start(self):
+        """
+        There should be a way to start the environment separately from
+        instantiating it.
+        """
+        environment = Environment(2, self.clock.callLater)
+        self.clock.advance(10)
+        self.assertEqual(environment.seconds(), 0)
 
 
     def test_stop(self):

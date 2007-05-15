@@ -26,11 +26,12 @@ class Environment(Clock):
     @ivar observers: A C{list} of objects notified about state changes of this
     object.
     """
+    _call = None
+
     def __init__(self, granularity, platformCallLater):
         Clock.__init__(self)
         self.granularity = granularity
         self._platformCallLater = platformCallLater
-        self._call = platformCallLater(1.0 / granularity, self._update)
         self.observers = []
 
 
@@ -39,6 +40,13 @@ class Environment(Clock):
         Advance the simulation time by one second.
         """
         self.advance(1.0 / self.granularity)
+        self.start()
+
+
+    def start(self):
+        """
+        Start the simulated advancement of time.
+        """
         self._call = self._platformCallLater(1.0 / self.granularity, self._update)
 
 
