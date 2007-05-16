@@ -25,3 +25,22 @@ class PlayerCreationMixin:
         Advance the clock by the given number of seconds.
         """
         self.currentSeconds += amount
+
+
+
+class PlayerCreationObserver(object):
+    """
+    Record player creation notifications.
+
+    @ivar createdPlayers: A list of two-tuples giving the arguments to
+    L{playerCreated} calls.
+    """
+    def __init__(self):
+        self.createdPlayers = []
+
+
+    def playerCreated(self, player, voluble):
+        """
+        Record a player creation.
+        """
+        self.createdPlayers.append((player, voluble))

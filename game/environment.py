@@ -65,7 +65,7 @@ class Environment(Clock):
         self.observers.append(observer)
 
 
-    def createPlayer(self, position, movementVelocity):
+    def createPlayer(self, position, movementVelocity, voluble):
         """
         Make a new player with the given parameters.
 
@@ -75,10 +75,14 @@ class Environment(Clock):
         @type movementVelocity: number
         @param movementVelocity: How fast can newly created player go?
 
+        @type voluble: C{bool}
+        @param voluble: Whether the created player has the power or habit of
+        turning or twining (IS THIS THE PLAYER YOU CAN CONTROL OR NOT).
+
         @return: The new L{Player}
         """
         player = Player(position, movementVelocity, self.seconds)
         for observer in self.observers:
-            observer.playerCreated(player)
+            observer.playerCreated(player, voluble)
         return player
 

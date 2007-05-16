@@ -7,6 +7,7 @@ from twisted.trial.unittest import TestCase
 from twisted.internet.task import Clock
 
 from game.environment import Environment
+from game.test.util import PlayerCreationObserver
 
 
 class EnvironmentTests(TestCase):
@@ -95,32 +96,29 @@ class EnvironmentTests(TestCase):
         self.assertEqual(self.clock.calls, [])
 
 
+    def _playerCreationTest(self, voluble):
+        position = (1, 2)
+        movementVelocity = 20
+        observer = PlayerCreationObserver()
+        self.environment.addObserver(observer)
+        player = self.environment.createPlayer(position, movementVelocity, voluble)
+        self.assertEqual(observer.createdPlayers, [(player, voluble)])
+        self.assertEqual(player.getPosition(), position)
+        self.assertEqual(player.movementVelocity, movementVelocity)
+        self.assertEqual(player.seconds, self.environment.seconds)
+
+
     def test_createPlayer(self):
         """
         L{Environment.createPlayer} should instantiate a L{Player} and
         broadcast it to all registered observers.
         """
-        class PlayerCreationObserver(object):
-            """
-            Record player creation notifications.
-            """
-            def __init__(self):
-                self.createdPlayers = []
+        return self._playerCreationTest(False)
 
 
-            def playerCreated(self, player):
-                """
-                Record a player creation.
-                """
-                self.createdPlayers.append(player)
-
-        position = (1, 2)
-        movementVelocity = 20
-        observer = PlayerCreationObserver()
-        self.environment.addObserver(observer)
-        player = self.environment.createPlayer(position, movementVelocity)
-        self.assertEqual(observer.createdPlayers, [player])
-        self.assertEqual(player.getPosition(), position)
-        self.assertEqual(player.movementVelocity, movementVelocity)
-        self.assertEqual(player.seconds, self.environment.seconds)
-
+    def test_createVolublePlayer(self):
+        """
+        As demonstrated by L{test_createPlayer}, save for the specification of
+        a voluble player, which information should be propagated to observers.
+        """
+        return self._playerCreationTest(True)

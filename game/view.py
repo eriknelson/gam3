@@ -175,7 +175,7 @@ class Window(object):
         return finishedDeferred
 
 
-    def playerCreated(self, player):
+    def playerCreated(self, player, voluble):
         """
         Create a L{PlayerView}.
         """

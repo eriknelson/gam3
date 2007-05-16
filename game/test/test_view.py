@@ -322,20 +322,12 @@ class WindowTests(TestCase):
         self.assertEquals(controller.ups, [LEFT])
 
 
-    def test_playerCreationObservation(self):
-        """
-        The window should register itself to receive player creation events.
-        """
-        self.assertEqual(self.environment.observers, [self.window])
-
-
     def test_playerCreated(self):
         """
         L{Window.playerCreated} should wrap the created player in a
         L{PlayerView} and add it to itself.
         """
-        player = Player((1, 2), 3, self.environment.seconds)
-        self.window.playerCreated(player)
+        player = self.environment.createPlayer((1, 2), 3, False)
         self.assertEqual(len(self.window.views), 1)
         self.assertTrue(isinstance(self.window.views[0], PlayerView))
         self.assertIdentical(self.window.views[0].player, player)

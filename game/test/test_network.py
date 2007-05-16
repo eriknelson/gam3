@@ -6,7 +6,7 @@ from twisted.trial.unittest import TestCase
 from twisted.internet.defer import Deferred
 from twisted.internet.task import Clock
 
-from game.test.util import PlayerCreationMixin
+from game.test.util import PlayerCreationMixin, PlayerCreationObserver
 from game.environment import Environment
 from game.network import (Direction, Introduce, SetPositionOf, SetDirectionOf,
                           NetworkController)
@@ -163,6 +163,35 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         return d
 
 
+    def _assertThingsAboutPlayerCreation(self, environment, position, movementVelocity):
+        player = self.controller.modelObjects[self.identifier]
+        self.assertEqual(player.getPosition(), position)
+        self.assertEqual(player.movementVelocity, movementVelocity)
+        self.assertEqual(player.seconds, environment.seconds)
+
+
+    def test_createInitialPlayer(self):
+        """
+        L{NetworkController._createInitialPlayer} should create the player
+        object for this client.
+        """
+        x, y = (3, 2)
+        movementVelocity = 40
+        granularity = 22
+        environment = Environment(granularity, self.clock.callLater)
+        observer = PlayerCreationObserver()
+        environment.addObserver(observer)
+
+        self.controller.createInitialPlayer(
+            environment, self.identifier, (x, y), movementVelocity)
+
+        self.assertEqual(len(observer.createdPlayers), 1)
+        player, voluble = observer.createdPlayers.pop()
+        self.assertTrue(voluble)
+        self._assertThingsAboutPlayerCreation(
+            environment, (x, y), movementVelocity)
+
+
     def test_greetServer(self):
         """
         L{NetworkController.introduce} should send an L{Introduce} command to
@@ -181,19 +210,19 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         self.assertEqual(kw, {})
         self.assertEqual(self.controller.modelObjects, {})
         self.assertIdentical(self.controller.environment, None)
+
         result.callback({'identifier': self.identifier,
                          'granularity': granularity,
                          'movementVelocity': movementVelocity,
                          'x': x,
                          'y': y})
-        # XXX This is *huuuuuuuuuuuuuuge*.  Make smaller units.
+
+        self._assertThingsAboutPlayerCreation(
+            self.controller.environment, (x, y), movementVelocity)
         self.assertTrue(isinstance(self.controller.environment, Environment))
-        player = self.controller.modelObjects[self.identifier]
-        self.assertEqual(player.getPosition(), (x, y))
-        self.assertEqual(player.movementVelocity, movementVelocity)
-        self.assertEqual(player.seconds, self.controller.environment.seconds)
         self.assertEqual(self.controller.environment.granularity, granularity)
-        self.assertEqual(self.controller.environment._platformCallLater, self.clock.callLater)
+        self.assertEqual(
+            self.controller.environment._platformCallLater, self.clock.callLater)
 
 
     def test_directionChanged(self):

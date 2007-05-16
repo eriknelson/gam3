@@ -104,6 +104,17 @@ class NetworkController(AMP):
             direction=modelObject.direction)
 
 
+    def createInitialPlayer(self, environment, identifier, position,
+                             movementVelocity):
+        """
+        Create this client's player in the given environment and add it to the
+        model object mapping.
+        """
+        player = environment.createPlayer(position, movementVelocity,
+                                          voluble=True)
+        self.addModelObject(identifier, player)
+
+
     def introduce(self):
         """
         Greet the server and register the player model object which belongs to
@@ -115,8 +126,9 @@ class NetworkController(AMP):
             position = box['x'], box['y']
             movementVelocity = box['movementVelocity']
             self.environment = Environment(granularity, self.scheduler)
-            player = self.environment.createPlayer(position, movementVelocity)
-            self.addModelObject(box['identifier'], player)
+            self.createInitialPlayer(
+                self.environment, box['identifier'], position,
+                movementVelocity)
         d.addCallback(cbIntroduce)
         return d
 
