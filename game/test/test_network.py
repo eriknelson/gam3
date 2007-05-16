@@ -163,10 +163,10 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         return d
 
 
-    def _assertThingsAboutPlayerCreation(self, environment, position, movementVelocity):
+    def _assertThingsAboutPlayerCreation(self, environment, position, speed):
         player = self.controller.modelObjects[self.identifier]
         self.assertEqual(player.getPosition(), position)
-        self.assertEqual(player.movementVelocity, movementVelocity)
+        self.assertEqual(player.speed, speed)
         self.assertEqual(player.seconds, environment.seconds)
 
 
@@ -176,20 +176,20 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         object for this client.
         """
         x, y = (3, 2)
-        movementVelocity = 40
+        speed = 40
         granularity = 22
         environment = Environment(granularity, self.clock.callLater)
         observer = PlayerCreationObserver()
         environment.addObserver(observer)
 
         self.controller.createInitialPlayer(
-            environment, self.identifier, (x, y), movementVelocity)
+            environment, self.identifier, (x, y), speed)
 
         self.assertEqual(len(observer.createdPlayers), 1)
         player, voluble = observer.createdPlayers.pop()
         self.assertTrue(voluble)
         self._assertThingsAboutPlayerCreation(
-            environment, (x, y), movementVelocity)
+            environment, (x, y), speed)
 
 
     def test_greetServer(self):
@@ -201,7 +201,7 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         self.controller.modelObjects.clear()
 
         x, y = (3, 2)
-        movementVelocity = 40
+        speed = 40
         granularity = 22
         d = self.controller.introduce()
         self.assertEqual(len(self.calls), 1)
@@ -213,12 +213,12 @@ class ControllerTests(TestCase, PlayerCreationMixin):
 
         result.callback({'identifier': self.identifier,
                          'granularity': granularity,
-                         'movementVelocity': movementVelocity,
+                         'speed': speed,
                          'x': x,
                          'y': y})
 
         self._assertThingsAboutPlayerCreation(
-            self.controller.environment, (x, y), movementVelocity)
+            self.controller.environment, (x, y), speed)
         self.assertTrue(isinstance(self.controller.environment, Environment))
         self.assertEqual(self.controller.environment.granularity, granularity)
         self.assertEqual(

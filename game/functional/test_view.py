@@ -17,7 +17,7 @@ class PlayerTests(TestCase):
         self.environment = Environment(50, reactor.callLater)
         self.player = Player(
             (0, 0),
-            movementVelocity=75,
+            speed=75,
             seconds=self.environment.seconds)
 
         # XXX PRIVATE VARIABLE USAGE ZOMG

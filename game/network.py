@@ -105,12 +105,12 @@ class NetworkController(AMP):
 
 
     def createInitialPlayer(self, environment, identifier, position,
-                             movementVelocity):
+                             speed):
         """
         Create this client's player in the given environment and add it to the
         model object mapping.
         """
-        player = environment.createPlayer(position, movementVelocity,
+        player = environment.createPlayer(position, speed,
                                           voluble=True)
         self.addModelObject(identifier, player)
 
@@ -124,11 +124,11 @@ class NetworkController(AMP):
         def cbIntroduce(box):
             granularity = box['granularity']
             position = box['x'], box['y']
-            movementVelocity = box['movementVelocity']
+            speed = box['speed']
             self.environment = Environment(granularity, self.scheduler)
             self.createInitialPlayer(
                 self.environment, box['identifier'], position,
-                movementVelocity)
+                speed)
         d.addCallback(cbIntroduce)
         return d
 

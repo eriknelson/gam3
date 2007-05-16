@@ -98,13 +98,13 @@ class EnvironmentTests(TestCase):
 
     def _playerCreationTest(self, voluble):
         position = (1, 2)
-        movementVelocity = 20
+        speed = 20
         observer = PlayerCreationObserver()
         self.environment.addObserver(observer)
-        player = self.environment.createPlayer(position, movementVelocity, voluble)
+        player = self.environment.createPlayer(position, speed, voluble)
         self.assertEqual(observer.createdPlayers, [(player, voluble)])
         self.assertEqual(player.getPosition(), position)
-        self.assertEqual(player.movementVelocity, movementVelocity)
+        self.assertEqual(player.speed, speed)
         self.assertEqual(player.seconds, self.environment.seconds)
 
 
