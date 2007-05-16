@@ -9,6 +9,8 @@ import pygame.display, pygame.locals
 from twisted.python.filepath import FilePath
 from twisted.internet.task import LoopingCall
 
+from game.controller import PlayerController
+
 
 def loadImage(path):
     """
@@ -180,6 +182,8 @@ class Window(object):
         Create a L{PlayerView}.
         """
         self.add(PlayerView(player))
+        if voluble:
+            self.submitTo(PlayerController(player))
 
 
 
