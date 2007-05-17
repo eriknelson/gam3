@@ -21,8 +21,8 @@ class ConnectionNotificationWrapper(ProtocolWrapper):
         Fire the Deferred at C{self.factory.connectionNotification} with the
         real protocol.
         """
-        self.factory.connectionNotification.callback(self.wrappedProtocol)
         ProtocolWrapper.makeConnection(self, transport)
+        self.factory.connectionNotification.callback(self.wrappedProtocol)
 
 
 
@@ -48,10 +48,14 @@ class UI(object):
     @ivar reactor: Something which provides
         L{twisted.internet.interfaces.IReactorTCP} and
         L{twisted.internet.interfaces.IReactorTime}.
+
+    @ivar windowFactory: The factory that should produce things like
+        L{game.view.Window}.
     """
 
-    def __init__(self, reactor):
+    def __init__(self, reactor, windowFactory):
         self.reactor = reactor
+        self.windowFactory = windowFactory
 
 
     def connect(self, (host, port)):
@@ -62,7 +66,27 @@ class UI(object):
         @param port: The TCP port number to connect to.
         """
         clientFactory = ClientFactory()
-        clientFactory.protocol = lambda: NetworkController(self.reactor.callLater)
+        clientFactory.protocol = lambda: NetworkController(
+            self.reactor.callLater)
         factory = ConnectionNotificationFactory(clientFactory)
         self.reactor.connectTCP(host, port, factory)
         return factory.connectionNotification
+
+
+    def gotIntroduced(self, environment):
+        self.window = self.windowFactory(environment, self.reactor)
+        self.window.go()
+
+
+
+    def start(self, (host, port)):
+        """
+        Let's Go!
+
+        - Connect to the given host and port.
+        - Make introductions.
+        - Run a GUI.
+        """
+        d = self.connect((host, port))
+        d.addCallback(lambda protocol: protocol.introduce())
+        d.addCallback(self.gotIntroduced)

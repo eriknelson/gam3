@@ -83,7 +83,7 @@ class Window(object):
 
     def __init__(self,
                  environment,
-                 scheduler=lambda x, y: None,
+                 scheduler=lambda x, y: None, # I guess I'm kind of an idiot.
                  display=pygame.display,
                  event=pygame.event):
         environment.addObserver(self)

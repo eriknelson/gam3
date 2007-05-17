@@ -262,7 +262,7 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         x, y = (3, 2)
         speed = 40
         granularity = 22
-        d = self.controller.introduce()
+        introduced = self.controller.introduce()
         self.assertEqual(len(self.calls), 1)
         result, command, kw = self.calls.pop()
         self.assertIdentical(command, Introduce)
@@ -281,7 +281,11 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         self.assertTrue(isinstance(self.controller.environment, Environment))
         self.assertEqual(self.controller.environment.granularity, granularity)
         self.assertEqual(
-            self.controller.environment._platformCallLater, self.clock.callLater)
+            self.controller.environment._platformCallLater,
+            self.clock.callLater)
+        introduced.addCallback(self.assertIdentical,
+                               self.controller.environment)
+        return introduced
 
 
     def test_directionChanged(self):

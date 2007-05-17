@@ -135,6 +135,7 @@ class NetworkController(AMP):
             self.createInitialPlayer(
                 self.environment, box['identifier'], position,
                 speed)
+            return self.environment
         d.addCallback(cbIntroduce)
         return d
 
