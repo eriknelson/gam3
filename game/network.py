@@ -42,6 +42,7 @@ class Introduce(Command):
                 ('y', Integer())]
 
 
+
 class SetPositionOf(Command):
     """
     Set the position of a L{Player}.
