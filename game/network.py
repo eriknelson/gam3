@@ -35,6 +35,11 @@ class Introduce(Command):
     """
     Client greeting message used to retrieve initial model state.
     """
+    response = [('identifier', Integer()),
+                ('granularity', Integer()),
+                ('speed', Integer()),
+                ('x', Integer()),
+                ('y', Integer())]
 
 
 class SetPositionOf(Command):

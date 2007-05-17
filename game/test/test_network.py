@@ -44,6 +44,65 @@ class DirectionArgumentTests(TestCase):
 
 
 
+class IntroduceCommandTests(TestCase):
+    """
+    Tests for L{Introduce}.
+    """
+    def test_makeResponse(self):
+        """
+        L{Introduce.makeResponse} should convert a mapping of structured data
+        into an L{AmpBox}.
+        """
+        identifier = 123
+        granularity = 20
+        speed = 12
+        x = -3
+        y = 2
+        box = Introduce.makeResponse({'identifier': identifier,
+                                      'granularity': granularity,
+                                      'speed': speed,
+                                      'x': x,
+                                      'y': y}, None)
+        self.assertEqual(
+            box,
+            {'identifier': str(identifier),
+             'granularity': str(granularity),
+             'speed': str(speed),
+             'x': str(x),
+             'y': str(y)})
+
+
+    def test__objectsToStrings(self):
+        """
+        Holy shit!  Use private functionality from amp to test that responses
+        are parsed properly.  See <trac://twisted/ticket/2657>.
+        """
+        # Holy shit!
+        from twisted.protocols.amp import _stringsToObjects
+
+        identifier = 123
+        granularity = 20
+        speed = 12
+        x = -3
+        y = 2
+
+        objects = _stringsToObjects({'identifier': str(identifier),
+                                     'granularity': str(granularity),
+                                     'speed': str(speed),
+                                     'x': str(x),
+                                     'y': str(y)},
+                                    Introduce.response,
+                                    None)
+        self.assertEqual(
+            objects,
+            {'identifier': identifier,
+             'granularity': granularity,
+             'speed': speed,
+             'x': x,
+             'y': y})
+
+
+
 class ControllerTests(TestCase, PlayerCreationMixin):
     """
     L{NetworkController} takes network input and makes local changes to model
