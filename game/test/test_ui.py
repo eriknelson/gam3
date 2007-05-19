@@ -38,6 +38,27 @@ class StubReactor(object):
         """
 
 
+class FakeWindow(object):
+    """
+    A thing that is looks like L{game.view.Window}.
+
+    @ivar environment: The first argument to the initializer.
+    @ivar scheduler: The second argument to the initializer.
+    """
+
+    def __init__(self, environment, scheduler):
+        self.environment = environment
+        self.scheduler = scheduler
+        self.went = []
+
+
+    def go(self):
+        """
+        Don't do anything.
+        """
+        self.went.append(True)
+
+
 
 class ConnectionNotificationWrapperTests(TestCase):
     """
@@ -176,36 +197,3 @@ class UITests(TestCase):
         self.assertIdentical(self.ui.window.environment, environment)
         self.assertIdentical(self.ui.window.scheduler, self.reactor)
         self.assertEqual(self.ui.window.went, [True])
-
-    # XXX gotIntroduced returns a Deferred maybe?
-
-
-    def callRemote(self, commandType, **kw):
-        """
-        Record an attempt to invoke a remote command.
-        """
-        result = Deferred()
-        self.calls.append((result, commandType, kw))
-        return result
-
-
-
-class FakeWindow(object):
-    """
-    A thing that is looks like L{game.view.Window}.
-
-    @ivar environment: The first argument to the initializer.
-    @ivar scheduler: The second argument to the initializer.
-    """
-
-    def __init__(self, environment, scheduler):
-        self.environment = environment
-        self.scheduler = scheduler
-        self.went = []
-
-
-    def go(self):
-        """
-        Don't do anything.
-        """
-        self.went.append(True)

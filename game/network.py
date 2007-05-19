@@ -116,8 +116,7 @@ class NetworkController(AMP):
         Create this client's player in the given environment and add it to the
         model object mapping.
         """
-        player = environment.createPlayer(position, speed,
-                                          voluble=True)
+        player = environment.createPlayer(position, speed)
         self.addModelObject(identifier, player)
 
 

@@ -1,3 +1,5 @@
+# -*- test-case-name: game.test.test_environment -*-
+
 """
 Model code for the substrate the game world inhabits.
 """
@@ -65,7 +67,7 @@ class Environment(Clock):
         self.observers.append(observer)
 
 
-    def createPlayer(self, position, speed, voluble):
+    def createPlayer(self, position, speed):
         """
         Make a new player with the given parameters.
 
@@ -75,14 +77,10 @@ class Environment(Clock):
         @type speed: number
         @param speed: How fast can newly created player go?
 
-        @type voluble: C{bool}
-        @param voluble: Whether the created player has the power or habit of
-        turning or twining (IS THIS THE PLAYER YOU CAN CONTROL OR NOT).
-
         @return: The new L{Player}
         """
         player = Player(position, speed, self.seconds)
         for observer in self.observers:
-            observer.playerCreated(player, voluble)
+            observer.playerCreated(player)
         return player
 

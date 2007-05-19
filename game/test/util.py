@@ -1,3 +1,8 @@
+# -*- test-case-name: game.test -*-
+
+"""
+Assorted utility code for tests.
+"""
 
 from game.player import Player
 
@@ -32,15 +37,14 @@ class PlayerCreationObserver(object):
     """
     Record player creation notifications.
 
-    @ivar createdPlayers: A list of two-tuples giving the arguments to
-    L{playerCreated} calls.
+    @ivar createdPlayers: A list of players passed to L{playerCreated} calls.
     """
     def __init__(self):
         self.createdPlayers = []
 
 
-    def playerCreated(self, player, voluble):
+    def playerCreated(self, player):
         """
         Record a player creation.
         """
-        self.createdPlayers.append((player, voluble))
+        self.createdPlayers.append(player)

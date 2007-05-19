@@ -327,24 +327,10 @@ class WindowTests(TestCase):
         L{Window.playerCreated} should wrap the created player in a
         L{PlayerView} and add it to itself.
         """
-        player = self.environment.createPlayer((1, 2), 3, False)
+        player = self.environment.createPlayer((1, 2), 3)
         self.assertEqual(len(self.window.views), 1)
         self.assertTrue(isinstance(self.window.views[0], PlayerView))
         self.assertIdentical(self.window.views[0].player, player)
-        self.assertIdentical(self.window.controller, None)
-
-
-    def test_createYourPlayer(self):
-        """
-        When a voluble player is created, in addition to having a
-        L{PlayerView}, the window should also submit to it('s controller).
-        """
-        player = self.environment.createPlayer((1, 2), 3, True)
-        self.assertEqual(len(self.window.views), 1)
-        self.assertTrue(isinstance(self.window.views[0], PlayerView))
-        self.assertIdentical(self.window.views[0].player, player)
-        self.assertTrue(isinstance(self.window.controller, PlayerController))
-        self.assertIdentical(self.window.controller.player, player)
 
 
 

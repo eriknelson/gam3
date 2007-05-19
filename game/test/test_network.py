@@ -245,8 +245,7 @@ class ControllerTests(TestCase, PlayerCreationMixin):
             environment, self.identifier, (x, y), speed)
 
         self.assertEqual(len(observer.createdPlayers), 1)
-        player, voluble = observer.createdPlayers.pop()
-        self.assertTrue(voluble)
+        player = observer.createdPlayers.pop()
         self._assertThingsAboutPlayerCreation(
             environment, (x, y), speed)
 

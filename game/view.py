@@ -177,13 +177,11 @@ class Window(object):
         return finishedDeferred
 
 
-    def playerCreated(self, player, voluble):
+    def playerCreated(self, player):
         """
         Create a L{PlayerView}.
         """
         self.add(PlayerView(player))
-        if voluble:
-            self.submitTo(PlayerController(player))
 
 
 

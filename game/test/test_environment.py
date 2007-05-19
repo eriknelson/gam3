@@ -96,29 +96,17 @@ class EnvironmentTests(TestCase):
         self.assertEqual(self.clock.calls, [])
 
 
-    def _playerCreationTest(self, voluble):
-        position = (1, 2)
-        speed = 20
-        observer = PlayerCreationObserver()
-        self.environment.addObserver(observer)
-        player = self.environment.createPlayer(position, speed, voluble)
-        self.assertEqual(observer.createdPlayers, [(player, voluble)])
-        self.assertEqual(player.getPosition(), position)
-        self.assertEqual(player.speed, speed)
-        self.assertEqual(player.seconds, self.environment.seconds)
-
-
     def test_createPlayer(self):
         """
         L{Environment.createPlayer} should instantiate a L{Player} and
         broadcast it to all registered observers.
         """
-        return self._playerCreationTest(False)
-
-
-    def test_createVolublePlayer(self):
-        """
-        As demonstrated by L{test_createPlayer}, save for the specification of
-        a voluble player, which information should be propagated to observers.
-        """
-        return self._playerCreationTest(True)
+        position = (1, 2)
+        speed = 20
+        observer = PlayerCreationObserver()
+        self.environment.addObserver(observer)
+        player = self.environment.createPlayer(position, speed)
+        self.assertEqual(observer.createdPlayers, [player])
+        self.assertEqual(player.getPosition(), position)
+        self.assertEqual(player.speed, speed)
+        self.assertEqual(player.seconds, self.environment.seconds)
