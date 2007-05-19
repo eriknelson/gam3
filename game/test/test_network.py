@@ -118,7 +118,7 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         self.identifier = 123
         self.player = self.makePlayer((1, 2))
         self.clock = Clock()
-        self.controller = NetworkController(self.clock.callLater)
+        self.controller = NetworkController(self.clock)
         self.controller.callRemote = self.callRemote
 
 
@@ -238,7 +238,7 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         x, y = (3, 2)
         speed = 40
         granularity = 22
-        environment = Environment(granularity, self.clock.callLater)
+        environment = Environment(granularity, self.clock)
         observer = PlayerCreationObserver()
         environment.addObserver(observer)
 
@@ -280,9 +280,7 @@ class ControllerTests(TestCase, PlayerCreationMixin):
             self.controller.environment, (x, y), speed)
         self.assertTrue(isinstance(self.controller.environment, Environment))
         self.assertEqual(self.controller.environment.granularity, granularity)
-        self.assertEqual(
-            self.controller.environment._platformCallLater,
-            self.clock.callLater)
+        self.assertEqual(self.controller.environment.platformClock, self.clock)
         introduced.addCallback(self.assertIdentical,
                                self.controller.environment)
         return introduced

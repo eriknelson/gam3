@@ -69,7 +69,7 @@ class UI(object):
         """
         clientFactory = ClientFactory()
         clientFactory.protocol = lambda: NetworkController(
-            self.reactor.callLater)
+            self.reactor)
         factory = ConnectionNotificationFactory(clientFactory)
         self.reactor.connectTCP(host, port, factory)
         return factory.connectionNotification
@@ -100,3 +100,4 @@ class UI(object):
         d = self.connect((host, port))
         d.addCallback(lambda protocol: protocol.introduce())
         d.addCallback(self.gotIntroduced)
+        return d

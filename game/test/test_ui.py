@@ -46,14 +46,14 @@ class StubWindow(object):
     A thing that is looks like L{game.view.Window}.
 
     @ivar environment: The first argument to the initializer.
-    @ivar scheduler: The second argument to the initializer.
+    @ivar clock: The second argument to the initializer.
     @ivar views: A list of view objects passed to L{add}.
     @ivar controller: The controller being submitted to.
     """
 
-    def __init__(self, environment, scheduler):
+    def __init__(self, environment, clock):
         self.environment = environment
-        self.scheduler = scheduler
+        self.clock = clock
         self.went = []
         self.views = []
         self.add = self.views.append
@@ -142,7 +142,7 @@ class UITests(TestCase):
                                          ).wrappedProtocol
         self.assertTrue(isinstance(protocol, NetworkController))
         self.assertEqual(protocol.environment, None)
-        self.assertEqual(protocol.scheduler, self.reactor.callLater)
+        self.assertEqual(protocol.clock, self.reactor)
 
 
     def test_connectionSuccessFiresDeferred(self):
@@ -210,7 +210,7 @@ class UITests(TestCase):
         environment = Environment(3, lambda: None)
         self.ui.gotIntroduced(environment)
         self.assertIdentical(self.ui.window.environment, environment)
-        self.assertIdentical(self.ui.window.scheduler, self.reactor)
+        self.assertIdentical(self.ui.window.clock, self.reactor)
         self.assertEqual(self.ui.window.went, [True])
 
 

@@ -18,8 +18,9 @@ class SimulationTime(Clock):
     is called, it is guaranteed that no "time" (according to
     L{SimulationTime.seconds}) will pass until the function returns.
 
-    @ivar _platformCallLater: A callable like L{IReactorTime.callLater} which
-        will be used to update the model time.
+    @ivar platformClock: A provider of
+        L{twisted.internet.interfaces.IReactorTime} which will be used
+        to update the model time.
 
     @ivar granularity: The number of times to update the model time
         per second. That is, the number of "instants" per
@@ -32,10 +33,10 @@ class SimulationTime(Clock):
     """
     _call = None
 
-    def __init__(self, granularity, platformCallLater):
+    def __init__(self, granularity, platformClock):
         Clock.__init__(self)
         self.granularity = granularity
-        self._platformCallLater = platformCallLater
+        self.platformClock = platformClock
 
 
     def _update(self):
@@ -50,8 +51,8 @@ class SimulationTime(Clock):
         """
         Start the simulated advancement of time.
         """
-        self._call = self._platformCallLater(1.0 / self.granularity,
-                                             self._update)
+        self._call = self.platformClock.callLater(1.0 / self.granularity,
+                                                  self._update)
 
 
     def stop(self):

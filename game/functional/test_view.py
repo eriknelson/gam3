@@ -14,7 +14,7 @@ from game.view import PlayerView
 
 class PlayerTests(TestCase):
     def setUp(self):
-        self.environment = Environment(50, reactor.callLater)
+        self.environment = Environment(50, reactor)
         self.environment.start()
         self.player = Player(
             (0, 0),

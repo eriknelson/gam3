@@ -79,15 +79,15 @@ class NetworkController(AMP):
 
     @ivar modelObjects: A C{dict} mapping identifiers to model objects.
 
-    @ivar scheduler: A callable like L{IReactorTime.callLater} which will be
-    used to update the model time.
+    @ivar clock: A provider of L{IReactorTime} which will be used to
+        update the model time.
     """
 
     environment = None
 
-    def __init__(self, scheduler):
+    def __init__(self, clock):
         self.modelObjects = {}
-        self.scheduler = scheduler
+        self.clock = clock
 
 
     def addModelObject(self, identifier, modelObject):
@@ -131,7 +131,7 @@ class NetworkController(AMP):
             granularity = box['granularity']
             position = box['x'], box['y']
             speed = box['speed']
-            self.environment = Environment(granularity, self.scheduler)
+            self.environment = Environment(granularity, self.clock)
             self.createInitialPlayer(
                 self.environment, box['identifier'], position,
                 speed)
