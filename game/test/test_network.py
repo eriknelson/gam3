@@ -80,7 +80,7 @@ class IntroduceCommandTests(TestCase):
              'y': str(y)})
 
 
-    def test__objectsToStrings(self):
+    def test_stringsToObjects(self):
         """
         Holy shit!  Use private functionality from amp to test that responses
         are parsed properly.  See <trac://twisted/ticket/2657>.
