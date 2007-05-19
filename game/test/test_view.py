@@ -13,11 +13,9 @@ import pygame
 from pygame.event import Event
 
 from game.view import Viewport, Window, PlayerView, loadImage
-from game.player import Player
 from game.test.util import PlayerCreationMixin
 from game.controller import LEFT
 from game.environment import Environment
-from game.controller import PlayerController
 
 class MockImage(object):
     """
@@ -174,11 +172,21 @@ class WindowTests(TestCase):
         self.display = MockDisplay()
         self.event = MockEventSource()
         self.window = Window(environment=self.environment,
-                             scheduler=self.clock.callLater,
+                             clock=self.clock,
                              display=self.display,
                              event=self.event)
         self.surface = MockSurface()
         self.window.screen = self.surface
+
+
+    def test_default_clock(self):
+        """
+        The L{Window}'s default clock should be L{twisted.internet.reactor}.
+        """
+        from twisted.internet import reactor
+        window = Window(self.environment)
+        self.assertIdentical(window.clock, reactor)
+
 
 
     def test_add(self):

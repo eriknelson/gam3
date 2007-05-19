@@ -8,6 +8,7 @@ import pygame.display, pygame.locals
 
 from twisted.python.filepath import FilePath
 from twisted.internet.task import LoopingCall
+from twisted.internet import reactor
 
 from game.controller import PlayerController
 
@@ -69,8 +70,8 @@ class Window(object):
 
 #     @ivar environment: The L{game.environment.Environment} which is being
 #         displayed.
-    @ivar schedule: Something like
-        L{twisted.internet.interfaces.IReactorTime.callLater}.
+    @ivar clock: Something providing
+        L{twisted.internet.interfaces.IReactorTime}.
     @ivar views: List of current child views.
     @ivar screen: The L{pygame.Surface} which will be drawn to.
     @ivar _paintCall: C{None} or the L{IDelayedCall} provider for a pending
@@ -83,12 +84,12 @@ class Window(object):
 
     def __init__(self,
                  environment,
-                 scheduler=lambda x, y: None, # I guess I'm kind of an idiot.
+                 clock=reactor,
                  display=pygame.display,
                  event=pygame.event):
         environment.addObserver(self)
         self.viewport = Viewport((0, 0), (320, 240))
-        self.schedule = scheduler
+        self.clock = clock
         self.display = display
         self.views = []
         self._paintCall = None
@@ -101,7 +102,7 @@ class Window(object):
         Mark the view as out of date and schedule a re-paint.
         """
         if self._paintCall is None:
-            self._paintCall = self.schedule(0, self.paint)
+            self._paintCall = self.clock.callLater(0, self.paint)
 
 
     def add(self, view):
