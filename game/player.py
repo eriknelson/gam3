@@ -4,6 +4,8 @@ class Player(object):
     """
     An object with a position.
 
+    # XXX Call this class Character.
+
     @ivar _lastPosition: A tuple of (x,y), specifying the last computed
     position of player.
 

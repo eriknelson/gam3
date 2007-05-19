@@ -8,7 +8,10 @@ from twisted.test.proto_helpers import StringTransport
 from twisted.internet.protocol import ClientFactory, Protocol
 from twisted.internet.defer import succeed
 
+from game.view import PlayerView
+from game.controller import PlayerController
 from game.network import NetworkController
+from game.environment import Environment
 from game.ui import (UI, ConnectionNotificationFactory,
                      ConnectionNotificationWrapper)
 
@@ -38,23 +41,35 @@ class StubReactor(object):
         """
 
 
-class FakeWindow(object):
+class StubWindow(object):
     """
     A thing that is looks like L{game.view.Window}.
 
     @ivar environment: The first argument to the initializer.
     @ivar scheduler: The second argument to the initializer.
+    @ivar views: A list of view objects passed to L{add}.
+    @ivar controller: The controller being submitted to.
     """
 
     def __init__(self, environment, scheduler):
         self.environment = environment
         self.scheduler = scheduler
         self.went = []
+        self.views = []
+        self.add = self.views.append
+        self.controller = None
+
+
+    def submitTo(self, controller):
+        """
+        Set C{self.controller}.
+        """
+        self.controller = controller
 
 
     def go(self):
         """
-        Don't do anything.
+        Append C{True} to C{self.went}.
         """
         self.went.append(True)
 
@@ -109,7 +124,7 @@ class UITests(TestCase):
         self.host = 'example.com'
         self.port = 12345
         self.reactor = StubReactor()
-        self.ui = UI(self.reactor, windowFactory=FakeWindow)
+        self.ui = UI(self.reactor, windowFactory=StubWindow)
 
 
     def test_connect(self):
@@ -192,8 +207,36 @@ class UITests(TestCase):
         When the introduction has been reciprocated, the L{UI} should
         create a L{Window} and call L{Window.go} on it.
         """
-        environment = object()
+        environment = Environment(3, lambda: None)
         self.ui.gotIntroduced(environment)
         self.assertIdentical(self.ui.window.environment, environment)
         self.assertIdentical(self.ui.window.scheduler, self.reactor)
         self.assertEqual(self.ui.window.went, [True])
+
+
+    def test_initialPlayer(self):
+        """
+        The initial L{Player} in the L{Environment} should have a view in and a
+        controller on the window.
+        """
+        player = object()
+        environment = Environment(10, lambda: 3)
+        environment.setInitialPlayer(player)
+        self.ui.gotIntroduced(environment)
+        self.assertEqual(len(self.ui.window.views), 1)
+        self.assertTrue(isinstance(self.ui.window.views[0], PlayerView))
+        self.assertIdentical(self.ui.window.views[0].player, player)
+        self.assertTrue(
+            isinstance(self.ui.window.controller, PlayerController))
+        self.assertIdentical(self.ui.window.controller.player, player)
+
+
+    def test_noInitialPlayer(self):
+        """
+        If no initial L{Player} is available in the L{Environment}, no view or
+        controller should be created.
+        """
+        environment = Environment(10, lambda: 3)
+        self.ui.gotIntroduced(environment)
+        self.assertEqual(len(self.ui.window.views), 0)
+        self.assertIdentical(self.ui.window.controller, None)

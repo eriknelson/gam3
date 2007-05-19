@@ -27,14 +27,25 @@ class Environment(Clock):
 
     @ivar observers: A C{list} of objects notified about state changes of this
     object.
+
+    @ivar initialPlayer: C{None} until an initial player is set, then whatever
+    L{Player} it is set to.
     """
     _call = None
+    initialPlayer = None
 
     def __init__(self, granularity, platformCallLater):
         Clock.__init__(self)
         self.granularity = granularity
         self._platformCallLater = platformCallLater
         self.observers = []
+
+
+    def setInitialPlayer(self, player):
+        """
+        Set the initial player to the given player.
+        """
+        self.initialPlayer = player
 
 
     def _update(self):

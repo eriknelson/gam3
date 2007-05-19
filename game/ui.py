@@ -9,6 +9,8 @@ from twisted.protocols.policies import ProtocolWrapper, WrappingFactory
 from twisted.internet.defer import Deferred
 
 from game.network import NetworkController
+from game.view import PlayerView
+from game.controller import PlayerController
 
 
 class ConnectionNotificationWrapper(ProtocolWrapper):
@@ -74,7 +76,15 @@ class UI(object):
 
 
     def gotIntroduced(self, environment):
+        """
+        Hook up a user-interface controller for the L{Player} and display the
+        L{Environment} in a L{Window}.
+        """
         self.window = self.windowFactory(environment, self.reactor)
+        player = environment.initialPlayer
+        if player is not None:
+            self.window.add(PlayerView(player))
+            self.window.submitTo(PlayerController(player))
         self.window.go()
 
 

@@ -110,3 +110,14 @@ class EnvironmentTests(TestCase):
         self.assertEqual(player.getPosition(), position)
         self.assertEqual(player.speed, speed)
         self.assertEqual(player.seconds, self.environment.seconds)
+
+
+    def test_setInitialPlayer(self):
+        """
+        L{Environment.setInitialPlayer} should change the environment's
+        C{initialPlayer} attribute from C{None} to its argument.
+        """
+        self.assertIdentical(self.environment.initialPlayer, None)
+        player = object()
+        self.environment.setInitialPlayer(player)
+        self.assertIdentical(self.environment.initialPlayer, player)

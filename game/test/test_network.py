@@ -227,6 +227,7 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         self.assertEqual(player.getPosition(), position)
         self.assertEqual(player.speed, speed)
         self.assertEqual(player.seconds, environment.seconds)
+        self.assertIdentical(environment.initialPlayer, player)
 
 
     def test_createInitialPlayer(self):
