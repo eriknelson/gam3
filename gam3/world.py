@@ -31,10 +31,10 @@ class World(SimulationTime):
     players will be created.
     """
     def __init__(self, random=random, playerCreationRectangle=None,
-                 granularity=None, scheduler=None):
-        SimulationTime.__init__(self, granularity, scheduler)
+                 granularity=None, platformClock=None):
+        SimulationTime.__init__(self, granularity, platformClock)
         if playerCreationRectangle is None:
-            playerCreationRectangle = point(-1, -1), point(1, 1)
+            playerCreationRectangle = point(-1, -1), point(200, 200)
         self.random = random
         self.playerCreationRectangle = playerCreationRectangle
 

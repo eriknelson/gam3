@@ -68,9 +68,9 @@ class WorldTimeTests(SimulationTimeTestsMixin, TestCase):
     Tests for the time-simulating aspecst of L{World}.
     """
 
-    def get_simulation(self, granularity, scheduler):
+    def get_simulation(self, granularity, clock):
         """
         Return a L{World}.
         """
-        return World(granularity=granularity, scheduler=scheduler)
+        return World(granularity=granularity, platformClock=clock)
 

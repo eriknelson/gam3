@@ -50,3 +50,14 @@ class TwistdPluginTests(TestCase):
     test_imports.todo = ("This should really be implemented to verify that "
                          "the plugin module does not import gam3 at import "
                          "time.")
+
+
+    def test_world_construction(self):
+        """
+        The plugin should construct a World with appropriate defaults.
+        """
+        from twisted.internet import reactor
+        service = gam3plugin.makeService({"port": 123})
+        gotPortNumber, factory = service.args
+        self.assertEqual(factory.world.granularity, 10)
+        self.assertEqual(factory.world.platformClock, reactor)
