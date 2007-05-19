@@ -7,9 +7,13 @@ from zope.interface.verify import verifyObject
 
 from twisted.trial.unittest import TestCase
 from twisted.application.service import IServiceMaker
+from twisted.application.internet import TCPServer
 from twisted.plugin import IPlugin
 
 from twisted.plugins.gam3_twistd import gam3plugin
+from gam3.network import Gam3Factory
+from gam3.world import World
+
 
 class TwistdPluginTests(TestCase):
     """
@@ -29,5 +33,20 @@ class TwistdPluginTests(TestCase):
         """
         L{Gam3Plugin.makeService} should return an L{IService} provider.
         """
-        service = gam3plugin.makeService({})
-        
+        portNumber = 123
+        service = gam3plugin.makeService({'port': portNumber})
+        self.assertTrue(isinstance(service, TCPServer))
+        gotPortNumber, factory = service.args
+        self.assertEqual(gotPortNumber, portNumber)
+        self.assertTrue(isinstance(factory, Gam3Factory))
+        self.assertTrue(isinstance(factory.world, World))
+
+
+    def test_imports(self):
+        """
+        Verify that the plugin module does not import gam3 at import time.
+        """
+        self.fail("This should really be implemented.")
+    test_imports.todo = ("This should really be implemented to verify that "
+                         "the plugin module does not import gam3 at import "
+                         "time.")

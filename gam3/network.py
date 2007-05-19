@@ -4,6 +4,7 @@
 Network functionality of Gam3.
 """
 
+from twisted.internet.protocol import ServerFactory
 from twisted.protocols.amp import AMP
 
 from game.network import Introduce
@@ -43,3 +44,22 @@ class Gam3Server(AMP):
         L{Player} has not been given before, invent a new identifier.
         """
         return id(player)
+
+
+
+class Gam3Factory(ServerFactory):
+    """
+    Server factory for Gam3.
+
+    @ivar world: The L{World} which will be served by protocols created by this
+    factory.
+    """
+    def __init__(self, world):
+        self.world = world
+
+
+    def buildProtocol(self, ignored):
+        """
+        Instantiate a L{Gam3Server} with a L{World}.
+        """
+        return Gam3Server(self.world)

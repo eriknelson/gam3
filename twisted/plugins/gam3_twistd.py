@@ -6,7 +6,8 @@ Plugin hook module for twistd service.
 
 from zope.interface import implements
 
-from twisted.application.service import IServiceMaker, Service
+from twisted.application.service import IServiceMaker
+from twisted.application.internet import TCPServer
 from twisted.plugin import IPlugin
 from twisted.python.usage import Options, portCoerce
 
@@ -33,6 +34,8 @@ class _Gam3Plugin(object):
 
         @param options: mapping of configuration
         """
-        return Service()
+        from gam3.network import Gam3Factory
+        from gam3.world import World
+        return TCPServer(options['port'], Gam3Factory(World()))
 
 gam3plugin = _Gam3Plugin()

@@ -2,13 +2,15 @@
 Tests for the networking functionality of Gam3.
 """
 
+from zope.interface.verify import verifyObject
 
 from twisted.trial.unittest import TestCase
+from twisted.internet.interfaces import IProtocolFactory
 
 from game.network import Introduce
 from game.player import Player
 
-from gam3.network import Gam3Server
+from gam3.network import Gam3Factory, Gam3Server
 
 
 
@@ -78,3 +80,26 @@ class NetworkTests(TestCase):
         self.assertEqual(protocol.identifierForPlayer(player1), playerOneID)
         self.assertEqual(protocol.identifierForPlayer(player2), playerTwoID)
         self.assertNotEqual(playerOneID, playerTwoID)
+
+
+
+class FactoryTests(TestCase):
+    """
+    Tests for L{Gam3Factory}.
+    """
+    def test_world(self):
+        """
+        L{Gam3Factory.buildProtocol} should pass the factory's L{World} to the
+        initializer of the protocol it creates.
+        """
+        world = object()
+        factory = Gam3Factory(world)
+        protocol = factory.buildProtocol(None)
+        self.assertIdentical(protocol.world, world)
+
+
+    def test_factory(self):
+        """
+        L{Gam3Factory} should be a Twisted Protocol Server Factory.
+        """
+        verifyObject(IProtocolFactory, Gam3Factory(None))
