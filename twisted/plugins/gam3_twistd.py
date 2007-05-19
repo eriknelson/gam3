@@ -37,7 +37,7 @@ class _Gam3Plugin(object):
         from gam3.network import Gam3Factory
         from gam3.world import World
         from twisted.internet import reactor
-        world = World(granularity=10, platformClock=reactor)
+        world = World(granularity=100, platformClock=reactor)
         return TCPServer(options['port'], Gam3Factory(world))
 
 gam3plugin = _Gam3Plugin()

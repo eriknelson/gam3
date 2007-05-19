@@ -59,5 +59,5 @@ class TwistdPluginTests(TestCase):
         from twisted.internet import reactor
         service = gam3plugin.makeService({"port": 123})
         gotPortNumber, factory = service.args
-        self.assertEqual(factory.world.granularity, 10)
+        self.assertEqual(factory.world.granularity, 100)
         self.assertEqual(factory.world.platformClock, reactor)

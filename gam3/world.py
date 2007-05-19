@@ -46,4 +46,4 @@ class World(SimulationTime):
         sw, ne = self.playerCreationRectangle
         x = self.random.randrange(sw.x, ne.x)
         y = self.random.randrange(sw.y, ne.y)
-        return Player((x, y), 2, lambda: 0)
+        return Player((x, y), 100, lambda: 0)
