@@ -9,12 +9,17 @@ from twisted.internet.task import Clock
 from game.player import Player
 
 
-class Environment(Clock):
+class SimulationTime(Clock):
     """
-    The part of The World which is visible to a client.
+    A mechanism for performing updates to simulations such that all
+    updates occur at the same instant.
+
+    If a L{SimulationTime.callLater} is performed, when the function
+    is called, it is guaranteed that no "time" (according to
+    L{SimulationTime.seconds}) will pass until the function returns.
 
     @ivar _platformCallLater: A callable like L{IReactorTime.callLater} which
-    will be used to update the model time.
+        will be used to update the model time.
 
     @ivar granularity: The number of times to update the model time
         per second. That is, the number of "instants" per
@@ -24,33 +29,18 @@ class Environment(Clock):
         B{model} frames per second.
 
     @ivar _call: The result of the latest call to C{scheduler}.
-
-    @ivar observers: A C{list} of objects notified about state changes of this
-    object.
-
-    @ivar initialPlayer: C{None} until an initial player is set, then whatever
-    L{Player} it is set to.
     """
     _call = None
-    initialPlayer = None
 
     def __init__(self, granularity, platformCallLater):
         Clock.__init__(self)
         self.granularity = granularity
         self._platformCallLater = platformCallLater
-        self.observers = []
-
-
-    def setInitialPlayer(self, player):
-        """
-        Set the initial player to the given player.
-        """
-        self.initialPlayer = player
 
 
     def _update(self):
         """
-        Advance the simulation time by one second.
+        Advance the simulation time by one "tick", or one over granularity.
         """
         self.advance(1.0 / self.granularity)
         self.start()
@@ -69,6 +59,31 @@ class Environment(Clock):
         Stop the simulated advancement of time. Clean up all pending calls.
         """
         self._call.cancel()
+
+
+
+class Environment(SimulationTime):
+    """
+    The part of The World which is visible to a client.
+
+    @ivar observers: A C{list} of objects notified about state changes of this
+        object.
+
+    @ivar initialPlayer: C{None} until an initial player is set, then whatever
+        L{Player} it is set to.
+    """
+    initialPlayer = None
+
+    def __init__(self, *a, **kw):
+        SimulationTime.__init__(self, *a, **kw)
+        self.observers = []
+
+
+    def setInitialPlayer(self, player):
+        """
+        Set the initial player to the given player.
+        """
+        self.initialPlayer = player
 
 
     def addObserver(self, observer):
@@ -95,4 +110,3 @@ class Environment(Clock):
         for observer in self.observers:
             observer.playerCreated(player)
         return player
-
