@@ -49,7 +49,7 @@ class Player(object):
         now = self.seconds()
         elapsedTime = now - self._lastDirectionChange
         s = (self.direction or 0j) * elapsedTime * self.speed
-        return x + s.imag, y + s.real
+        return int(x + s.imag), int(y + s.real)
 
 
     def setDirection(self, direction):
