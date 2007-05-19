@@ -20,7 +20,7 @@ class SimulationTimeTestsMixin(object):
         Set up a SimulationTime.
         """
         self.clock = Clock()
-        self.simulation = self.get_simulation(1, self.clock)
+        self.simulation = self.getSimulationTime(1, self.clock)
         self.simulation.start()
 
 
@@ -68,7 +68,7 @@ class SimulationTimeTestsMixin(object):
         """
         Same as L{test_granularity}, but with subsecond granularity.
         """
-        simulation = self.get_simulation(2, self.clock)
+        simulation = self.getSimulationTime(2, self.clock)
         simulation.start()
         self.clock.advance(0.5)
         self.assertEqual(simulation.seconds(), 0.5)
@@ -81,7 +81,7 @@ class SimulationTimeTestsMixin(object):
         There should be a way to start the simulation separately from
         instantiating it.
         """
-        simulation = self.get_simulation(2, self.clock)
+        simulation = self.getSimulationTime(2, self.clock)
         self.clock.advance(10)
         self.assertEqual(simulation.seconds(), 0)
 
@@ -101,7 +101,7 @@ class SimulationTimeTests(SimulationTimeTestsMixin, TestCase):
     """
     Tests for L{SimulationTime}.
     """
-    def get_simulation(self, granularity, clock):
+    def getSimulationTime(self, granularity, clock):
         """
         Return a L{SimulationTime}.
         """
@@ -114,7 +114,7 @@ class EnvironmentTimeTests(SimulationTimeTestsMixin, TestCase):
     Tests for the L{SimulationTime} aspects of L{Environment}.
     """
 
-    def get_simulation(self, granularity, scheduler):
+    def getSimulationTime(self, granularity, scheduler):
         """
         Return a L{SimulationTime}.
         """
