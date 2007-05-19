@@ -12,13 +12,14 @@ r"""
 import random
 
 from game.player import Player
+from game.environment import SimulationTime
 
 from epsilon.structlike import record
 
 
 point = record('x y')
 
-class World(object):
+class World(SimulationTime):
     """
     All-encompassing model object for the state of a Gam3 game (until we get
     some distribution up ins).
@@ -29,7 +30,9 @@ class World(object):
     southwestern and northeastern corners of a rectangle within which new
     players will be created.
     """
-    def __init__(self, random=random, playerCreationRectangle=None):
+    def __init__(self, random=random, playerCreationRectangle=None,
+                 granularity=None, scheduler=None):
+        SimulationTime.__init__(self, granularity, scheduler)
         if playerCreationRectangle is None:
             playerCreationRectangle = point(-1, -1), point(1, 1)
         self.random = random

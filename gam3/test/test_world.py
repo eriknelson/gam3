@@ -9,6 +9,8 @@ from epsilon.structlike import record
 
 from gam3.world import World, point
 
+from game.test.test_environment import SimulationTimeTestsMixin
+
 
 class StubRandom(record('rangeResults')):
     """
@@ -29,6 +31,7 @@ class WorldTests(TestCase):
     """
     Tests for L{World}.
     """
+
     def test_createPlayer(self):
         """
         L{World.createPlayer} should return a L{Player} at a random location
@@ -57,3 +60,17 @@ class WorldTests(TestCase):
         x, y = player.getPosition()
         self.assertTrue(isinstance(x, int))
         self.assertTrue(isinstance(y, int))
+
+
+
+class WorldTimeTests(SimulationTimeTestsMixin, TestCase):
+    """
+    Tests for the time-simulating aspecst of L{World}.
+    """
+
+    def get_simulation(self, granularity, scheduler):
+        """
+        Return a L{World}.
+        """
+        return World(granularity=granularity, scheduler=scheduler)
+
