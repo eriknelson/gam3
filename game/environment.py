@@ -60,7 +60,8 @@ class Environment(Clock):
         """
         Start the simulated advancement of time.
         """
-        self._call = self._platformCallLater(1.0 / self.granularity, self._update)
+        self._call = self._platformCallLater(1.0 / self.granularity,
+                                             self._update)
 
 
     def stop(self):

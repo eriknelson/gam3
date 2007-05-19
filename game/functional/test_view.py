@@ -15,6 +15,7 @@ from game.view import PlayerView
 class PlayerTests(TestCase):
     def setUp(self):
         self.environment = Environment(50, reactor.callLater)
+        self.environment.start()
         self.player = Player(
             (0, 0),
             speed=75,
@@ -34,7 +35,7 @@ class PlayerTests(TestCase):
         * A 320x240 window, black background, should be displayed.
         * Alt-f4 should close the window.
         """
-        window = Window()
+        window = Window(self.environment)
         return window.go()
 
 
@@ -43,7 +44,7 @@ class PlayerTests(TestCase):
         The player image should be displayed at the bottom-left corner of the
         window.
         """
-        window = Window(reactor.callLater)
+        window = Window(self.environment, reactor.callLater)
         view = PlayerView(self.player)
         window.add(view)
 
@@ -55,7 +56,7 @@ class PlayerTests(TestCase):
         The player image should move from the bottom left of the screen to the
         bottom right of the screen.
         """
-        window = Window(reactor.callLater)
+        window = Window(self.environment, reactor.callLater)
         view = PlayerView(self.player)
         window.add(view)
         self.player.setDirection(EAST)
@@ -66,7 +67,7 @@ class PlayerTests(TestCase):
         """
         The arrow keys should direct the player in eight directions.
         """
-        window = Window(reactor.callLater)
+        window = Window(self.environment, reactor.callLater)
         view = PlayerView(self.player)
         window.add(view)
         window.submitTo(PlayerController(self.player))
