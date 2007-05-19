@@ -7,8 +7,9 @@ from zope.interface.verify import verifyObject
 from twisted.trial.unittest import TestCase
 from twisted.internet.interfaces import IProtocolFactory
 
-from game.network import Introduce
+from game.network import Introduce, SetDirectionOf, Direction
 from game.player import Player
+from game.direction import WEST
 
 from gam3.network import Gam3Factory, Gam3Server
 
@@ -16,7 +17,7 @@ from gam3.network import Gam3Factory, Gam3Server
 
 class FakeWorld(object):
     """
-    Act like a FORWARD RESOLUTION:L{World}.
+    Act like a L{gam3.world.World}.
 
     @ivar players: L{Player}s that have been created.
     """
@@ -67,6 +68,27 @@ class NetworkTests(TestCase):
         return d
 
 
+    def test_setDirection(self):
+        """
+        The server should respond to L{SetDirectionOf} commands and
+        change direction of the specified L{Player} model object.
+        """
+        world = FakeWorld()
+        player = world.createPlayer()
+
+        protocol = Gam3Server(world)
+        player_id = protocol.identifierForPlayer(player)
+        responder = protocol.lookupFunction(SetDirectionOf.commandName)
+        d = responder({"identifier": str(player_id),
+                       "direction": Direction().toString(WEST)})
+
+        def gotResult(box):
+            self.assertEqual(player.direction, WEST)
+
+        d.addCallback(gotResult)
+        return d
+
+
     def test_identifierForPlayer(self):
         """
         L{Gam3Server} should provide an identifier producing function
@@ -80,6 +102,16 @@ class NetworkTests(TestCase):
         self.assertEqual(protocol.identifierForPlayer(player1), playerOneID)
         self.assertEqual(protocol.identifierForPlayer(player2), playerTwoID)
         self.assertNotEqual(playerOneID, playerTwoID)
+
+    def test_playerForIdentifier(self):
+        """
+        L{Gam3Server} should provide a function from L{Player}
+        identifiers to L{Player}s.
+        """
+        protocol = Gam3Server(None)
+        player = object()
+        playerID = protocol.identifierForPlayer(player)
+        self.assertIdentical(protocol.playerForIdentifier(playerID), player)
 
 
 
