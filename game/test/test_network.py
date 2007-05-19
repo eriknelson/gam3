@@ -42,6 +42,14 @@ class DirectionArgumentTests(TestCase):
                 self.assertIdentical(type(netrepr), str)
                 self.assertEqual(argument.fromString(netrepr), direction)
 
+    def test_stationality(self):
+        """
+        Direction should be able to deal with C{None} as a direction,
+        which means "not moving".
+        """
+        argument = Direction()
+        self.assertIdentical(argument.fromString(argument.toString(None)), None)
+
 
 
 class IntroduceCommandTests(TestCase):

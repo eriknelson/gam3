@@ -20,14 +20,22 @@ class Direction(Argument):
         """
         Convert the direction to two bytes.
         """
-        return pack("bb", direction.real, direction.imag)
+        if direction is not None:
+            x = direction.real
+            y = direction.imag
+        else:
+            x = y = 0
+        return pack("bb", x, y)
 
 
     def fromString(self, encodedDirection):
         """
         Convert the direction from bytes.
         """
-        return complex(*unpack("bb", encodedDirection))
+        direction = complex(*unpack("bb", encodedDirection))
+        if direction == 0j:
+            direction = None
+        return direction
 
 
 
@@ -102,7 +110,7 @@ class NetworkController(AMP):
         """
         Notify the network that a local model object changed direction.
 
-        @param modelObject: A
+        @param modelObject: The L{Player} whose direction has changed.
         """
         self.callRemote(
             SetDirectionOf,
