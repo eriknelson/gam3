@@ -7,9 +7,10 @@ Combination of View and Controller (maybe the Model is hiding in there too).
 from twisted.internet.protocol import ClientFactory
 from twisted.protocols.policies import ProtocolWrapper, WrappingFactory
 from twisted.internet.defer import Deferred
+from twisted.internet import reactor
 
 from game.network import NetworkController
-from game.view import PlayerView
+from game.view import PlayerView, Window
 from game.controller import PlayerController
 
 
@@ -55,7 +56,7 @@ class UI(object):
         L{game.view.Window}.
     """
 
-    def __init__(self, reactor, windowFactory):
+    def __init__(self, reactor=reactor, windowFactory=Window):
         self.reactor = reactor
         self.windowFactory = windowFactory
 
@@ -85,7 +86,8 @@ class UI(object):
         if player is not None:
             self.window.add(PlayerView(player))
             self.window.submitTo(PlayerController(player))
-        self.window.go()
+        environment.start()
+        return self.window.go()
 
 
 

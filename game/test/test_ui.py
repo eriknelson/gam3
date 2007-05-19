@@ -7,6 +7,7 @@ from twisted.trial.unittest import TestCase
 from twisted.test.proto_helpers import StringTransport
 from twisted.internet.protocol import ClientFactory, Protocol
 from twisted.internet.defer import succeed
+from twisted.internet.task import Clock
 
 from game.view import PlayerView
 from game.controller import PlayerController
@@ -126,6 +127,18 @@ class UITests(TestCase):
         self.reactor = StubReactor()
         self.ui = UI(self.reactor, windowFactory=StubWindow)
 
+    def test_defaults(self):
+        """
+        Instantiating a L{UI} with no arguments should work and should
+        use appropriate default values for the C{reactor} and
+        C{windowFactory}.
+        """
+        from twisted.internet import reactor
+        from game.view import Window
+        ui = UI()
+        self.assertIdentical(ui.reactor, reactor)
+        self.assertIdentical(ui.windowFactory, Window)
+
 
     def test_connect(self):
         """
@@ -205,13 +218,17 @@ class UITests(TestCase):
     def test_gotIntroduced(self):
         """
         When the introduction has been reciprocated, the L{UI} should
-        create a L{Window} and call L{Window.go} on it.
+        start the Environment and create a L{Window} and call
+        L{Window.go} on it.
         """
-        environment = Environment(3, lambda: None)
+        starts = []
+        environment = Environment(3, None)
+        environment.start = lambda: starts.append(True)
         self.ui.gotIntroduced(environment)
         self.assertIdentical(self.ui.window.environment, environment)
         self.assertIdentical(self.ui.window.clock, self.reactor)
         self.assertEqual(self.ui.window.went, [True])
+        self.assertEqual(starts, [True])
 
 
     def test_initialPlayer(self):
@@ -220,7 +237,7 @@ class UITests(TestCase):
         controller on the window.
         """
         player = object()
-        environment = Environment(10, lambda: 3)
+        environment = Environment(10, Clock())
         environment.setInitialPlayer(player)
         self.ui.gotIntroduced(environment)
         self.assertEqual(len(self.ui.window.views), 1)
@@ -236,7 +253,7 @@ class UITests(TestCase):
         If no initial L{Player} is available in the L{Environment}, no view or
         controller should be created.
         """
-        environment = Environment(10, lambda: 3)
+        environment = Environment(10, Clock())
         self.ui.gotIntroduced(environment)
         self.assertEqual(len(self.ui.window.views), 0)
         self.assertIdentical(self.ui.window.controller, None)
