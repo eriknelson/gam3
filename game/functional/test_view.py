@@ -44,7 +44,7 @@ class PlayerTests(TestCase):
         The player image should be displayed at the bottom-left corner of the
         window.
         """
-        window = Window(self.environment, reactor.callLater)
+        window = Window(self.environment)
         view = PlayerView(self.player)
         window.add(view)
 
@@ -56,7 +56,7 @@ class PlayerTests(TestCase):
         The player image should move from the bottom left of the screen to the
         bottom right of the screen.
         """
-        window = Window(self.environment, reactor.callLater)
+        window = Window(self.environment)
         view = PlayerView(self.player)
         window.add(view)
         self.player.setDirection(EAST)
@@ -67,7 +67,7 @@ class PlayerTests(TestCase):
         """
         The arrow keys should direct the player in eight directions.
         """
-        window = Window(self.environment, reactor.callLater)
+        window = Window(self.environment)
         view = PlayerView(self.player)
         window.add(view)
         window.submitTo(PlayerController(self.player))
