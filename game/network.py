@@ -66,6 +66,25 @@ class SetPositionOf(Command):
                  ('y', Integer())]
 
 
+
+class NewPlayer(Command):
+    """
+    Notify someone that a L{Player} of the given C{identifier} is at
+    the given position.
+
+    @param identifier: The unique identifier for the player whose position will
+        be set.
+    @param x: The x position.
+    @param y: The y position.
+    """
+
+    arguments = [('identifier', Integer()),
+                 ('x', Integer()),
+                 ('y', Integer())]
+
+
+
+
 class SetDirectionOf(Command):
     """
     Set the direction of a L{Player}.

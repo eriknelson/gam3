@@ -9,7 +9,7 @@ from twisted.internet.task import Clock
 from game.test.util import PlayerCreationMixin, PlayerCreationObserver
 from game.environment import Environment
 from game.network import (Direction, Introduce, SetPositionOf, SetDirectionOf,
-                          NetworkController)
+                          NetworkController, NewPlayer)
 from game.direction import NORTH, SOUTH, EAST, WEST
 
 
@@ -80,25 +80,21 @@ class IntroduceCommandTests(TestCase):
              'y': str(y)})
 
 
-    def test_stringsToObjects(self):
+    def test_parseResponse(self):
         """
-        Holy shit!  Use private functionality from amp to test that responses
-        are parsed properly.  See <trac://twisted/ticket/2657>.
+        Test that responses are parsed properly.
         """
-        # Holy shit!
-        from twisted.protocols.amp import _stringsToObjects
-
         identifier = 123
         granularity = 20
         speed = 12
         x = -3
         y = 2
 
+        from twisted.protocols.amp import _stringsToObjects
         objects = _stringsToObjects({'identifier': str(identifier),
                                      'granularity': str(granularity),
                                      'speed': str(speed),
-                                     'x': str(x),
-                                     'y': str(y)},
+                                     'x': str(x), 'y': str(y)},
                                     Introduce.response,
                                     None)
         self.assertEqual(
@@ -106,8 +102,48 @@ class IntroduceCommandTests(TestCase):
             {'identifier': identifier,
              'granularity': granularity,
              'speed': speed,
-             'x': x,
-             'y': y})
+             'x': x, 'y': y})
+
+
+
+class NewPlayerCommandTests(TestCase):
+    """
+    Tests for L{NewPlayer}.
+    """
+
+    def test_parseArguments(self):
+        """
+        Arguments should be parsed properly.
+        """
+        identifier = 123
+        x = 1
+        y = 2
+        from twisted.protocols.amp import _stringsToObjects
+        box = _stringsToObjects({'identifier': str(identifier),
+                                 'x': str(x), 'y': str(y)},
+                                NewPlayer.arguments,
+                                None)
+        self.assertEqual(box, {'identifier': identifier,
+                               'x': x, 'y': y})
+
+
+    def test_makeArguments(self):
+        """
+        Test that arguments are serialized properly.
+        """
+        identifier = 123
+        x = -3
+        y = 2
+
+        from twisted.protocols.amp import _objectsToStrings
+        strings = _objectsToStrings({'identifier': identifier,
+                                     'x': x, 'y': y},
+                                    NewPlayer.arguments,
+                                    {},
+                                    None)
+        self.assertEqual(strings,
+                         {'identifier': str(identifier),
+                          'x': str(x), 'y': str(y)})
 
 
 
