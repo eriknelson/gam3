@@ -35,7 +35,7 @@ class Gam3Server(AMP):
         x, y = player.getPosition()
         self.callRemote(NewPlayer,
                         identifier=self.identifierForPlayer(player),
-                        x=x, y=y)
+                        x=x, y=y, speed=player.speed)
 
 
     def introduce(self):
@@ -52,6 +52,7 @@ class Gam3Server(AMP):
                 "x": x,
                 "y": y}
     Introduce.responder(introduce)
+
 
     def setDirectionOf(self, identifier, direction):
         """

@@ -107,7 +107,7 @@ class NetworkTests(TestCase):
         self.assertEqual(
             self.calls,
             [(NewPlayer, {'identifier': protocol.identifierForPlayer(player),
-                          'x': x, 'y': y})])
+                          'x': x, 'y': y, 'speed': player.speed})])
 
 
     def test_setDirection(self):
