@@ -22,7 +22,6 @@ class Gam3Server(AMP):
     def __init__(self, world):
         self.world = world
         self.players = {}
-        world.addObserver(self)
 
 
     def playerCreated(self, player):
@@ -41,9 +40,11 @@ class Gam3Server(AMP):
     def introduce(self):
         """
         Return L{game.environment.Environment} and new
-        L{game.player.Player} data.
+        L{game.player.Player} data, and start watching for new player
+        creation.
         """
         player = self.world.createPlayer()
+        self.world.addObserver(self)
         identifier = self.identifierForPlayer(player)
         x, y = player.getPosition()
         return {"granularity": self.world.granularity,

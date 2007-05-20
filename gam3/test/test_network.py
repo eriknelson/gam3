@@ -101,13 +101,27 @@ class NetworkTests(TestCase):
         """
         world = World()
         protocol = Gam3Server(world)
+        #Introduce the protocol to a client so that it starts watching
+        #for new Players.
         protocol.callRemote = self.callRemote
+        protocol.introduce()
         player = world.createPlayer()
         x, y = player.getPosition()
         self.assertEqual(
             self.calls,
             [(NewPlayer, {'identifier': protocol.identifierForPlayer(player),
                           'x': x, 'y': y, 'speed': player.speed})])
+
+
+    def test_introductionDoesNotSendNewPlayer(self):
+        """
+        When introducing the first character, no NewPlayer command
+        should be sent.
+        """
+        world = World()
+        protocol = Gam3Server(world)
+        protocol.callRemote = self.callRemote
+        protocol.introduce()
 
 
     def test_setDirection(self):
