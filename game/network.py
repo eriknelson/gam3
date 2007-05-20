@@ -80,7 +80,8 @@ class NewPlayer(Command):
 
     arguments = [('identifier', Integer()),
                  ('x', Integer()),
-                 ('y', Integer())]
+                 ('y', Integer()),
+                 ('speed', Integer())]
 
 
 
@@ -220,3 +221,16 @@ class NetworkController(AMP):
         self.objectByIdentifier(identifier).setDirection(direction)
         return {}
     SetDirectionOf.responder(setDirectionOf)
+
+
+    def newPlayer(self, identifier, x, y, speed):
+        """
+        Add a new L{Player} object to the L{Environment}.
+
+        @param identifier: The network-level identifier of the player.
+        @param x: The x position of the new L{Player}.
+        @param y: The y position of the new L{Player}.
+        """
+        self.environment.createPlayer((x, y), speed)
+        return {}
+    NewPlayer.responder(newPlayer)

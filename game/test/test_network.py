@@ -118,13 +118,15 @@ class NewPlayerCommandTests(TestCase):
         identifier = 123
         x = 1
         y = 2
+        speed = 999
         from twisted.protocols.amp import _stringsToObjects
         box = _stringsToObjects({'identifier': str(identifier),
-                                 'x': str(x), 'y': str(y)},
+                                 'x': str(x), 'y': str(y),
+                                 'speed': str(speed)},
                                 NewPlayer.arguments,
                                 None)
         self.assertEqual(box, {'identifier': identifier,
-                               'x': x, 'y': y})
+                               'x': x, 'y': y, 'speed': speed})
 
 
     def test_makeArguments(self):
@@ -134,16 +136,19 @@ class NewPlayerCommandTests(TestCase):
         identifier = 123
         x = -3
         y = 2
+        speed = 493
 
         from twisted.protocols.amp import _objectsToStrings
         strings = _objectsToStrings({'identifier': identifier,
-                                     'x': x, 'y': y},
+                                     'x': x, 'y': y,
+                                     'speed': speed},
                                     NewPlayer.arguments,
                                     {},
                                     None)
         self.assertEqual(strings,
                          {'identifier': str(identifier),
-                          'x': str(x), 'y': str(y)})
+                          'x': str(x), 'y': str(y),
+                          'speed': str(speed)})
 
 
 
@@ -346,29 +351,23 @@ class ControllerTests(TestCase, PlayerCreationMixin):
              "direction": NORTH})
 
 
-
-class MockNetworkController(object):
-    """
-    A thing that looks like L{NetworkController}.
-
-    """
-
-    def __init__(self, modelObjects):
-        self.calls = []
-        self.modelObjects = modelObjects
-
-
-    def identifierByObject(self, modelObject):
-        for identifier, object in self.modelObjects.iteritems():
-            if object is modelObject:
-                return identifier
-        raise ValueError("identifierByObject passed unknown model object")
-
-
-
-class ObserverTests(TestCase, PlayerCreationMixin):
-    """
-    Tests for the bit which tells the network about what is happening to the
-    L{Player} locally, which isL{NetworkPlayerObserver}.
-    """
-
+    def test_newPlayer(self):
+        """
+        L{NetworkController} should respond to L{NewPlayer} commands
+        and introduce a new L{Player} object to the L{Environment}.
+        """
+        observer = PlayerCreationObserver()
+        self.controller.environment = Environment(10, self.clock)
+        self.controller.environment.addObserver(observer)
+        responder = self.controller.lookupFunction(NewPlayer.commandName)
+        x, y = (3, 500)
+        speed = 999
+        d = responder({"identifier": "123", "x": str(x), "y": str(y),
+                       "speed": str(speed)})
+        def gotResult(ign):
+            self.assertEqual(len(observer.createdPlayers), 1)
+            player = observer.createdPlayers[0]
+            self.assertEqual(player.getPosition(), (x, y))
+            self.assertEqual(player.speed, speed)
+        d.addCallback(gotResult)
+        return d
