@@ -7,10 +7,11 @@ from zope.interface.verify import verifyObject
 from twisted.trial.unittest import TestCase
 from twisted.internet.interfaces import IProtocolFactory
 
-from game.network import Introduce, SetDirectionOf, Direction
+from game.network import Introduce, SetDirectionOf, Direction, NewPlayer
 from game.player import Player
 from game.direction import WEST
 
+from gam3.world import World
 from gam3.network import Gam3Factory, Gam3Server
 
 
@@ -30,6 +31,7 @@ class FakeWorld(object):
     def __init__(self):
         self.players = []
 
+
     def createPlayer(self):
         """
         Create a L{Player}, recording it in C{self.players}.
@@ -37,12 +39,36 @@ class FakeWorld(object):
         self.players.append(Player((self.x, self.y), self.speed, lambda: 3))
         return self.players[-1]
 
+    def addObserver(self, observer):
+        """
+        Do nothing.
+
+        @param observer: A parameter.
+        """
+
 
 
 class NetworkTests(TestCase):
     """
     Tests for the client-facing AMP server protocol.
+
+    @ivar calls: List of tuples of (AMP command class, dictionary of
+        arguments).
     """
+
+    def setUp(self):
+        """
+        Initialize C{self.calls}.
+        """
+        self.calls = []
+
+
+    def callRemote(self, command, **kw):
+        """
+        Add a call to C{self.calls}.
+        """
+        self.calls.append((command, kw))
+
 
     def test_introduction(self):
         """
@@ -66,6 +92,22 @@ class NetworkTests(TestCase):
 
         d.addCallback(gotResult)
         return d
+
+
+    def test_createMorePlayers(self):
+        """
+        When a player is created, all existing clients must be
+        notified of it.
+        """
+        world = World()
+        protocol = Gam3Server(world)
+        protocol.callRemote = self.callRemote
+        player = world.createPlayer()
+        x, y = player.getPosition()
+        self.assertEqual(
+            self.calls,
+            [(NewPlayer, {'identifier': protocol.identifierForPlayer(player),
+                          'x': x, 'y': y})])
 
 
     def test_setDirection(self):
@@ -94,7 +136,7 @@ class NetworkTests(TestCase):
         L{Gam3Server} should provide an identifier producing function
         which produces identifiers that go up.
         """
-        protocol = Gam3Server(None)
+        protocol = Gam3Server(FakeWorld())
         player1 = object()
         player2 = object()
         playerOneID = protocol.identifierForPlayer(player1)
@@ -103,12 +145,13 @@ class NetworkTests(TestCase):
         self.assertEqual(protocol.identifierForPlayer(player2), playerTwoID)
         self.assertNotEqual(playerOneID, playerTwoID)
 
+
     def test_playerForIdentifier(self):
         """
         L{Gam3Server} should provide a function from L{Player}
         identifiers to L{Player}s.
         """
-        protocol = Gam3Server(None)
+        protocol = Gam3Server(FakeWorld())
         player = object()
         playerID = protocol.identifierForPlayer(player)
         self.assertIdentical(protocol.playerForIdentifier(playerID), player)
@@ -124,7 +167,7 @@ class FactoryTests(TestCase):
         L{Gam3Factory.buildProtocol} should pass the factory's L{World} to the
         initializer of the protocol it creates.
         """
-        world = object()
+        world = FakeWorld()
         factory = Gam3Factory(world)
         protocol = factory.buildProtocol(None)
         self.assertIdentical(protocol.world, world)

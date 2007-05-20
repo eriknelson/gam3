@@ -10,6 +10,7 @@ from epsilon.structlike import record
 from gam3.world import World, point
 
 from game.test.test_environment import SimulationTimeTestsMixin
+from game.test.util import PlayerCreationObserver
 
 
 class StubRandom(record('rangeResults')):
@@ -62,13 +63,25 @@ class WorldTests(TestCase):
         self.assertTrue(isinstance(y, int))
 
 
+    def test_createPlayerEmitsEvent(self):
+        """
+        When L{World.createPlayer} is called, observers should be
+        notified.
+        """
+        world = World()
+        observer = PlayerCreationObserver()
+        world.addObserver(observer)
+        player = world.createPlayer()
+        self.assertEqual(observer.createdPlayers, [player])
+
+
 
 class WorldTimeTests(SimulationTimeTestsMixin, TestCase):
     """
     Tests for the time-simulating aspecst of L{World}.
     """
 
-    def get_simulation(self, granularity, clock):
+    def getSimulationTime(self, granularity, clock):
         """
         Return a L{World}.
         """

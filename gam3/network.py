@@ -7,7 +7,7 @@ Network functionality of Gam3.
 from twisted.internet.protocol import ServerFactory
 from twisted.protocols.amp import AMP
 
-from game.network import Introduce, SetDirectionOf
+from game.network import Introduce, SetDirectionOf, NewPlayer
 
 
 class Gam3Server(AMP):
@@ -22,6 +22,20 @@ class Gam3Server(AMP):
     def __init__(self, world):
         self.world = world
         self.players = {}
+        world.addObserver(self)
+
+
+    def playerCreated(self, player):
+        """
+        Broadcast data about the new player to the client that this
+        protocol is connected to with a L{NewPlayer} command.
+
+        @param player: The L{Player} that was created.
+        """
+        x, y = player.getPosition()
+        self.callRemote(NewPlayer,
+                        identifier=self.identifierForPlayer(player),
+                        x=x, y=y)
 
 
     def introduce(self):
