@@ -115,13 +115,14 @@ class NetworkTests(TestCase):
 
     def test_introductionDoesNotSendNewPlayer(self):
         """
-        When introducing the first character, no NewPlayer command
+        When introducing the first character, no L{NewPlayer} command
         should be sent.
         """
         world = World()
         protocol = Gam3Server(world)
         protocol.callRemote = self.callRemote
         protocol.introduce()
+        self.assertEqual(self.calls, [])
 
 
     def test_setDirection(self):
