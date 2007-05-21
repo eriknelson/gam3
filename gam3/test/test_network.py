@@ -10,7 +10,7 @@ from twisted.internet.task import Clock
 
 from game.network import Introduce, SetDirectionOf, Direction, NewPlayer
 from game.player import Player
-from game.direction import WEST
+from game.direction import WEST, EAST
 
 from gam3.world import World
 from gam3.network import Gam3Factory, Gam3Server
@@ -195,6 +195,62 @@ class NetworkTests(TestCase):
                             }),
                           ]:
             self.assertTrue(newPlayer in self.calls)
+
+
+    def test_sendOtherPlayersDirection(self):
+        """
+        When other L{Player}s change direction, the client should be notified.
+        """
+        world = World()
+        player = world.createPlayer()
+        protocol = Gam3Server(world)
+        protocol.callRemote = self.callRemote
+        protocol.sendExistingPlayers()
+        self.calls = []
+        player.setDirection(EAST)
+        self.assertEqual(self.calls,
+                         [(SetDirectionOf,
+                           {"identifier": protocol.identifierForPlayer(player),
+                            "direction": EAST})])
+
+
+    def test_sendOnlyOtherDirectionOfPlayers(self):
+        """
+        L{SetDirectionOf} commands should not be sent for the client's
+        L{Player}.
+        """
+        clock = Clock()
+        world = World()
+        protocol = Gam3Server(world, clock=clock)
+        protocol.callRemote = self.callRemote
+        protocol.introduce()
+        # advance because observers aren't registered until later FIXME BUG XXX
+        # see #2671
+        clock.advance(0)
+        protocol.player.setDirection(EAST)
+        self.assertEqual(self.calls, [])
+
+
+    def test_sendDirectionOfNewPlayers(self):
+        """
+        L{Player}s that are added after a client has been introduced
+        should have their directions sent.
+        """
+        clock = Clock()
+        world = World()
+        protocol = Gam3Server(world, clock=clock)
+        protocol.callRemote = self.callRemote
+        protocol.introduce()
+        # advance because observers aren't registered until later FIXME BUG XXX
+        # see #2671
+        clock.advance(0)
+        player = world.createPlayer()
+        self.calls = [] #ignore other calls
+        player.setDirection(WEST)
+        self.assertEqual(self.calls,
+                         [(SetDirectionOf,
+                           {"identifier": protocol.identifierForPlayer(player),
+                            "direction": WEST})])
 
 
     def test_setDirection(self):
