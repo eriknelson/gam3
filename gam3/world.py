@@ -32,6 +32,8 @@ class World(SimulationTime):
 
     @ivar observers: A C{list} of objects notified about state changes of this
         object.
+
+    @ivar players: A C{list} of L{Player}s in this world.
     """
     def __init__(self, random=random, playerCreationRectangle=None,
                  granularity=None, platformClock=None):
@@ -41,6 +43,7 @@ class World(SimulationTime):
         self.random = random
         self.playerCreationRectangle = playerCreationRectangle
         self.observers = []
+        self.players = []
 
 
     def createPlayer(self):
@@ -53,6 +56,7 @@ class World(SimulationTime):
         player = Player((x, y), 100, lambda: 0)
         for observer in self.observers:
             observer.playerCreated(player)
+        self.players.append(player)
         return player
 
 
@@ -62,3 +66,11 @@ class World(SimulationTime):
         in this world.
         """
         self.observers.append(observer)
+
+
+    def getPlayers(self):
+        """
+        Return an iterator of all L{Player}s in this L{World}.
+        """
+        return iter(self.players)
+

@@ -5,6 +5,7 @@ Network functionality of Gam3.
 """
 
 from twisted.internet.protocol import ServerFactory
+from twisted.internet import reactor
 from twisted.protocols.amp import AMP
 
 from game.network import Introduce, SetDirectionOf, NewPlayer
@@ -17,11 +18,16 @@ class Gam3Server(AMP):
 
     @ivar world: The L{World}.
     @ivar players: A mapping from L{Player} identifiers to L{Player}s.
+    @ivar clock: An L{IReactorTime} provider.
+    @ivar player: The L{Player} of the client that this protocol
+        instance is communicating to.
     """
 
-    def __init__(self, world):
+    def __init__(self, world, clock=reactor):
         self.world = world
+        self.clock = clock
         self.players = {}
+        self.player = None
 
 
     def playerCreated(self, player):
@@ -44,15 +50,28 @@ class Gam3Server(AMP):
         creation.
         """
         player = self.world.createPlayer()
-        self.world.addObserver(self)
         identifier = self.identifierForPlayer(player)
         x, y = player.getPosition()
+        # XXX FIXME BUG: Instead, we should do what twisted:#2671 wants.
+        self.clock.callLater(0, self.sendExistingPlayers)
+        self.player = player
         return {"granularity": self.world.granularity,
                 "identifier": identifier,
                 "speed": player.speed,
                 "x": x,
                 "y": y}
     Introduce.responder(introduce)
+
+
+    def sendExistingPlayers(self):
+        """
+        Send L{NewCommand} commands to this client for each existing
+        L{Player} in the L{World}.
+        """
+        for player in self.world.getPlayers():
+            if player is not self.player:
+                self.playerCreated(player)
+        self.world.addObserver(self)
 
 
     def setDirectionOf(self, identifier, direction):

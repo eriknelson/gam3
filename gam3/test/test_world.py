@@ -75,6 +75,16 @@ class WorldTests(TestCase):
         self.assertEqual(observer.createdPlayers, [player])
 
 
+    def test_getPlayers(self):
+        """
+        There should be a method for getting the L{Player}s from a
+        L{World}.
+        """
+        world = World()
+        player1 = world.createPlayer()
+        player2 = world.createPlayer()
+        self.assertEqual(list(world.getPlayers()), [player1, player2])
+
 
 class WorldTimeTests(SimulationTimeTestsMixin, TestCase):
     """

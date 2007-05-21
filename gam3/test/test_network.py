@@ -6,6 +6,7 @@ from zope.interface.verify import verifyObject
 
 from twisted.trial.unittest import TestCase
 from twisted.internet.interfaces import IProtocolFactory
+from twisted.internet.task import Clock
 
 from game.network import Introduce, SetDirectionOf, Direction, NewPlayer
 from game.player import Player
@@ -46,6 +47,12 @@ class FakeWorld(object):
         @param observer: A parameter.
         """
 
+    def getPlayers(self):
+        """
+        Return the players.
+        """
+        return self.players
+
 
 
 class NetworkTests(TestCase):
@@ -68,6 +75,16 @@ class NetworkTests(TestCase):
         Add a call to C{self.calls}.
         """
         self.calls.append((command, kw))
+
+
+    def test_defaultClock(self):
+        """
+        The L{Gam3Server}'s default clock should be
+        L{twisted.internet.reactor}.
+        """
+        from twisted.internet import reactor
+        protocol = Gam3Server(World())
+        self.assertIdentical(protocol.clock, reactor)
 
 
     def test_introduction(self):
@@ -99,12 +116,16 @@ class NetworkTests(TestCase):
         When a player is created, all existing clients must be
         notified of it.
         """
+        clock = Clock()
         world = World()
-        protocol = Gam3Server(world)
+        protocol = Gam3Server(world, clock=clock)
         #Introduce the protocol to a client so that it starts watching
         #for new Players.
         protocol.callRemote = self.callRemote
         protocol.introduce()
+        # advance because the observer doesn't start until later FIXME BUG XXX
+        # see #2671
+        clock.advance(0)
         player = world.createPlayer()
         x, y = player.getPosition()
         self.assertEqual(
@@ -123,6 +144,57 @@ class NetworkTests(TestCase):
         protocol.callRemote = self.callRemote
         protocol.introduce()
         self.assertEqual(self.calls, [])
+
+
+    def test_oldPlayerNewPlayer(self):
+        """
+        When a player connects and introduces himself, he should
+        shortly thereafter get L{NewPlayer} commands for all
+        already-connected players.
+        """
+        clock = Clock()
+        world = World()
+
+        player1 = world.createPlayer()
+
+        protocol = Gam3Server(world, clock=clock)
+        protocol.callRemote = self.callRemote
+
+        # Try to create a player tricksily to invoke race conditions
+        player2 = world.createPlayer()
+
+        self.assertEqual(self.calls, [])
+
+        protocol.introduce()
+
+        # Try to create a player tricksily to invoke race conditions
+        player3 = world.createPlayer()
+        # advance because NewPlayers aren't sent until later FIXME BUG XXX
+        # see #2671
+        clock.advance(0)
+
+        self.assertEqual(len(self.calls), 3)
+
+        for newPlayer in [(NewPlayer,
+                           {"identifier": protocol.identifierForPlayer(player1),
+                            "speed": player1.speed,
+                            "x": player1.getPosition()[0],
+                            "y": player1.getPosition()[1],
+                            }),
+                          (NewPlayer,
+                           {"identifier": protocol.identifierForPlayer(player2),
+                            "speed": player2.speed,
+                            "x": player2.getPosition()[0],
+                            "y": player2.getPosition()[1],
+                            }),
+                          (NewPlayer,
+                           {"identifier": protocol.identifierForPlayer(player3),
+                            "speed": player3.speed,
+                            "x": player3.getPosition()[0],
+                            "y": player3.getPosition()[1],
+                            }),
+                          ]:
+            self.assertTrue(newPlayer in self.calls)
 
 
     def test_setDirection(self):
