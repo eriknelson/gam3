@@ -184,7 +184,7 @@ class NetworkController(AMP):
         Look up the network identifier for a given model object.
 
         @raise ValueError: If no network identifier is associated with the
-        given model object.
+            given model object.
 
         @rtype: L{int}
         """
@@ -225,12 +225,14 @@ class NetworkController(AMP):
 
     def newPlayer(self, identifier, x, y, speed):
         """
-        Add a new L{Player} object to the L{Environment}.
+        Add a new L{Player} object to the L{Environment}, and start
+        tracking its identifier on the network.
 
         @param identifier: The network-level identifier of the player.
         @param x: The x position of the new L{Player}.
         @param y: The y position of the new L{Player}.
         """
-        self.environment.createPlayer((x, y), speed)
+        player = self.environment.createPlayer((x, y), speed)
+        self.modelObjects[identifier] = player
         return {}
     NewPlayer.responder(newPlayer)

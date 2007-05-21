@@ -354,7 +354,8 @@ class ControllerTests(TestCase, PlayerCreationMixin):
     def test_newPlayer(self):
         """
         L{NetworkController} should respond to L{NewPlayer} commands
-        and introduce a new L{Player} object to the L{Environment}.
+        by introducing a new L{Player} object to the L{Environment}
+        and registering the L{Player}'s identifier.
         """
         observer = PlayerCreationObserver()
         self.controller.environment = Environment(10, self.clock)
@@ -369,5 +370,8 @@ class ControllerTests(TestCase, PlayerCreationMixin):
             player = observer.createdPlayers[0]
             self.assertEqual(player.getPosition(), (x, y))
             self.assertEqual(player.speed, speed)
+            obj = self.controller.objectByIdentifier(
+                self.controller.identifierByObject(player))
+            self.assertIdentical(obj, player)
         d.addCallback(gotResult)
         return d
