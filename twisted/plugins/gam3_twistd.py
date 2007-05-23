@@ -4,6 +4,8 @@
 Plugin hook module for twistd service.
 """
 
+from os.path import join
+
 from zope.interface import implements
 
 from twisted.application.service import IServiceMaker
@@ -22,7 +24,9 @@ class _Gam3Plugin(object):
         Gam3 twistd command line options.
         """
         optParameters = [
-            ('port', 'p', 1337, 'TCP port number to listen on.', portCoerce)]
+            ('port', 'p', 1337, 'TCP port number to listen on.', portCoerce),
+            ('log-directory', 'l', None,
+             'Directory to which to log protocol traffic.')]
 
     description = "Gam3 MMO server"
 
@@ -35,9 +39,29 @@ class _Gam3Plugin(object):
         @param options: mapping of configuration
         """
         from gam3.network import Gam3Factory
-        from gam3.world import World
+        from gam3.world import (
+            TCP_SERVICE_NAME, GAM3_SERVICE_NAME, Gam3Service, World)
         from twisted.internet import reactor
+        from twisted.application.service import MultiService
+        from twisted.protocols.policies import TrafficLoggingFactory
+
         world = World(granularity=100, platformClock=reactor)
-        return TCPServer(options['port'], Gam3Factory(world))
+
+        service = MultiService()
+
+        factory = Gam3Factory(world)
+        if options['log-directory'] is not None:
+            factory = TrafficLoggingFactory(
+                factory, join(options['log-directory'], 'gam3'))
+
+        tcp = TCPServer(options['port'], factory)
+        tcp.setName(TCP_SERVICE_NAME)
+        tcp.setServiceParent(service)
+
+        gam3 = Gam3Service(world)
+        gam3.setName(GAM3_SERVICE_NAME)
+        gam3.setServiceParent(service)
+
+        return service
 
 gam3plugin = _Gam3Plugin()

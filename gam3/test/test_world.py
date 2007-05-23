@@ -3,11 +3,15 @@
 Tests for L{gam3.world}.
 """
 
+from zope.interface.verify import verifyObject
+
 from twisted.trial.unittest import TestCase
+from twisted.internet.task import Clock
+from twisted.application.service import IService
 
 from epsilon.structlike import record
 
-from gam3.world import World, point
+from gam3.world import Gam3Service, World, point
 
 from game.test.test_environment import SimulationTimeTestsMixin
 from game.test.util import PlayerCreationObserver
@@ -49,6 +53,16 @@ class WorldTests(TestCase):
         player = world.createPlayer()
 
         self.assertEqual(player.getPosition(), (x, y))
+
+
+    def test_createdPlayerIsTemporallyAligned(self):
+        """
+        L{World.createPlayer} should create a player in the same time continuum
+        as the L{World} it is called on.
+        """
+        world = World()
+        player = world.createPlayer()
+        self.assertEqual(player.seconds, world.seconds)
 
 
     def test_createPlayerWithDefaultWorld(self):
@@ -97,3 +111,39 @@ class WorldTimeTests(SimulationTimeTestsMixin, TestCase):
         """
         return World(granularity=granularity, platformClock=clock)
 
+
+
+class ServiceTests(TestCase):
+    """
+    Tests for L{Gam3Service}.
+    """
+    def test_serviceness(self):
+        """
+        L{Gam3Service} should provide L{IService}.
+        """
+        verifyObject(IService, Gam3Service(None))
+
+
+    def test_startServiceStartsWorld(self):
+        """
+        L{Gam3Service.startService} should start simulation time.
+        """
+        clock = Clock()
+        world = World(platformClock=clock)
+        service = Gam3Service(world)
+        self.assertFalse(clock.calls)
+        service.startService()
+        self.assertTrue(clock.calls)
+
+
+    def test_stopServiceStopsWorld(self):
+        """
+        L{Gam3Service.stopService} should stop simulation time.
+        """
+        clock = Clock()
+        world = World(platformClock=clock)
+        service = Gam3Service(world)
+        world.start()
+        self.assertTrue(clock.calls)
+        service.stopService()
+        self.assertFalse(clock.calls)

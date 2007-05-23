@@ -11,11 +11,16 @@ r"""
 
 import random
 
+from twisted.application.service import Service
+
 from game.player import Player
 from game.environment import SimulationTime
 
 from epsilon.structlike import record
 
+
+TCP_SERVICE_NAME = 'tcp-service-name'
+GAM3_SERVICE_NAME = 'gam3-service-name'
 
 point = record('x y')
 
@@ -36,7 +41,7 @@ class World(SimulationTime):
     @ivar players: A C{list} of L{Player}s in this world.
     """
     def __init__(self, random=random, playerCreationRectangle=None,
-                 granularity=None, platformClock=None):
+                 granularity=1, platformClock=None):
         SimulationTime.__init__(self, granularity, platformClock)
         if playerCreationRectangle is None:
             playerCreationRectangle = point(-1, -1), point(200, 200)
@@ -53,7 +58,7 @@ class World(SimulationTime):
         sw, ne = self.playerCreationRectangle
         x = self.random.randrange(sw.x, ne.x)
         y = self.random.randrange(sw.y, ne.y)
-        player = Player((x, y), 100, lambda: 0)
+        player = Player((x, y), 100, self.seconds)
         for observer in self.observers:
             observer.playerCreated(player)
         self.players.append(player)
@@ -74,3 +79,28 @@ class World(SimulationTime):
         """
         return iter(self.players)
 
+
+
+class Gam3Service(Service):
+    """
+    An L{IService<twisted.application.service.IService>} which starts and stops
+    simulation time on a L{World}.
+
+    @ivar world: The L{World} to start and stop.
+    """
+    def __init__(self, world):
+        self.world = world
+
+
+    def startService(self):
+        """
+        Start simulation time on the wrapped world.
+        """
+        self.world.start()
+
+
+    def stopService(self):
+        """
+        Stop simulation time on the wrapped world.
+        """
+        self.world.stop()
