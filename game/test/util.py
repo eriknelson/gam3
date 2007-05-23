@@ -42,6 +42,7 @@ class PlayerVisibilityObserver(object):
     """
     def __init__(self):
         self.createdPlayers = []
+        self.removedPlayers = []
 
 
     def playerCreated(self, player):
