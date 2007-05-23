@@ -6,7 +6,7 @@ from twisted.trial.unittest import TestCase
 from twisted.internet.defer import Deferred
 from twisted.internet.task import Clock
 
-from game.test.util import PlayerCreationMixin, PlayerCreationObserver
+from game.test.util import PlayerCreationMixin, PlayerVisibilityObserver
 from game.environment import Environment
 from game.network import (Direction, Introduce, SetPositionOf, SetDirectionOf,
                           NetworkController, NewPlayer, SetMyDirection)
@@ -335,7 +335,7 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         speed = 40
         granularity = 22
         environment = Environment(granularity, self.clock)
-        observer = PlayerCreationObserver()
+        observer = PlayerVisibilityObserver()
         environment.addObserver(observer)
 
         self.controller.createInitialPlayer(
@@ -414,7 +414,7 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         by introducing a new L{Player} object to the L{Environment}
         and registering the L{Player}'s identifier.
         """
-        observer = PlayerCreationObserver()
+        observer = PlayerVisibilityObserver()
         self.controller.environment = Environment(10, self.clock)
         self.controller.environment.addObserver(observer)
         responder = self.controller.lookupFunction(NewPlayer.commandName)

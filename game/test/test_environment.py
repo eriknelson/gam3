@@ -7,7 +7,7 @@ from twisted.trial.unittest import TestCase
 from twisted.internet.task import Clock
 
 from game.environment import Environment, SimulationTime
-from game.test.util import PlayerCreationObserver
+from game.test.util import PlayerVisibilityObserver
 
 
 class SimulationTimeTestsMixin(object):
@@ -144,7 +144,7 @@ class EnvironmentTests(TestCase):
         """
         position = (1, 2)
         speed = 20
-        observer = PlayerCreationObserver()
+        observer = PlayerVisibilityObserver()
         self.environment.addObserver(observer)
         player = self.environment.createPlayer(position, speed)
         self.assertEqual(observer.createdPlayers, [player])
