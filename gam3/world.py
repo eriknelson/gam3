@@ -65,6 +65,16 @@ class World(SimulationTime):
         return player
 
 
+    def removePlayer(self, player):
+        """
+        Stop tracking the given L{Player} and notify observers via the
+        C{playerRemoved} method.
+        """
+        self.players.remove(player)
+        for observer in self.observers:
+            observer.playerRemoved(player)
+
+
     def addObserver(self, observer):
         """
         Add the given object to the list of those notified about state changes

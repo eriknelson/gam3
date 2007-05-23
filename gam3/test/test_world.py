@@ -14,7 +14,7 @@ from epsilon.structlike import record
 from gam3.world import Gam3Service, World, point
 
 from game.test.test_environment import SimulationTimeTestsMixin
-from game.test.util import PlayerCreationObserver
+from game.test.util import PlayerVisibilityObserver
 
 
 class StubRandom(record('rangeResults')):
@@ -55,6 +55,42 @@ class WorldTests(TestCase):
         self.assertEqual(player.getPosition(), (x, y))
 
 
+    def test_removePlayer(self):
+        """
+        L{World.removePlayer} should remove the given player from the
+        world and broadcast an event about its removal.
+        """
+        world = World()
+        player = world.createPlayer()
+        observer = PlayerVisibilityObserver()
+        world.addObserver(observer)
+        world.removePlayer(player)
+        self.assertFalse(player in world.players)
+        self.assertEqual(observer.removedPlayers, [player])
+
+
+    def test_removePlayerCallsObserversAfterRemovingPlayer(self):
+        """
+        In a C{playerRemoved} observer, the L{Player} who is being
+        removed should not presently be a part of the L{World}.
+        """
+        world = World()
+        player = world.createPlayer()
+        existentPlayers = []
+
+        class Observer(object):
+            def playerRemoved(self, player):
+                """
+                An observer which records whether players are in the
+                world.
+                """
+                existentPlayers.append(player in world.players)
+
+        world.addObserver(Observer())
+        world.removePlayer(player)
+        self.assertEqual(existentPlayers, [False])
+
+
     def test_createdPlayerIsTemporallyAligned(self):
         """
         L{World.createPlayer} should create a player in the same time continuum
@@ -83,7 +119,7 @@ class WorldTests(TestCase):
         notified.
         """
         world = World()
-        observer = PlayerCreationObserver()
+        observer = PlayerVisibilityObserver()
         world.addObserver(observer)
         player = world.createPlayer()
         self.assertEqual(observer.createdPlayers, [player])
