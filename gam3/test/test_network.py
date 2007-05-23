@@ -8,7 +8,8 @@ from twisted.trial.unittest import TestCase
 from twisted.internet.interfaces import IProtocolFactory
 from twisted.internet.task import Clock
 
-from game.network import Introduce, SetDirectionOf, Direction, NewPlayer
+from game.network import (Introduce, SetMyDirection, SetDirectionOf,
+                          Direction, NewPlayer)
 from game.player import Player
 from game.direction import WEST, EAST
 
@@ -199,7 +200,8 @@ class NetworkTests(TestCase):
 
     def test_sendOtherPlayersDirection(self):
         """
-        When other L{Player}s change direction, the client should be notified.
+        When other L{Player}s change direction, the client should be notified
+        of the new direction and the position at the time of the change.
         """
         world = World()
         player = world.createPlayer()
@@ -208,10 +210,13 @@ class NetworkTests(TestCase):
         protocol.sendExistingPlayers()
         self.calls = []
         player.setDirection(EAST)
+        x, y = player.getPosition()
         self.assertEqual(self.calls,
                          [(SetDirectionOf,
                            {"identifier": protocol.identifierForPlayer(player),
-                            "direction": EAST})])
+                            "direction": EAST,
+                            "x": x,
+                            "y": y})])
 
 
     def test_sendOnlyOtherDirectionOfPlayers(self):
@@ -233,8 +238,8 @@ class NetworkTests(TestCase):
 
     def test_sendDirectionOfNewPlayers(self):
         """
-        L{Player}s that are added after a client has been introduced
-        should have their directions sent.
+        L{Player}s who are added after a client has been introduced
+        should have their directions and positions sent.
         """
         clock = Clock()
         world = World()
@@ -247,28 +252,30 @@ class NetworkTests(TestCase):
         player = world.createPlayer()
         self.calls = [] #ignore other calls
         player.setDirection(WEST)
+        x, y = player.getPosition()
         self.assertEqual(self.calls,
                          [(SetDirectionOf,
                            {"identifier": protocol.identifierForPlayer(player),
-                            "direction": WEST})])
+                            "direction": WEST,
+                            "x": x,
+                            "y": y})])
 
 
-    def test_setDirection(self):
+    def test_setMyDirection(self):
         """
-        The server should respond to L{SetDirectionOf} commands and
+        The server should respond to L{SetMyDirection} commands and
         change direction of the specified L{Player} model object.
         """
         world = FakeWorld()
-        player = world.createPlayer()
-
         protocol = Gam3Server(world)
-        player_id = protocol.identifierForPlayer(player)
-        responder = protocol.lookupFunction(SetDirectionOf.commandName)
-        d = responder({"identifier": str(player_id),
-                       "direction": Direction().toString(WEST)})
+        protocol.introduce()
+        responder = protocol.lookupFunction(SetMyDirection.commandName)
+        d = responder({"direction": Direction().toString(WEST)})
 
         def gotResult(box):
-            self.assertEqual(player.direction, WEST)
+            self.assertEqual(protocol.player.direction, WEST)
+            x, y = protocol.player.getPosition()
+            self.assertEqual(box, {'x': str(x), 'y': str(y)})
 
         d.addCallback(gotResult)
         return d

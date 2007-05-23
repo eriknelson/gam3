@@ -8,7 +8,7 @@ from twisted.internet.protocol import ServerFactory
 from twisted.internet import reactor
 from twisted.protocols.amp import AMP
 
-from game.network import Introduce, SetDirectionOf, NewPlayer
+from game.network import Introduce, SetDirectionOf, NewPlayer, SetMyDirection
 
 
 class Gam3Server(AMP):
@@ -88,22 +88,24 @@ class Gam3Server(AMP):
         """
         A L{Player}'s direction has changed: Send it to the client.
         """
+        x, y = player.getPosition()
         self.callRemote(SetDirectionOf,
                         identifier=self.identifierForPlayer(player),
-                        direction=player.direction)
+                        direction=player.direction,
+                        x=x, y=y)
 
     # AMP responders
-    def setDirectionOf(self, identifier, direction):
+    def setMyDirection(self, direction):
         """
-        Set the direction of the player specified by the given identifier.
+        Set the direction of the player of the client connected to this
+        protocol.
 
-        @param identifier: A number specifying the L{Player} whose
-            direction to change.
         @param direction: A L{game.direction} direction.
         """
-        self.playerForIdentifier(identifier).setDirection(direction)
-        return {}
-    SetDirectionOf.responder(setDirectionOf)
+        self.player.setDirection(direction)
+        x, y = self.player.getPosition()
+        return {'x': x, 'y': y}
+    SetMyDirection.responder(setMyDirection)
 
 
     def identifierForPlayer(self, player):
