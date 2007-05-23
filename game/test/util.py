@@ -33,11 +33,12 @@ class PlayerCreationMixin:
 
 
 
-class PlayerCreationObserver(object):
+class PlayerVisibilityObserver(object):
     """
     Record player creation notifications.
 
     @ivar createdPlayers: A list of players passed to L{playerCreated} calls.
+    @ivar removedPlayers: A list of players passed to L{playerRemoved} calls.
     """
     def __init__(self):
         self.createdPlayers = []
@@ -48,3 +49,10 @@ class PlayerCreationObserver(object):
         Record a player creation.
         """
         self.createdPlayers.append(player)
+
+
+    def playerRemoved(self, player):
+        """
+        Record a player removal.
+        """
+        self.removedPlayers.append(player)
