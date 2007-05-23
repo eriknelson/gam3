@@ -9,7 +9,7 @@ from twisted.internet.task import Clock
 from game.test.util import PlayerCreationMixin, PlayerCreationObserver
 from game.environment import Environment
 from game.network import (Direction, Introduce, SetPositionOf, SetDirectionOf,
-                          NetworkController, NewPlayer)
+                          NetworkController, NewPlayer, SetMyDirection)
 from game.direction import NORTH, SOUTH, EAST, WEST
 
 
@@ -52,103 +52,146 @@ class DirectionArgumentTests(TestCase):
 
 
 
-class IntroduceCommandTests(TestCase):
+class CommandTestMixin(object):
     """
-    Tests for L{Introduce}.
+    Mixin for testcases for serialization and parsing of Commands.
+
+    @cvar command: L{Command} subclass to test.
+
+    @type argumentObjects: L{dict}
+    @cvar argumentObjects: The unserialized forms of arguments matching the
+        argument schema of your Command.
+
+    @type argumentStrings: L{dict}
+    @cvar argumentStrings: The serialized forms of arguments matching the
+        argument schema of your Command.
+
+    @type responseObjects: L{dict}
+    @cvar responseObjects: The unserialized forms of responses matching the
+        response schema of your Command.
+
+    @type responseStrings: L{dict}
+    @cvar responseStrings: The serialized forms of responses matching the
+        response schema of your Command.
     """
+
     def test_makeResponse(self):
         """
-        L{Introduce.makeResponse} should convert a mapping of structured data
-        into an L{AmpBox}.
+        C{self.responseObjects} should serialize to C{self.responseStrings}.
         """
-        identifier = 123
-        granularity = 20
-        speed = 12
-        x = -3
-        y = 2
-        box = Introduce.makeResponse({'identifier': identifier,
-                                      'granularity': granularity,
-                                      'speed': speed,
-                                      'x': x,
-                                      'y': y}, None)
-        self.assertEqual(
-            box,
-            {'identifier': str(identifier),
-             'granularity': str(granularity),
-             'speed': str(speed),
-             'x': str(x),
-             'y': str(y)})
+        box = self.command.makeResponse(self.responseObjects, None)
+        self.assertEqual(box, self.responseStrings)
 
 
     def test_parseResponse(self):
         """
-        Test that responses are parsed properly.
+        C{self.responseStrings} should parse to C{self.responseObjects}.
         """
-        identifier = 123
-        granularity = 20
-        speed = 12
-        x = -3
-        y = 2
-
         from twisted.protocols.amp import _stringsToObjects
-        objects = _stringsToObjects({'identifier': str(identifier),
-                                     'granularity': str(granularity),
-                                     'speed': str(speed),
-                                     'x': str(x), 'y': str(y)},
-                                    Introduce.response,
-                                    None)
-        self.assertEqual(
-            objects,
-            {'identifier': identifier,
-             'granularity': granularity,
-             'speed': speed,
-             'x': x, 'y': y})
-
-
-
-class NewPlayerCommandTests(TestCase):
-    """
-    Tests for L{NewPlayer}.
-    """
-
-    def test_parseArguments(self):
-        """
-        Arguments should be parsed properly.
-        """
-        identifier = 123
-        x = 1
-        y = 2
-        speed = 999
-        from twisted.protocols.amp import _stringsToObjects
-        box = _stringsToObjects({'identifier': str(identifier),
-                                 'x': str(x), 'y': str(y),
-                                 'speed': str(speed)},
-                                NewPlayer.arguments,
-                                None)
-        self.assertEqual(box, {'identifier': identifier,
-                               'x': x, 'y': y, 'speed': speed})
+        objects = _stringsToObjects(self.responseStrings,
+                                    self.command.response, None)
+        self.assertEqual(objects, self.responseObjects)
 
 
     def test_makeArguments(self):
         """
-        Test that arguments are serialized properly.
+        C{self.argumentObjects} should serialize to C{self.argumentStrings}.
         """
-        identifier = 123
-        x = -3
-        y = 2
-        speed = 493
-
         from twisted.protocols.amp import _objectsToStrings
-        strings = _objectsToStrings({'identifier': identifier,
-                                     'x': x, 'y': y,
-                                     'speed': speed},
-                                    NewPlayer.arguments,
-                                    {},
-                                    None)
-        self.assertEqual(strings,
-                         {'identifier': str(identifier),
-                          'x': str(x), 'y': str(y),
-                          'speed': str(speed)})
+        strings = _objectsToStrings(self.argumentObjects,
+                                    self.command.arguments, {}, None)
+        self.assertEqual(strings, self.argumentStrings)
+
+
+    def test_parseArguments(self):
+        """
+        Parsing C{self.argumentStrings} should result in
+        C{self.argumentObjects}.
+        """
+        from twisted.protocols.amp import _stringsToObjects
+        box = _stringsToObjects(self.argumentStrings,
+                                self.command.arguments, None)
+        self.assertEqual(box, self.argumentObjects)
+
+
+
+def stringifyDictValues(schema):
+    """
+    Return a dict like C{schema} but whose values have been str()ed.
+    """
+    return dict([(k, str(v)) for k, v in schema.items()])
+
+
+
+class IntroduceCommandTests(CommandTestMixin, TestCase):
+    """
+    Tests for L{Introduce}.
+    """
+
+    command = Introduce
+
+    responseObjects = {
+        'identifier': 123,
+        'granularity': 20,
+        'speed': 12,
+        'x': -3,
+        'y': 2}
+    responseStrings = stringifyDictValues(responseObjects)
+
+    argumentObjects = argumentStrings = {}
+
+
+
+class NewPlayerCommandTests(CommandTestMixin, TestCase):
+    """
+    Tests for L{NewPlayer}.
+    """
+
+    command = NewPlayer
+
+    argumentObjects = {
+        'identifier': 123,
+        'x': 505,
+        'y': 23489,
+        'speed': 3999}
+
+    argumentStrings = stringifyDictValues(argumentObjects)
+
+    responseObjects = responseStrings = {}
+
+
+
+class SetMyDirectionTests(CommandTestMixin, TestCase):
+    """
+    Tests for L{SetMyDirection}.
+    """
+    command = SetMyDirection
+
+    argumentObjects = {'direction': WEST}
+    argumentStrings = {'direction': Direction().toString(WEST)}
+
+    responseObjects = {'x': 32, 'y': 939}
+    responseStrings = {'x': '32', 'y': '939'}
+
+
+
+class SetDirectionOfTests(CommandTestMixin, TestCase):
+    """
+    Tests for L{SetDirectionOf}.
+    """
+
+    command = SetDirectionOf
+
+    argumentObjects = {
+        'identifier': 595,
+        'direction': WEST,
+        'x': 939,
+        'y': -93999}
+
+    argumentStrings = stringifyDictValues(argumentObjects)
+    argumentStrings['direction'] = Direction().toString(WEST)
+
+    responseObjects = responseStrings = {}
 
 
 
@@ -254,19 +297,23 @@ class ControllerTests(TestCase, PlayerCreationMixin):
 
     def test_setDirectionOf(self):
         """
-        When L{SetDirectionOf} is issued, the L{Player}'s direction should be
-        set.
+        When L{SetDirectionOf} is issued, the L{Player}'s direction and
+        position should be set.
         """
         self.controller.addModelObject(self.identifier, self.player)
 
         responder = self.controller.lookupFunction(SetDirectionOf.commandName)
         direction = Direction().toString(NORTH)
+        x, y = (234, 5985)
         d = responder({
                 'identifier': str(self.identifier),
-                'direction': direction})
+                'direction': direction,
+                'x': str(x),
+                'y': str(y)})
 
         def gotDirectionSetting(ign):
             self.assertEqual(self.player.direction, NORTH)
+            self.assertEqual(self.player.getPosition(), (x, y))
         d.addCallback(gotDirectionSetting)
         return d
 
@@ -344,11 +391,21 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         self.player.setDirection(NORTH)
         self.assertEqual(len(self.calls), 1)
         result, command, kw = self.calls.pop(0)
-        self.assertIdentical(command, SetDirectionOf)
-        self.assertEqual(
-            kw,
-            {"identifier": self.identifier,
-             "direction": NORTH})
+        self.assertIdentical(command, SetMyDirection)
+        self.assertEqual(kw, {"direction": NORTH})
+
+
+    def test_directionChangedResponse(self):
+        """
+        When the server responds to a L{SetMyDirection} command with new a
+        position, the L{NetworkController} should update the L{Player}'s
+        position.
+        """
+        self.controller.directionChanged(self.player)
+        self.assertEquals(len(self.calls), 1)
+        x, y = (123, 5398)
+        self.calls[0][0].callback({"x": x, "y": y})
+        self.assertEqual(self.player.getPosition(), (x, y))
 
 
     def test_newPlayer(self):

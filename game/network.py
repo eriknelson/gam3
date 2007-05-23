@@ -85,19 +85,48 @@ class NewPlayer(Command):
 
 
 
+class SetMyDirection(Command):
+    """
+    Set the direction of my L{Player}.
+
+    This is a client to server command.
+
+    @type direction: L{Direction}
+    @param direction: The new direction.
+
+
+    @return x: The x coordinate of the player at the time the server received
+        the Command.
+    @return y: Same as x, save for the y coordinate.
+    """
+
+    arguments = [('direction', Direction())]
+
+    response = [('x', Integer()),
+                ('y', Integer())]
+
+
 
 class SetDirectionOf(Command):
     """
     Set the direction of a L{Player}.
 
+    This is a server to client command which indicates the new direction and
+    position of a L{Player}.
+
     @param identifier: The unique identifier for the player whose position will
         be set.
     @type direction: L{Direction}.
     @param direction: The new direction of the player.
+    @param x: The x coordinate at the time of change in direction.
+    @param y: The y coordinate at the time of change in direction.
     """
 
     arguments = [('identifier', Integer()),
-                 ('direction', Direction())]
+                 ('direction', Direction()),
+                 ('x', Integer()),
+                 ('y', Integer()),
+                 ]
 
 
 class NetworkController(AMP):
@@ -132,10 +161,19 @@ class NetworkController(AMP):
 
         @param modelObject: The L{Player} whose direction has changed.
         """
-        self.callRemote(
-            SetDirectionOf,
-            identifier=self.identifierByObject(modelObject),
-            direction=modelObject.direction)
+        d = self.callRemote(SetMyDirection, direction=modelObject.direction)
+        d.addCallback(self._gotNewPosition, modelObject)
+
+
+    def _gotNewPosition(self, position, player):
+        """
+        Update a L{Player}'s position based on new data from the server.
+
+        @param player: The L{Player} whose position to change.
+        @param position: Dict with C{x} and C{y} keys, whose values should be
+        integers specifying position.
+        """
+        player.setPosition((position['x'], position['y']))
 
 
     def createInitialPlayer(self, environment, identifier, position,
@@ -209,7 +247,7 @@ class NetworkController(AMP):
     SetPositionOf.responder(setPositionOf)
 
 
-    def setDirectionOf(self, identifier, direction):
+    def setDirectionOf(self, identifier, direction, x, y):
         """
         Set the direction of a local model object.
 
@@ -218,7 +256,9 @@ class NetworkController(AMP):
 
         @see SetDirectionOf
         """
-        self.objectByIdentifier(identifier).setDirection(direction)
+        player = self.objectByIdentifier(identifier)
+        player.setDirection(direction)
+        player.setPosition((x, y))
         return {}
     SetDirectionOf.responder(setDirectionOf)
 
