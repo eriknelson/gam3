@@ -9,7 +9,8 @@ from twisted.internet.task import Clock
 from game.test.util import PlayerCreationMixin, PlayerVisibilityObserver
 from game.environment import Environment
 from game.network import (Direction, Introduce, SetPositionOf, SetDirectionOf,
-                          NetworkController, NewPlayer, SetMyDirection)
+                          NetworkController, NewPlayer, SetMyDirection,
+                          RemovePlayer)
 from game.direction import NORTH, SOUTH, EAST, WEST
 
 
@@ -161,6 +162,20 @@ class NewPlayerCommandTests(CommandTestMixin, TestCase):
 
 
 
+class RemovePlayerCommandTests(CommandTestMixin, TestCase):
+    """
+    Tests for L{RemovePlayer}.
+    """
+
+    command = RemovePlayer
+
+    responseObjects = responseStrings = {}
+
+    argumentObjects = {'identifier': 123}
+    argumentStrings = {'identifier': '123'}
+
+
+
 class SetMyDirectionTests(CommandTestMixin, TestCase):
     """
     Tests for L{SetMyDirection}.
@@ -203,7 +218,6 @@ class ControllerTests(TestCase, PlayerCreationMixin):
     @ivar calls: A list of three-tuples consisting of a Deferred, a command
         subclass, and a dictionary of keyword arguments representing attempted
         Command invocations.
-
     """
     def setUp(self):
         self.calls = []
@@ -430,5 +444,28 @@ class ControllerTests(TestCase, PlayerCreationMixin):
             obj = self.controller.objectByIdentifier(
                 self.controller.identifierByObject(player))
             self.assertIdentical(obj, player)
+        d.addCallback(gotResult)
+        return d
+
+
+    def test_removePlayer(self):
+        """
+        L{NetworkController} should respond to L{RemovePlayer}
+        commands by removing the identified L{Player} object from the
+        L{Environment} and forgetting the L{Player}'s identifier.
+        """
+        environment = Environment(10, self.clock)
+        self.controller.environment = environment
+        observer = PlayerVisibilityObserver()
+        environment.addObserver(observer)
+        identifier = 123
+        self.controller.newPlayer(identifier, 23, 32, 939)
+        responder = self.controller.lookupFunction(RemovePlayer.commandName)
+        d = responder({"identifier": str(identifier)})
+        def gotResult(ignored):
+            self.assertEqual(observer.removedPlayers, observer.createdPlayers)
+            self.assertRaises(
+                KeyError,
+                self.controller.objectByIdentifier, identifier)
         d.addCallback(gotResult)
         return d

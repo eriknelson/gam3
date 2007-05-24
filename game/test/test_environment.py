@@ -153,6 +153,20 @@ class EnvironmentTests(TestCase):
         self.assertEqual(player.seconds, self.environment.seconds)
 
 
+    def test_removePlayer(self):
+        """
+        L{Environment.removePlayer} should broadcast C{playerRemoved}
+        to all registered observers.
+        """
+        position = (1, 2)
+        speed = 20
+        observer = PlayerVisibilityObserver()
+        self.environment.addObserver(observer)
+        player = self.environment.createPlayer(position, speed)
+        self.environment.removePlayer(player)
+        self.assertEqual(observer.createdPlayers, observer.removedPlayers)
+
+
     def test_setInitialPlayer(self):
         """
         L{Environment.setInitialPlayer} should change the environment's

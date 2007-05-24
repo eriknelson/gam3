@@ -179,7 +179,7 @@ class WindowTests(TestCase):
         self.window.screen = self.surface
 
 
-    def test_default_clock(self):
+    def test_defaultClock(self):
         """
         The L{Window}'s default clock should be L{twisted.internet.reactor}.
         """
@@ -339,6 +339,16 @@ class WindowTests(TestCase):
         self.assertEqual(len(self.window.views), 1)
         self.assertTrue(isinstance(self.window.views[0], PlayerView))
         self.assertIdentical(self.window.views[0].player, player)
+
+
+    def test_playerRemoved(self):
+        """
+        L{Window.playerRemoved} should remove the L{PlayerView} for
+        the removed L{Player}.
+        """
+        player = self.environment.createPlayer((1, 2), 3)
+        self.environment.removePlayer(player)
+        self.assertEqual(self.window.views, [])
 
 
 

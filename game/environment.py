@@ -111,3 +111,12 @@ class Environment(SimulationTime):
         for observer in self.observers:
             observer.playerCreated(player)
         return player
+
+
+    def removePlayer(self, player):
+        """
+        Broadcast the removal of the given player to all registered observers.
+        """
+        for observer in self.observers:
+            observer.playerRemoved(player)
+

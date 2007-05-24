@@ -69,11 +69,11 @@ class SetPositionOf(Command):
 
 class NewPlayer(Command):
     """
-    Notify someone that a L{Player} of the given C{identifier} is at
+    Notify someone that a L{Player} with the given C{identifier} is at
     the given position.
 
-    @param identifier: The unique identifier for the player whose position will
-        be set.
+    @param identifier: The unique identifier for the player whose
+        position will, be set.
     @param x: The x position.
     @param y: The y position.
     """
@@ -82,6 +82,17 @@ class NewPlayer(Command):
                  ('x', Integer()),
                  ('y', Integer()),
                  ('speed', Integer())]
+
+
+class RemovePlayer(Command):
+    """
+    Notify someone that a L{Player} with the given C{identifier} has
+    been removed.
+
+    @param identifier: The unique identifier for the player whose position will
+        be set.
+    """
+    arguments = [('identifier', Integer())]
 
 
 
@@ -265,7 +276,7 @@ class NetworkController(AMP):
 
     def newPlayer(self, identifier, x, y, speed):
         """
-        Add a new L{Player} object to the L{Environment}, and start
+        Add a new L{Player} object to the L{Environment} and start
         tracking its identifier on the network.
 
         @param identifier: The network-level identifier of the player.
@@ -273,6 +284,19 @@ class NetworkController(AMP):
         @param y: The y position of the new L{Player}.
         """
         player = self.environment.createPlayer((x, y), speed)
-        self.modelObjects[identifier] = player
+        self.addModelObject(identifier, player)
         return {}
     NewPlayer.responder(newPlayer)
+
+
+    def removePlayer(self, identifier):
+        """
+        Remove an existing L{Player} object from the L{Environment}
+        and stop tracking its identifier on the network.
+
+        @param identifier: The network-level identifier of the player.
+        """
+        self.environment.removePlayer(self.objectByIdentifier(identifier))
+        del self.modelObjects[identifier]
+        return {}
+    RemovePlayer.responder(removePlayer)

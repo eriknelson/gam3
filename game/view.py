@@ -185,6 +185,15 @@ class Window(object):
         self.add(PlayerView(player))
 
 
+    def playerRemoved(self, player):
+        """
+        Remove a L{PlayerView}.
+        """
+        for view in self.views:
+            if view.player is player:
+                self.views.remove(view)
+
+
 
 class PlayerView(object):
     """
