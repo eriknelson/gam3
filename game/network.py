@@ -284,7 +284,7 @@ class NetworkController(AMP):
         @param y: The y position of the new L{Player}.
         """
         player = self.environment.createPlayer((x, y), speed)
-        self.addModelObject(identifier, player)
+        self.modelObjects[identifier] = player
         return {}
     NewPlayer.responder(newPlayer)
 

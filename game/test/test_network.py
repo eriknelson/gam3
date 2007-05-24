@@ -448,6 +448,24 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         return d
 
 
+    def test_newPlayer(self):
+        """
+        The L{NewPlayer} responder should not cause the
+        L{NetworkController} to observe the new player.
+        """
+        self.controller.environment = Environment(10, self.clock)
+        responder = self.controller.lookupFunction(NewPlayer.commandName)
+        identifier = 123
+        d = responder({"identifier": str(identifier),
+                       "x": "1", "y": "2", "speed": "99"})
+        def gotResult(ign):
+            player = self.controller.objectByIdentifier(identifier)
+            player.setDirection(WEST)
+            self.assertEqual(self.calls, [])
+        d.addCallback(gotResult)
+        return d
+
+
     def test_removePlayer(self):
         """
         L{NetworkController} should respond to L{RemovePlayer}
