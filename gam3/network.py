@@ -8,7 +8,8 @@ from twisted.internet.protocol import ServerFactory
 from twisted.internet import reactor
 from twisted.protocols.amp import AMP
 
-from game.network import Introduce, SetDirectionOf, NewPlayer, SetMyDirection
+from game.network import (Introduce, SetDirectionOf, NewPlayer,
+                          SetMyDirection, RemovePlayer)
 
 
 class Gam3Server(AMP):
@@ -32,13 +33,25 @@ class Gam3Server(AMP):
 
     def playerCreated(self, player):
         """
-        Broadcast data about the new player to the client that this
+        Send data about the new player to the client that this
         protocol is connected to with a L{NewPlayer} command.
 
         @param player: The L{Player} that was created.
         """
         self.notifyPlayerCreated(player)
         player.addObserver(self)
+
+
+    def playerRemoved(self, player):
+        """
+        Send data about the removed player to the client that this
+        protocol is connected to with a L{RemovePlayer} command.
+
+        @param player: The L{Player} that was removed.
+        """
+        identifier = self.identifierForPlayer(player)
+        self.callRemote(RemovePlayer, identifier=identifier)
+        del self.players[identifier]
 
 
     def notifyPlayerCreated(self, player):
@@ -124,6 +137,13 @@ class Gam3Server(AMP):
         L{identifierForPlayer}.
         """
         return self.players[identifier]
+
+
+    def connectionLost(self, reason):
+        """
+        Remove this connection's L{Player} from the L{World}.
+        """
+        self.world.removePlayer(self.player)
 
 
 

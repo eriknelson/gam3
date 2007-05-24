@@ -7,9 +7,10 @@ from zope.interface.verify import verifyObject
 from twisted.trial.unittest import TestCase
 from twisted.internet.interfaces import IProtocolFactory
 from twisted.internet.task import Clock
+from twisted.test.proto_helpers import StringTransport
 
 from game.network import (Introduce, SetMyDirection, SetDirectionOf,
-                          Direction, NewPlayer)
+                          Direction, NewPlayer, RemovePlayer)
 from game.player import Player
 from game.direction import WEST, EAST
 
@@ -41,12 +42,14 @@ class FakeWorld(object):
         self.players.append(Player((self.x, self.y), self.speed, lambda: 3))
         return self.players[-1]
 
+
     def addObserver(self, observer):
         """
         Do nothing.
 
         @param observer: A parameter.
         """
+
 
     def getPlayers(self):
         """
@@ -259,6 +262,39 @@ class NetworkTests(TestCase):
                             "direction": WEST,
                             "x": x,
                             "y": y})])
+
+
+    def test_playerRemoved(self):
+        """
+        The L{Gam3Server} should respond to C{playerRemoved} events by
+        sending a L{RemovePlayer} command and no longer tracking the
+        removed L{Player}'s identifier.
+        """
+        world = World()
+        protocol = Gam3Server(world)
+        protocol.callRemote = self.callRemote
+        player = world.createPlayer()
+        protocol.sendExistingPlayers() # to start observing!
+        del self.calls[0]
+        identifier = protocol.identifierForPlayer(player)
+        world.removePlayer(player)
+        self.assertEqual(self.calls,
+                         [(RemovePlayer, {'identifier': identifier})])
+        self.assertRaises(KeyError, protocol.playerForIdentifier, identifier)
+
+
+    def test_connectionLost(self):
+        """
+        The L{Gam3Server} should remove its L{Player} from the
+        L{World} when its connection is lost.
+        """
+        world = World()
+        protocol = Gam3Server(world)
+        protocol.makeConnection(StringTransport())
+        protocol.introduce()
+        player = protocol.player
+        protocol.connectionLost(None)
+        self.assertFalse(player in world.players)
 
 
     def test_setMyDirection(self):
