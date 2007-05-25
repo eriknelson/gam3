@@ -4,6 +4,8 @@ class Player(object):
     """
     An object with a position.
 
+    # XXX Call this class Character.
+
     @ivar _lastPosition: A tuple of (x,y), specifying the last computed
     position of player.
 
@@ -13,7 +15,7 @@ class Player(object):
     @ivar direction: C{NORTH}, C{EAST} the additive inverse of one of these, or
     the sum of any two non-additive-inverse of these four values.
 
-    @ivar movementVelocity: The distance which can be covered when the player
+    @ivar speed: The distance which can be covered when the player
     is in motion (probably in something like cm/sec, if x and y are in cm.
 
     @ivar observers: A C{list} of objects notified about state changes of this
@@ -23,10 +25,10 @@ class Player(object):
     # XXX: This shouldn't be public. (make it a property without a setter?)
     direction = None
 
-    def __init__(self, position, movementVelocity, seconds):
+    def __init__(self, position, speed, seconds):
         self._lastPosition = position
         self._lastDirectionChange = seconds()
-        self.movementVelocity = movementVelocity
+        self.speed = speed
         self.seconds = seconds
         self.observers = []
 
@@ -48,8 +50,8 @@ class Player(object):
         x, y = self._lastPosition
         now = self.seconds()
         elapsedTime = now - self._lastDirectionChange
-        s = (self.direction or 0j) * elapsedTime * self.movementVelocity
-        return x + s.imag, y + s.real
+        s = (self.direction or 0j) * elapsedTime * self.speed
+        return int(x + s.imag), int(y + s.real)
 
 
     def setDirection(self, direction):
@@ -66,7 +68,7 @@ class Player(object):
         self.direction = direction
 
         for observer in self.observers:
-            observer.directionChanged()
+            observer.directionChanged(self)
 
 
     def addObserver(self, observer):

@@ -8,6 +8,9 @@ import pygame.display, pygame.locals
 
 from twisted.python.filepath import FilePath
 from twisted.internet.task import LoopingCall
+from twisted.internet import reactor
+
+from game.controller import PlayerController
 
 
 def loadImage(path):
@@ -65,8 +68,10 @@ class Window(object):
     A top-level PyGame-based window. This acts as a container for
     other view objects.
 
-    @ivar schedule: Something like
-        L{twisted.internet.interfaces.IReactorTime.callLater}.
+#     @ivar environment: The L{game.environment.Environment} which is being
+#         displayed.
+    @ivar clock: Something providing
+        L{twisted.internet.interfaces.IReactorTime}.
     @ivar views: List of current child views.
     @ivar screen: The L{pygame.Surface} which will be drawn to.
     @ivar _paintCall: C{None} or the L{IDelayedCall} provider for a pending
@@ -78,11 +83,13 @@ class Window(object):
     """
 
     def __init__(self,
-                 scheduler=lambda x, y: None,
+                 environment,
+                 clock=reactor,
                  display=pygame.display,
                  event=pygame.event):
+        environment.addObserver(self)
         self.viewport = Viewport((0, 0), (320, 240))
-        self.schedule = scheduler
+        self.clock = clock
         self.display = display
         self.views = []
         self._paintCall = None
@@ -95,7 +102,7 @@ class Window(object):
         Mark the view as out of date and schedule a re-paint.
         """
         if self._paintCall is None:
-            self._paintCall = self.schedule(0, self.paint)
+            self._paintCall = self.clock.callLater(0, self.paint)
 
 
     def add(self, view):
@@ -169,6 +176,22 @@ class Window(object):
         finishedDeferred.addCallback(lambda ign: self.display.quit())
 
         return finishedDeferred
+
+
+    def playerCreated(self, player):
+        """
+        Create a L{PlayerView}.
+        """
+        self.add(PlayerView(player))
+
+
+    def playerRemoved(self, player):
+        """
+        Remove a L{PlayerView}.
+        """
+        for view in self.views:
+            if view.player is player:
+                self.views.remove(view)
 
 
 

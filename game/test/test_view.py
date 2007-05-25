@@ -13,10 +13,9 @@ import pygame
 from pygame.event import Event
 
 from game.view import Viewport, Window, PlayerView, loadImage
-from game.player import Player
 from game.test.util import PlayerCreationMixin
 from game.controller import LEFT
-
+from game.environment import Environment
 
 class MockImage(object):
     """
@@ -167,14 +166,27 @@ class WindowTests(TestCase):
         """
         Create a L{Window} with a mock scheduler and display.
         """
-        self.display = MockDisplay()
+        self.granularity = 20
         self.clock = Clock()
+        self.environment = Environment(self.granularity, self.clock.callLater)
+        self.display = MockDisplay()
         self.event = MockEventSource()
-        self.window = Window(scheduler=self.clock.callLater,
+        self.window = Window(environment=self.environment,
+                             clock=self.clock,
                              display=self.display,
                              event=self.event)
         self.surface = MockSurface()
         self.window.screen = self.surface
+
+
+    def test_defaultClock(self):
+        """
+        The L{Window}'s default clock should be L{twisted.internet.reactor}.
+        """
+        from twisted.internet import reactor
+        window = Window(self.environment)
+        self.assertIdentical(window.clock, reactor)
+
 
 
     def test_add(self):
@@ -316,6 +328,28 @@ class WindowTests(TestCase):
         self.event.events = [Event(pygame.KEYUP, key=pygame.K_LEFT)]
         self.window.handleInput()
         self.assertEquals(controller.ups, [LEFT])
+
+
+    def test_playerCreated(self):
+        """
+        L{Window.playerCreated} should wrap the created player in a
+        L{PlayerView} and add it to itself.
+        """
+        player = self.environment.createPlayer((1, 2), 3)
+        self.assertEqual(len(self.window.views), 1)
+        self.assertTrue(isinstance(self.window.views[0], PlayerView))
+        self.assertIdentical(self.window.views[0].player, player)
+
+
+    def test_playerRemoved(self):
+        """
+        L{Window.playerRemoved} should remove the L{PlayerView} for
+        the removed L{Player}.
+        """
+        player = self.environment.createPlayer((1, 2), 3)
+        self.environment.removePlayer(player)
+        self.assertEqual(self.window.views, [])
+
 
 
 class MockEventSource(object):

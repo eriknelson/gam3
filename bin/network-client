@@ -1,0 +1,5 @@
+#!/usr/bin/python
+import sys
+from game.scripts.network_client import NetworkClient
+
+NetworkClient().main(sys.argv)
