@@ -4,9 +4,11 @@ GAME MILESTONE THREE - TERRAIN
 FUNCTIONAL SPECIFICATION
 ------------------------
 
-The player should be able to move over a world with scenery and props (such as
-hedgerows and puddles).  The player should be rendered on top of the scenery at
-the position he occupies with transparency.
+The player should be able to move over a world with scenery (such as
+hedgerows and puddles).  The player should be rendered on top of the
+scenery at the position he occupies with transparency.  Collision with
+objects in the scene need not block the player's movement.
+
 
 IMPLEMENTATION
 --------------
