@@ -12,10 +12,13 @@ from twisted.python.filepath import FilePath
 import pygame
 from pygame.event import Event
 
-from game.view import Viewport, Window, PlayerView, loadImage
-from game.test.util import PlayerCreationMixin
+from game import __file__ as gameFile
+from game.view import (
+    Viewport, Window, PlayerView, loadImage, TerrainView, GRASS)
+from game.test.util import PlayerCreationMixin, MockWindow, MockSurface
 from game.controller import LEFT
 from game.environment import Environment
+
 
 class MockImage(object):
     """
@@ -32,36 +35,6 @@ class MockImage(object):
         Return the size of this image.
         """
         return self.size
-
-
-
-class MockSurface(object):
-    """
-    An object that is supposed to look like L{pygame.Surface}.
-
-    @ivar blits: A list of two-tuples giving the arguments to all
-    calls to the C{blit} method.
-
-    @ivar fills: A list of three-tuples giving the colors passed to the C{fill}
-    method.
-    """
-    def __init__(self):
-        self.blits = []
-        self.fills = []
-
-
-    def blit(self, surface, position):
-        """
-        Record an attempt to blit another surface onto this one.
-        """
-        self.blits.append((surface, position))
-
-
-    def fill(self, color):
-        """
-        Record an attempt to fill the entire surface with a particular color.
-        """
-        self.fills.append(color)
 
 
 
@@ -102,36 +75,6 @@ class MockView(object):
         Set the C{painted} attribute to True.
         """
         self.painted = True
-
-
-
-class MockWindow(object):
-    """
-    An object that is supposed to look like L{Window}.
-
-    @ivar draws: A list of two-tuples giving the arguments to all
-    calls to the C{draw} method.
-
-    @ivar dirtied: An integer giving the number of calls to the C{dirty}
-    method.
-    """
-    def __init__(self):
-        self.draws = []
-        self.dirtied = 0
-
-
-    def draw(self, image, position):
-        """
-        Record an attempt to render an image at a particular location.
-        """
-        self.draws.append((image, position))
-
-
-    def dirty(self):
-        """
-        Record an attempt to dirty the window.
-        """
-        self.dirtied += 1
 
 
 
@@ -441,3 +384,38 @@ class ImageTests(TestCase):
         self.assertEqual(image.get_at((0, 0)), (0, 0, 0, 0))
         self.assertEqual(image.get_at((1, 0)), (255, 0, 0, 255))
 
+
+
+
+class TerrainViewTest(TestCase):
+    """
+    Tests for L{game.terrain.TerrainView}.
+    """
+
+    def test_paint(self):
+        """
+        The view should blit images representing terrain types at
+        appropriate locations in the view.
+        """
+        window = MockWindow()
+        terrainModel = {(0,0): GRASS}
+        view = TerrainView(terrainModel, lambda x: x)
+        view.setParent(window)
+        view.paint()
+        grassImage = view.getImageForTerrain(GRASS)
+        self.assertEqual(window.draws, [(grassImage, (0, 0))])
+
+
+    def test_getImageForTerrain(self):
+        """
+        There should be a method for getting an image representing a
+        particular terrain type.
+        """
+        grass = object()
+        paths = []
+        def loadImage(path):
+            paths.append(path)
+            return grass
+        view = TerrainView({}, loader=loadImage)
+        self.assertIdentical(view.getImageForTerrain(GRASS), grass)
+        self.assertEqual(paths, ['grass.png'])

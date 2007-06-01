@@ -162,6 +162,31 @@ class NewPlayerCommandTests(CommandTestMixin, TestCase):
 
 
 
+# class SetTerrainCommandTests(CommandTestMixin, TestCase):
+#     """
+#     Tests for L{SetTerrain}.
+#     """
+
+#     command = SetTerrain
+
+#     argumentObjects = {
+#         'terrain': [{'x': 393,
+#                      'y': 292,
+#                      'type': GRASS},
+#                     {'x': 23,
+#                      'y': 99,
+#                      'type': MOUNTAIN}]}
+
+#     argumentStrings = {
+#         'terrain': ('\x00\x01' 'x' '\x00\x03' '393'
+#                     '\x00\x01' 'y' '\x00\x03' '292'
+
+#                      'y': '292',
+
+#     responseObject = responseStrings = {}
+
+
+
 class RemovePlayerCommandTests(CommandTestMixin, TestCase):
     """
     Tests for L{RemovePlayer}.
@@ -487,3 +512,31 @@ class ControllerTests(TestCase, PlayerCreationMixin):
                 self.controller.objectByIdentifier, identifier)
         d.addCallback(gotResult)
         return d
+
+
+    def test_setTerrain(self):
+        """
+        L{NetworkController} should respond to the L{SetTerrain}
+        command by updating its terrain model with the received data.
+        """
+        responder = self.controller.lookupFunction(SetTerrain.commandName)
+        terrainArgument = AmpList([
+                ('x', Integer()),
+                ('y', Integer()),
+                ('type', Terrain())])
+        terrainModel = [
+            {'x': 123, 'y': 456, 'type': GRASS},
+            {'x': 654, 'y': 321, 'type': DESERT}]
+        terrainBytes = terrainArgument.toStringProto(
+            terrainModel,
+            self.controller)
+        d = responder({"terrain": terrainBytes})
+        def gotResult(ignored):
+            self.assertEqual(
+                self.environment.terrain,
+                dict(((element['x'], element['y']), element['type'])
+                      for element
+                      in terrainModel))
+        d.addCallback(gotResult)
+        return d
+

@@ -57,3 +57,63 @@ class PlayerVisibilityObserver(object):
         Record a player removal.
         """
         self.removedPlayers.append(player)
+
+
+
+class MockWindow(object):
+    """
+    An object that is supposed to look like L{Window}.
+
+    @ivar draws: A list of two-tuples giving the arguments to all
+    calls to the C{draw} method.
+
+    @ivar dirtied: An integer giving the number of calls to the C{dirty}
+    method.
+    """
+    def __init__(self):
+        self.draws = []
+        self.dirtied = 0
+
+
+    def draw(self, image, position):
+        """
+        Record an attempt to render an image at a particular location.
+        """
+        self.draws.append((image, position))
+
+
+    def dirty(self):
+        """
+        Record an attempt to dirty the window.
+        """
+        self.dirtied += 1
+
+
+
+class MockSurface(object):
+    """
+    An object that is supposed to look like L{pygame.Surface}.
+
+    @ivar blits: A list of two-tuples giving the arguments to all
+        calls to the C{blit} method.
+
+    @ivar fills: A list of three-tuples giving the colors passed to
+        the C{fill} method.
+    """
+    def __init__(self):
+        self.blits = []
+        self.fills = []
+
+
+    def blit(self, surface, position):
+        """
+        Record an attempt to blit another surface onto this one.
+        """
+        self.blits.append((surface, position))
+
+
+    def fill(self, color):
+        """
+        Record an attempt to fill the entire surface with a particular color.
+        """
+        self.fills.append(color)

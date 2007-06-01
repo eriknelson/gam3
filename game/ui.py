@@ -10,7 +10,7 @@ from twisted.internet.defer import Deferred
 from twisted.internet import reactor
 
 from game.network import NetworkController
-from game.view import PlayerView, Window
+from game.view import TerrainView, PlayerView, Window
 from game.controller import PlayerController
 
 
@@ -76,16 +76,40 @@ class UI(object):
         return factory.connectionNotification
 
 
+    def gotInitialPlayer(self, player):
+        """
+        Hook up a L{PlayerView} and a L{PlayerController} for the
+        given L{Player}.
+        """
+        self.window.add(PlayerView(player))
+        self.window.submitTo(PlayerController(player))
+
+
+    def gotTerrain(self, terrain):
+        """
+        Create a L{TerrainView} for the given terrain and add it to my
+        L{Window}.
+        """
+        self.window.add(TerrainView(terrain, None))
+
+
     def gotIntroduced(self, environment):
         """
         Hook up a user-interface controller for the L{Player} and display the
         L{Environment} in a L{Window}.
+
+        # XXX This would be vastly simplified and improved if the
+        # notion of "initial player" were utterly demolished and in
+        # its place distinct "here is the player whom you shall
+        # control with your volition" and "here is some terrain upon
+        # which aforementioned player ought to tread" events were
+        # handled on this object.
         """
         self.window = self.windowFactory(environment, self.reactor)
+        self.gotTerrain(environment.terrain)
         player = environment.initialPlayer
         if player is not None:
-            self.window.add(PlayerView(player))
-            self.window.submitTo(PlayerController(player))
+            self.gotInitialPlayer(player)
         environment.start()
         return self.window.go()
 

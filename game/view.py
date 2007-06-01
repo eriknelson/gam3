@@ -32,7 +32,7 @@ class Viewport(object):
     This object serves primarily to convert between model and view coordinates.
 
     @ivar modelPosition: two-tuple of ints giving the model position which
-    corresponds to the bottom right corner of the view.
+    corresponds to the bottom left corner of the view.
 
     @ivar viewSize: two-tuple of ints giving the width and height of the view.
     """
@@ -194,23 +194,12 @@ class Window(object):
                 self.views.remove(view)
 
 
-
-class PlayerView(object):
+class ViewMixin(object):
     """
-    A view for a player.
-
-    @ivar player: The L{game.player.Player} object.
+    A mixin which allows subclasses to have a parent.
 
     @ivar parent: The L{Window} to draw to.
     """
-
-    def __init__(self, player):
-        self.player = player
-        # look up the image data based on model object (and whether it
-        # is friday the 13th)
-        self.image = loadImage(
-            FilePath(__file__).sibling("data").child("player.png"))
-
 
     def setParent(self, parent):
         """
@@ -221,10 +210,63 @@ class PlayerView(object):
         self.parent = parent
 
 
+
+class PlayerView(ViewMixin):
+    """
+    A view for a player.
+
+    @ivar player: The L{game.player.Player} object.
+    """
+
+    def __init__(self, player):
+        self.player = player
+        # look up the image data based on model object (and whether it
+        # is friday the 13th)
+        self.image = loadImage(
+            FilePath(__file__).sibling("data").child("player.png"))
+
+
     def paint(self):
         """
         Paint an image of the player at the player's current location.
         """
         self.parent.draw(self.image, self.player.getPosition())
 
+
+
+# Terrain types
+GRASS = 'grass'
+
+
+class TerrainView(ViewMixin):
+    """
+    A view for terrain over a tract of land.
+
+    @type terrain: L{dict}
+    @ivar terrain: The terrain data, mapping positions to terrain types.
+
+    @ivar loader: A callable like L{loadImage}.
+    """
+
+    def __init__(self, terrain, loader):
+        self.terrain = terrain
+        self.loader = loader
+
+
+    def paint(self):
+        """
+        Paint all visible terrain to the L{Window}.
+        """
+        for position, terrainType in self.terrain.iteritems():
+            self.parent.draw(self.getImageForTerrain(terrainType), position)
+
+
+    def getImageForTerrain(self, terrainType):
+        """
+        @param terrainType: The terrain type.
+
+        @rtype: L{Surface}
+        @return: An image which represents the given C{terrainType}.
+        """
+        return self.loader(terrainType + '.png')
 
