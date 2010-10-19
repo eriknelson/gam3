@@ -294,6 +294,18 @@ class WindowTests(TestCase):
         self.assertEqual(self.window.views, [])
 
 
+    def test_playerRemovedIgnoresTerrain(self):
+        """
+        If there is a L{TerrainView} in the L{Window}, L{Window.playerRemoved}
+        ignores it.
+        """
+        terrain = TerrainView(GRASS, loadImage)
+        self.window.add(terrain)
+        player = self.environment.createPlayer((1, 2), 3)
+        self.environment.removePlayer(player)
+        self.assertEqual(self.window.views, [terrain])
+
+
 
 class MockEventSource(object):
     """
@@ -394,8 +406,8 @@ class TerrainViewTest(TestCase):
 
     def test_paint(self):
         """
-        The view should blit images representing terrain types at
-        appropriate locations in the view.
+        The view should blit images representing terrain types at appropriate
+        locations in the view.
         """
         window = MockWindow()
         terrainModel = {(0,0): GRASS}
@@ -408,8 +420,8 @@ class TerrainViewTest(TestCase):
 
     def test_getImageForTerrain(self):
         """
-        There should be a method for getting an image representing a
-        particular terrain type.
+        There should be a method for getting an image representing a particular
+        terrain type.
         """
         grass = object()
         paths = []

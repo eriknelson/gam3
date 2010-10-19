@@ -188,8 +188,9 @@ class Window(object):
         Remove a L{PlayerView}.
         """
         for view in self.views:
-            if view.player is player:
+            if isinstance(view, PlayerView) and view.player is player:
                 self.views.remove(view)
+                return
 
 
 class ViewMixin(object):
