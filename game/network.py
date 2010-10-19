@@ -6,9 +6,8 @@ Network support for Game.
 
 from struct import pack, unpack
 
-from twisted.protocols.amp import AMP, Command, Integer, Argument
+from twisted.protocols.amp import AMP, AmpList, Command, Integer, Argument
 
-from game.player import Player
 from game.environment import Environment
 
 
@@ -48,6 +47,19 @@ class Introduce(Command):
                 ('speed', Integer()),
                 ('x', Integer()),
                 ('y', Integer())]
+
+
+
+Terrain = Integer
+
+class SetTerrain(Command):
+    """
+    Specify the type of terrain at one or more positions.
+    """
+    arguments = [('terrain', AmpList([
+                    ('x', Integer()),
+                    ('y', Integer()),
+                    ('type', Terrain())]))]
 
 
 
@@ -300,3 +312,17 @@ class NetworkController(AMP):
         del self.modelObjects[identifier]
         return {}
     RemovePlayer.responder(removePlayer)
+
+
+    def setTerrain(self, terrain):
+        """
+        Add new terrain information to the environment.
+
+        @param terrain: A sequence of mappings with C{"type"}, C{"x"} and C{"y"}
+            keys.
+        """
+        for info in terrain:
+            self.environment.terrain[info["x"], info["y"]] = info["type"]
+        return {}
+    SetTerrain.responder(setTerrain)
+

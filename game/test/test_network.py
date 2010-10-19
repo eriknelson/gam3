@@ -5,14 +5,15 @@ Tests for L{game.network} (Network support for Game).
 from twisted.trial.unittest import TestCase
 from twisted.internet.defer import Deferred
 from twisted.internet.task import Clock
+from twisted.protocols.amp import AmpList, Integer
 
 from game.test.util import PlayerCreationMixin, PlayerVisibilityObserver
 from game.environment import Environment
 from game.network import (Direction, Introduce, SetPositionOf, SetDirectionOf,
                           NetworkController, NewPlayer, SetMyDirection,
-                          RemovePlayer)
+                          RemovePlayer, SetTerrain, Terrain)
 from game.direction import NORTH, SOUTH, EAST, WEST
-
+from game.terrain import GRASS, MOUNTAIN, DESERT
 
 class DirectionArgumentTests(TestCase):
     """
@@ -42,6 +43,7 @@ class DirectionArgumentTests(TestCase):
                 netrepr = argument.toString(direction)
                 self.assertIdentical(type(netrepr), str)
                 self.assertEqual(argument.fromString(netrepr), direction)
+
 
     def test_stationality(self):
         """
@@ -162,28 +164,33 @@ class NewPlayerCommandTests(CommandTestMixin, TestCase):
 
 
 
-# class SetTerrainCommandTests(CommandTestMixin, TestCase):
-#     """
-#     Tests for L{SetTerrain}.
-#     """
+class SetTerrainCommandTests(CommandTestMixin, TestCase):
+    """
+    Tests for L{SetTerrain}.
+    """
 
-#     command = SetTerrain
+    command = SetTerrain
 
-#     argumentObjects = {
-#         'terrain': [{'x': 393,
-#                      'y': 292,
-#                      'type': GRASS},
-#                     {'x': 23,
-#                      'y': 99,
-#                      'type': MOUNTAIN}]}
+    argumentObjects = {
+        'terrain': [{'x': 393,
+                     'y': 292,
+                     'type': GRASS},
+                    {'x': 23,
+                     'y': 99,
+                     'type': MOUNTAIN}]}
 
-#     argumentStrings = {
-#         'terrain': ('\x00\x01' 'x' '\x00\x03' '393'
-#                     '\x00\x01' 'y' '\x00\x03' '292'
+    argumentStrings = {
+        'terrain': (
+            '\x00\x04' 'type' '\x00\x01' '0'
+            '\x00\x01' 'x'    '\x00\x03' '393'
+            '\x00\x01' 'y'    '\x00\x03' '292'
+            '\x00\x00'
+            '\x00\x04' 'type' '\x00\x01' '1'
+            '\x00\x01' 'x'    '\x00\x02' '23'
+            '\x00\x01' 'y'    '\x00\x02' '99'
+            '\x00\x00')}
 
-#                      'y': '292',
-
-#     responseObject = responseStrings = {}
+    responseObjects = responseStrings = {}
 
 
 
@@ -473,7 +480,8 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         return d
 
 
-    def test_newPlayer(self):
+    # XXX Fix test name and clarify docstring.
+    def test_newPlayer2(self):
         """
         The L{NewPlayer} responder should not cause the
         L{NetworkController} to observe the new player.
@@ -519,6 +527,7 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         L{NetworkController} should respond to the L{SetTerrain}
         command by updating its terrain model with the received data.
         """
+        environment = self.controller.environment = Environment(10, self.clock)
         responder = self.controller.lookupFunction(SetTerrain.commandName)
         terrainArgument = AmpList([
                 ('x', Integer()),
@@ -533,7 +542,7 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         d = responder({"terrain": terrainBytes})
         def gotResult(ignored):
             self.assertEqual(
-                self.environment.terrain,
+                environment.terrain,
                 dict(((element['x'], element['y']), element['type'])
                       for element
                       in terrainModel))
