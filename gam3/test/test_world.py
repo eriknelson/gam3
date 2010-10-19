@@ -36,6 +36,12 @@ class WorldTests(TestCase):
     """
     Tests for L{World}.
     """
+    def test_emptyTerrain(self):
+        """
+        A newly created L{World} has an empty terrain mapping.
+        """
+        self.assertEquals(World().terrain, {})
+
 
     def test_createPlayer(self):
         """

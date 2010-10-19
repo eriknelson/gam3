@@ -39,6 +39,9 @@ class World(SimulationTime):
         object.
 
     @ivar players: A C{list} of L{Player}s in this world.
+
+    @ivar terrain: A C{dict} mapping x, y coordinate tuples to a terrain type
+        for that location.
     """
     def __init__(self, random=random, playerCreationRectangle=None,
                  granularity=1, platformClock=None):
@@ -49,6 +52,7 @@ class World(SimulationTime):
         self.playerCreationRectangle = playerCreationRectangle
         self.observers = []
         self.players = []
+        self.terrain = {}
 
 
     def createPlayer(self):

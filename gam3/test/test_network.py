@@ -13,6 +13,7 @@ from game.network import (Introduce, SetMyDirection, SetDirectionOf,
                           Direction, NewPlayer, RemovePlayer, SetTerrain)
 from game.player import Player
 from game.direction import WEST, EAST
+from game.terrain import GRASS, MOUNTAIN
 
 from gam3.world import World
 from gam3.network import Gam3Factory, Gam3Server
@@ -165,6 +166,11 @@ class NetworkTests(TestCase):
         """
         clock = Clock()
         world = World()
+        world.terrain.update({
+                (0, 0): GRASS,
+                (1, 1): GRASS,
+                (2, 1): MOUNTAIN,
+                })
 
         protocol = Gam3Server(world, clock=clock)
         protocol.callRemote = self.callRemote
@@ -177,7 +183,12 @@ class NetworkTests(TestCase):
 
         self.assertEqual(
             self.getCommands(SetTerrain),
-            [(SetTerrain, {'terrain': [{'type': 'grass', 'x': 0, 'y': 0}]})])
+            [(SetTerrain, {'terrain': [
+                            # XXX This ordering only works by accident.
+                            {'type': 'grass', 'x': 0, 'y': 0},
+                            {'type': 'grass', 'x': 1, 'y': 1},
+                            {'type': 'mountain', 'x': 2, 'y': 1},
+                            ]})])
 
 
     def test_oldPlayerNewPlayer(self):

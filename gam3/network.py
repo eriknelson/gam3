@@ -90,7 +90,13 @@ class Gam3Server(AMP):
         Send information about terrain and connected players.
         """
         self.sendExistingPlayers()
-        self.callRemote(SetTerrain, terrain=[{'x': 0, 'y': 0, 'type': GRASS}])
+        # XXX This is pretty inefficient for any respectable size.  Limit it
+        # somehow.
+        self.callRemote(
+            SetTerrain,
+            terrain=[
+                dict(x=x, y=y, type=type) for
+                ((x, y), type) in self.world.terrain.iteritems()])
 
 
     def sendExistingPlayers(self):
