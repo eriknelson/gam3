@@ -10,6 +10,8 @@ from twisted.python.filepath import FilePath
 from twisted.internet.task import LoopingCall
 from twisted.internet import reactor
 
+from game import __file__ as gameFile
+
 
 def loadImage(path):
     """
@@ -263,5 +265,6 @@ class TerrainView(ViewMixin):
         @rtype: L{Surface}
         @return: An image which represents the given C{terrainType}.
         """
-        return self.loader(terrainType + '.png')
+        return self.loader(
+            FilePath(gameFile).sibling('data').child(terrainType + '.png'))
 

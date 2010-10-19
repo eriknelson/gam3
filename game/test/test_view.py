@@ -12,6 +12,7 @@ from twisted.python.filepath import FilePath
 import pygame
 from pygame.event import Event
 
+from game import __file__ as gameFile
 from game.terrain import GRASS
 from game.view import (
     Viewport, Window, PlayerView, loadImage, TerrainView)
@@ -430,4 +431,5 @@ class TerrainViewTest(TestCase):
             return grass
         view = TerrainView({}, loader=loadImage)
         self.assertIdentical(view.getImageForTerrain(GRASS), grass)
-        self.assertEqual(paths, ['grass.png'])
+        self.assertEqual(
+            paths, [FilePath(gameFile).sibling('data').child('grass.png')])

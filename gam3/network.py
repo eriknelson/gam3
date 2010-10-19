@@ -9,7 +9,8 @@ from twisted.internet import reactor
 from twisted.protocols.amp import AMP
 
 from game.network import (Introduce, SetDirectionOf, NewPlayer,
-                          SetMyDirection, RemovePlayer)
+                          SetMyDirection, RemovePlayer, SetTerrain)
+from game.terrain import GRASS
 
 
 class Gam3Server(AMP):
@@ -74,7 +75,7 @@ class Gam3Server(AMP):
         identifier = self.identifierForPlayer(player)
         x, y = player.getPosition()
         # XXX FIXME BUG: Instead, we should do what twisted:#2671 wants.
-        self.clock.callLater(0, self.sendExistingPlayers)
+        self.clock.callLater(0, self.sendExistingState)
         self.player = player
         return {"granularity": self.world.granularity,
                 "identifier": identifier,
@@ -84,10 +85,18 @@ class Gam3Server(AMP):
     Introduce.responder(introduce)
 
 
+    def sendExistingState(self):
+        """
+        Send information about terrain and connected players.
+        """
+        self.sendExistingPlayers()
+        self.callRemote(SetTerrain, terrain=[{'x': 0, 'y': 0, 'type': GRASS}])
+
+
     def sendExistingPlayers(self):
         """
-        Send L{NewCommand} commands to this client for each existing
-        L{Player} in the L{World}.
+        Send L{NewCommand} commands to this client for each existing L{Player}
+        in the L{World}.
         """
         for player in self.world.getPlayers():
             if player is not self.player:
