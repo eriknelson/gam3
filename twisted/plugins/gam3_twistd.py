@@ -13,6 +13,16 @@ from twisted.application.internet import TCPServer
 from twisted.plugin import IPlugin
 from twisted.python.usage import Options, portCoerce
 
+def _parseTerrain(map):
+    from game.terrain import GRASS, MOUNTAIN, DESERT
+    types = {'G': GRASS, 'M': MOUNTAIN, 'D': DESERT}
+    result = {}
+    for y, line in enumerate(map.splitlines()):
+        for x, ch in enumerate(line):
+            result[x, y] = types[ch]
+    return result
+
+
 class _Gam3Plugin(object):
     """
     Trivial glue class to expose a twistd service.
@@ -26,7 +36,9 @@ class _Gam3Plugin(object):
         optParameters = [
             ('port', 'p', 1337, 'TCP port number to listen on.', portCoerce),
             ('log-directory', 'l', None,
-             'Directory to which to log protocol traffic.')]
+             'Directory to which to log protocol traffic.'),
+            ('terrain', None, None,
+             'Filename containing the terrain data to use.')]
 
     description = "Gam3 MMO server"
 
@@ -41,11 +53,15 @@ class _Gam3Plugin(object):
         from gam3.network import Gam3Factory
         from gam3.world import (
             TCP_SERVICE_NAME, GAM3_SERVICE_NAME, Gam3Service, World)
+        from twisted.python.filepath import FilePath
         from twisted.internet import reactor
         from twisted.application.service import MultiService
         from twisted.protocols.policies import TrafficLoggingFactory
 
         world = World(granularity=100, platformClock=reactor)
+        if options['terrain']:
+            world.terrain.update(
+                _parseTerrain(FilePath(options['terrain']).getContent()))
 
         service = MultiService()
 
