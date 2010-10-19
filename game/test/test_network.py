@@ -181,11 +181,11 @@ class SetTerrainCommandTests(CommandTestMixin, TestCase):
 
     argumentStrings = {
         'terrain': (
-            '\x00\x04' 'type' '\x00\x01' '0'
+            '\x00\x04' 'type' '\x00\x05' 'grass'
             '\x00\x01' 'x'    '\x00\x03' '393'
             '\x00\x01' 'y'    '\x00\x03' '292'
             '\x00\x00'
-            '\x00\x04' 'type' '\x00\x01' '1'
+            '\x00\x04' 'type' '\x00\x08' 'mountain'
             '\x00\x01' 'x'    '\x00\x02' '23'
             '\x00\x01' 'y'    '\x00\x02' '99'
             '\x00\x00')}

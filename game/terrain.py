@@ -1,2 +1,4 @@
 
-GRASS, MOUNTAIN, DESERT = range(3)
+GRASS = 'grass'
+MOUNTAIN = 'mountain'
+DESERT = 'desert'

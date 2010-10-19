@@ -12,9 +12,9 @@ from twisted.python.filepath import FilePath
 import pygame
 from pygame.event import Event
 
-from game import __file__ as gameFile
+from game.terrain import GRASS
 from game.view import (
-    Viewport, Window, PlayerView, loadImage, TerrainView, GRASS)
+    Viewport, Window, PlayerView, loadImage, TerrainView)
 from game.test.util import PlayerCreationMixin, MockWindow, MockSurface
 from game.controller import LEFT
 from game.environment import Environment

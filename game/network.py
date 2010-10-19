@@ -6,7 +6,8 @@ Network support for Game.
 
 from struct import pack, unpack
 
-from twisted.protocols.amp import AMP, AmpList, Command, Integer, Argument
+from twisted.protocols.amp import (
+    AMP, AmpList, Command, Integer, String, Argument)
 
 from game.environment import Environment
 
@@ -50,7 +51,7 @@ class Introduce(Command):
 
 
 
-Terrain = Integer
+Terrain = String
 
 class SetTerrain(Command):
     """

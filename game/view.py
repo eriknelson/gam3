@@ -10,8 +10,6 @@ from twisted.python.filepath import FilePath
 from twisted.internet.task import LoopingCall
 from twisted.internet import reactor
 
-from game.controller import PlayerController
-
 
 def loadImage(path):
     """
@@ -232,10 +230,6 @@ class PlayerView(ViewMixin):
         """
         self.parent.draw(self.image, self.player.getPosition())
 
-
-
-# Terrain types
-GRASS = 'grass'
 
 
 class TerrainView(ViewMixin):
