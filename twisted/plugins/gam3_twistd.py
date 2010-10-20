@@ -19,7 +19,7 @@ def _parseTerrain(map):
     result = {}
     for y, line in enumerate(map.splitlines()):
         for x, ch in enumerate(line):
-            result[x, y] = types[ch]
+            result[x * 64, y * 64] = types[ch]
     return result
 
 

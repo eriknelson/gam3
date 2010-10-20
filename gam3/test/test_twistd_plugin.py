@@ -110,7 +110,7 @@ class TwistdPluginTests(TestCase):
         gam3 = service.getServiceNamed(GAM3_SERVICE_NAME)
         self.assertEquals(
             gam3.world.terrain,
-            {(0, 0): GRASS, (1, 0): GRASS, (2, 0): GRASS,
-             (0, 1): GRASS, (1, 1): GRASS, (2, 1): MOUNTAIN,
-             (0, 2): GRASS, (1, 2): MOUNTAIN, (2, 2): MOUNTAIN,
-             (0, 3): GRASS, (1, 3): MOUNTAIN, (2, 3): DESERT})
+            {(0, 0): GRASS, (64, 0): GRASS, (128, 0): GRASS,
+             (0, 64): GRASS, (64, 64): GRASS, (128, 64): MOUNTAIN,
+             (0, 128): GRASS, (64, 128): MOUNTAIN, (128, 128): MOUNTAIN,
+             (0, 192): GRASS, (64, 192): MOUNTAIN, (128, 192): DESERT})
