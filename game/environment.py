@@ -4,7 +4,7 @@
 Model code for the substrate the game world inhabits.
 """
 
-from twisted.internet.task import Clock
+from twisted.internet.task import LoopingCall, Clock
 
 from game.player import Player
 
@@ -39,27 +39,27 @@ class SimulationTime(Clock):
         self.platformClock = platformClock
 
 
-    def _update(self):
+    def _update(self, frames):
         """
         Advance the simulation time by one "tick", or one over granularity.
         """
-        self.advance(1.0 / self.granularity)
-        self.start()
+        self.advance(1.0 * frames / self.granularity)
 
 
     def start(self):
         """
         Start the simulated advancement of time.
         """
-        self._call = self.platformClock.callLater(1.0 / self.granularity,
-                                                  self._update)
+        self._call = LoopingCall.withCount(self._update)
+        self._call.clock = self.platformClock
+        self._call.start(1.0 / self.granularity, now=False)
 
 
     def stop(self):
         """
         Stop the simulated advancement of time. Clean up all pending calls.
         """
-        self._call.cancel()
+        self._call.stop()
 
 
 
