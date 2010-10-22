@@ -17,7 +17,7 @@ def _parseTerrain(map):
     from game.terrain import GRASS, MOUNTAIN, DESERT
     types = {'G': GRASS, 'M': MOUNTAIN, 'D': DESERT}
     result = {}
-    for y, line in enumerate(map.splitlines()[::-1]):
+    for y, line in enumerate(map.strip().splitlines()[::-1]):
         for x, ch in enumerate(line):
             result[x * 64, y * 64] = types[ch]
     return result

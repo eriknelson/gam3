@@ -114,3 +114,19 @@ class TwistdPluginTests(TestCase):
              (0, 128): GRASS, (64, 128): GRASS, (128, 128): MOUNTAIN,
              (0, 64): GRASS, (64, 64): MOUNTAIN, (128, 64): MOUNTAIN,
              (0, 0): GRASS, (64, 0): MOUNTAIN, (128, 0): DESERT})
+
+
+    def test_ignoreTrailingWhitespace(self):
+        """
+        Trailing whitespace in the terrain file does not affect the resulting
+        terrain data.
+        """
+        terrain = self.mktemp()
+        FilePath(terrain).setContent("GM\nMD\n\n")
+        service = gam3plugin.makeService({
+                "port": 123, 'log-directory': None, 'terrain': terrain})
+        gam3 = service.getServiceNamed(GAM3_SERVICE_NAME)
+        self.assertEquals(
+            gam3.world.terrain,
+            {(0, 64): GRASS, (64, 64): MOUNTAIN,
+             (0, 0): MOUNTAIN, (64, 0): DESERT})
