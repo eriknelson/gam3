@@ -83,9 +83,9 @@ class SimulationTimeTestsMixin(object):
         simulation time updates by the same amount as if the platform clock had
         advanced more smoothly.
         """
-        simulation = self.getSimulationTime(2, self.clock)
-        self.clock.advance(1.0)
-        self.assertEquals(simulation.seconds(), 1.0)
+        simulation = self.simulation
+        self.clock.advance(simulation.granularity * 2)
+        self.assertEquals(simulation.seconds(), simulation.granularity * 2)
 
 
     def test_start(self):
