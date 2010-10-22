@@ -5,8 +5,8 @@ Tests for Game scripts.
 import sys
 
 from twisted.trial.unittest import TestCase
-from twisted.internet.defer import Deferred
 from twisted.python.failure import Failure
+from twisted.internet.defer import Deferred
 from twisted.python import log
 from twisted.internet import reactor
 
@@ -28,8 +28,11 @@ class DoubleLogModule(object):
         self.errors = []
         self.logFiles = []
         self.msg = self.messages.append
-        self.err = self.errors.append
         self.startLogging = self.logFiles.append
+
+
+    def err(self, reason, message=None):
+        self.errors.append((reason, message))
 
 
 
@@ -38,10 +41,12 @@ class DoubleReactor(object):
     A thing which has a L{run} method.
 
     @ivar runs: The number of times L{run} has been called.
+    @ivar stops: The number of times L{stop} has been called.
     """
 
     def __init__(self):
         self.runs = 0
+        self.stops = 0
 
 
     def run(self):
@@ -49,6 +54,13 @@ class DoubleReactor(object):
         Record an attempt to run the reactor.
         """
         self.runs += 1
+
+
+    def stop(self):
+        """
+        Record an attempt to stop the reactor.
+        """
+        self.stops += 1
 
 
 
@@ -114,8 +126,9 @@ class NetworkClientTest(TestCase):
         e = Exception("OH NOES!")
         self.ui.starts[('host', 123)].errback(e)
         self.assertEqual(len(self.logger.errors), 1)
-        error = self.logger.errors[0]
+        error, message = self.logger.errors[0]
         self.assertIdentical(error.value, e)
+        self.assertEquals(message, "Problem running UI")
 
 
     def test_defaults(self):
@@ -128,3 +141,24 @@ class NetworkClientTest(TestCase):
         self.assertIdentical(client.reactor, reactor)
         self.assertIdentical(client.uiFactory, UI)
 
+
+    def test_stop(self):
+        """
+        When the L{Deferred} returned by the UI's C{start} method fires,
+        L{NetworkClient} stops the reactor.
+        """
+        self.networkClient.run('host', 123)
+        self.assertEquals(self.reactor.stops, 0)
+        self.ui.starts[('host', 123)].callback(None)
+        self.assertEquals(self.reactor.stops, 1)
+
+
+    def test_stopOnError(self):
+        """
+        If the L{Deferred} returned by the UI's C{start} method fires with a
+        L{Failure}, the failure is logged and L{NetworkClient} stops the
+        reactor.
+        """
+        self.networkClient.run('host', 123)
+        self.ui.starts[('host', 123)].errback(Failure(RuntimeError("oops")))
+        self.assertEquals(self.reactor.stops, 1)
