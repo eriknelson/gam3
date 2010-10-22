@@ -165,8 +165,7 @@ class Window(object):
         @return: A Deferred that fires when this window is closed by the user.
         """
         pygame.init()
-        self.screen = self.display.set_mode(self.viewport.viewSize,
-                                            pygame.locals.DOUBLEBUF)
+        self.screen = self.display.set_mode(self.viewport.viewSize)
 
         self._renderCall = LoopingCall(self.paint)
         self._renderCall.start(0.01)
@@ -226,5 +225,3 @@ class PlayerView(object):
         Paint an image of the player at the player's current location.
         """
         self.parent.draw(self.image, self.player.getPosition())
-
-
