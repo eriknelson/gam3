@@ -52,6 +52,7 @@ class SimulationTimeTestsMixin(object):
             self.clock.advance(1)
         self.assertEqual(self.simulation.seconds(), 3)
 
+
     def test_granularity(self):
         """
         The C{granularity} parameter to L{SimulationTime} should specify
@@ -74,6 +75,17 @@ class SimulationTimeTestsMixin(object):
         self.assertEqual(simulation.seconds(), 0.5)
         self.clock.advance(0.5)
         self.assertEqual(simulation.seconds(), 1)
+
+
+    def test_framedrop(self):
+        """
+        If the platform clock jumps forward by more than a granule, the
+        simulation time updates by the same amount as if the platform clock had
+        advanced more smoothly.
+        """
+        simulation = self.simulation
+        self.clock.advance(simulation.granularity * 2)
+        self.assertEquals(simulation.seconds(), simulation.granularity * 2)
 
 
     def test_start(self):
