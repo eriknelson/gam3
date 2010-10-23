@@ -27,8 +27,10 @@ class MockImage(object):
 
     @ivar size: A two-tuple of ints giving the pixel dimensions of this image.
     """
-    def __init__(self, size):
+    def __init__(self, label, size, depth=None):
+        self.label = label
         self.size = size
+        self.depth = depth
 
 
     def get_size(self):
@@ -36,6 +38,13 @@ class MockImage(object):
         Return the size of this image.
         """
         return self.size
+
+
+    def convert(self, depth):
+        """
+        Create a new L{MockImage} with the indicated depth.
+        """
+        return MockImage(self.label, self.size, depth)
 
 
 
@@ -235,7 +244,7 @@ class WindowTests(TestCase):
         viewSize = (32, 24)
         self.window.viewport.viewSize = viewSize
         self.window.screen = MockSurface()
-        image = MockImage(imageSize)
+        image = MockImage("foo", imageSize)
         self.window.draw(image, drawPosition)
         self.assertEqual(
             self.window.screen.blits,
@@ -412,7 +421,7 @@ class TerrainViewTest(TestCase):
         """
         window = MockWindow()
         terrainModel = {(0,0): GRASS}
-        view = TerrainView(terrainModel, lambda x: x)
+        view = TerrainView(terrainModel, lambda x: MockImage(x, (64, 64)))
         view.setParent(window)
         view.paint()
         grassImage = view.getImageForTerrain(GRASS)
@@ -424,12 +433,12 @@ class TerrainViewTest(TestCase):
         There should be a method for getting an image representing a particular
         terrain type.
         """
-        grass = object()
         paths = []
         def loadImage(path):
             paths.append(path)
-            return grass
+            return MockImage(path.basename(), (64, 64))
         view = TerrainView({}, loader=loadImage)
-        self.assertIdentical(view.getImageForTerrain(GRASS), grass)
+        image = view.getImageForTerrain(GRASS)
+        self.assertEquals(image.label, "grass.png")
         self.assertEqual(
             paths, [FilePath(gameFile).sibling('data').child('grass.png')])
