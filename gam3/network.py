@@ -101,8 +101,8 @@ class Gam3Server(AMP):
 
     def sendExistingPlayers(self):
         """
-        Send L{NewCommand} commands to this client for each existing L{Player}
-        in the L{World}.
+        Send L{NewPlayer} commands to this client for each existing L{Player} in
+        the L{World}.
         """
         for player in self.world.getPlayers():
             if player is not self.player:
