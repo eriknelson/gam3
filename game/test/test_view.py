@@ -21,33 +21,6 @@ from game.controller import LEFT
 from game.environment import Environment
 
 
-class MockImage(object):
-    """
-    An object that is supposed to look like the thing returned by L{loadImage}.
-
-    @ivar size: A two-tuple of ints giving the pixel dimensions of this image.
-    """
-    def __init__(self, label, size, depth=None):
-        self.label = label
-        self.size = size
-        self.depth = depth
-
-
-    def get_size(self):
-        """
-        Return the size of this image.
-        """
-        return self.size
-
-
-    def convert(self, depth):
-        """
-        Create a new L{MockImage} with the indicated depth.
-        """
-        return MockImage(self.label, self.size, depth)
-
-
-
 class MockDisplay(object):
     """
     An object that is supposed to look like L{pygame.display}.
@@ -65,6 +38,20 @@ class MockDisplay(object):
         self.flipped += 1
 
 
+    def set_mode(self, size, flags=0):
+        """
+        Create a display surface for the given mode.
+        """
+        self._screen = MockSurface("<display>", size)
+        return self._screen
+
+
+    def quit(self):
+        """
+        Ignored.  Should stop things, probably.
+        """
+
+
 
 class MockView(object):
     """
@@ -72,12 +59,26 @@ class MockView(object):
     """
     parent = None
     painted = False
+    _initializedDisplay = None
 
     def setParent(self, parent):
         """
         Set the C{parent} attribute.
         """
         self.parent = parent
+
+
+    def displayInitialized(self, surface):
+        """
+        Called when the display surface is initialized (perhaps more than once).
+
+        This implementation requires that the surface supplied not be C{None}
+        and records it.
+        """
+        if surface is None:
+            raise RuntimeError(
+                "Display should never be None if it is initialized.")
+        self._initializedDisplay = surface
 
 
     def paint(self):
@@ -128,7 +129,7 @@ class WindowTests(TestCase):
                              clock=self.clock,
                              display=self.display,
                              event=self.event)
-        self.surface = MockSurface()
+        self.surface = MockSurface("<display>", (640, 480))
         self.window.screen = self.surface
 
 
@@ -141,14 +142,39 @@ class WindowTests(TestCase):
         self.assertIdentical(window.clock, reactor)
 
 
-
-    def test_add(self):
+    def test_addBeforeGo(self):
         """
-        Adding a view to a Window should set the window as the view's parent.
+        Adding a view to a Window should set the window as the view's parent but
+        not initial the view with a display if L{Window.go} has not been called
+        yet.
         """
         view = MockView()
         self.window.add(view)
         self.assertIdentical(view.parent, self.window)
+
+
+    def test_addAfterGo(self):
+        """
+        If L{Window.go} has been called already, L{Window.add} calls the view's
+        C{initialize} method with the display surface.
+        """
+        view = MockView()
+        self.window.go()
+        self.addCleanup(self.window.stop)
+        self.window.add(view)
+        self.assertIdentical(view._initializedDisplay, self.display._screen)
+
+
+    def test_goAfterAdd(self):
+        """
+        If views have been added to the L{Window}, L{Window.go} causes the
+        display surface tobe passed to their C{displayInitialized} methods.
+        """
+        view = MockView()
+        self.window.add(view)
+        self.window.go()
+        self.addCleanup(self.window.stop)
+        self.assertIdentical(view._initializedDisplay, self.display._screen)
 
 
     def test_dirty(self):
@@ -243,8 +269,9 @@ class WindowTests(TestCase):
         drawPosition = (13, -1)
         viewSize = (32, 24)
         self.window.viewport.viewSize = viewSize
-        self.window.screen = MockSurface()
-        image = MockImage("foo", imageSize)
+        self.window.go()
+        self.addCleanup(self.window.stop)
+        image = MockSurface("foo", imageSize)
         self.window.draw(image, drawPosition)
         self.assertEqual(
             self.window.screen.blits,
@@ -359,8 +386,12 @@ class MockController(object):
 
 class PlayerViewTests(TestCase, PlayerCreationMixin):
     def setUp(self):
+        self.paths = []
+        def loadImage(path):
+            self.paths.append(path)
+            return MockSurface(path.basename(), (64, 64))
         self.player = self.makePlayer((3, 2))
-        self.view = PlayerView(self.player)
+        self.view = PlayerView(self.player, loadImage)
 
 
     def test_initialization(self):
@@ -391,6 +422,20 @@ class PlayerViewTests(TestCase, PlayerCreationMixin):
         self.assertEqual(window.draws, [(self.view.image, (3, 2))])
 
 
+    def test_imageConverted(self):
+        """
+        If the L{PlayerView} knows about a display surface, it converts the
+        player image to a depth matching it.
+        """
+        window = MockWindow()
+        self.view.setParent(window)
+        display = MockSurface("<display>", (0, 0), 12)
+        self.view.displayInitialized(display)
+        self.view.paint()
+        [(image, position)] = window.draws
+        self.assertEquals(image.depth, 12)
+
+
 
 class ImageTests(TestCase):
     """
@@ -409,7 +454,7 @@ class ImageTests(TestCase):
 
 
 
-class TerrainViewTest(TestCase):
+class TerrainViewTests(TestCase):
     """
     Tests for L{game.terrain.TerrainView}.
     """
@@ -420,12 +465,28 @@ class TerrainViewTest(TestCase):
         locations in the view.
         """
         window = MockWindow()
-        terrainModel = {(0,0): GRASS}
-        view = TerrainView(terrainModel, lambda x: MockImage(x, (64, 64)))
+        terrainModel = {(0, 0): GRASS}
+        view = TerrainView(terrainModel, lambda x: MockSurface(x, (64, 64)))
         view.setParent(window)
         view.paint()
         grassImage = view.getImageForTerrain(GRASS)
         self.assertEqual(window.draws, [(grassImage, (0, 0))])
+
+
+    def test_convertImageToDisplayDepth(self):
+        """
+        The image returned by L{TerrainView.getImageForTerrain} has the same
+        color depth as the display surface passed to
+        L{Terrain.displayInitialized}.
+        """
+        depth = 8
+        view = TerrainView({}, lambda x: MockSurface(x, (64, 64)))
+        # Trick it into caching the result with the wrong depth.
+        view.getImageForTerrain(GRASS)
+        # Give it the depth information.
+        view.displayInitialized(MockSurface("<display>", (0, 0), depth))
+        # Make sure it is correct on this later call.
+        self.assertEquals(view.getImageForTerrain(GRASS).depth, depth)
 
 
     def test_getImageForTerrain(self):
@@ -436,7 +497,7 @@ class TerrainViewTest(TestCase):
         paths = []
         def loadImage(path):
             paths.append(path)
-            return MockImage(path.basename(), (64, 64))
+            return MockSurface(path.basename(), (64, 64))
         view = TerrainView({}, loader=loadImage)
         image = view.getImageForTerrain(GRASS)
         self.assertEquals(image.label, "grass.png")

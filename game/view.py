@@ -81,6 +81,7 @@ class Window(object):
     @ivar display: Something like L{pygame.display}.
     @ivar event: Something like L{pygame.event}.
     """
+    screen = None
 
     def __init__(self,
                  environment,
@@ -110,6 +111,8 @@ class Window(object):
         Associate the given view object with this window.
         """
         view.setParent(self)
+        if self.screen is not None:
+            view.displayInitialized(self.screen)
         self.views.append(view)
         self.dirty()
 
@@ -143,7 +146,7 @@ class Window(object):
         """
         for event in self.event.get():
             if event.type == pygame.locals.QUIT:
-                self._inputCall.stop()
+                self.stop()
             elif self.controller and event.type == pygame.KEYDOWN:
                 self.controller.keyDown(event.key)
             elif self.controller and event.type == pygame.KEYUP:
@@ -165,16 +168,27 @@ class Window(object):
         @return: A Deferred that fires when this window is closed by the user.
         """
         pygame.init()
-        self.screen = self.display.set_mode(self.viewport.viewSize)
+        self.screen = self.display.set_mode(
+            self.viewport.viewSize,
+            pygame.locals.DOUBLEBUF)
+        for view in self.views:
+            view.displayInitialized(self.screen)
 
         self._renderCall = LoopingCall(self.paint)
-        self._renderCall.start(0.01)
+        self._renderCall.start(0.01, now=False)
         self._inputCall = LoopingCall(self.handleInput)
-        finishedDeferred = self._inputCall.start(0.04)
+        finishedDeferred = self._inputCall.start(0.04, now=False)
         finishedDeferred.addCallback(lambda ign: self._renderCall.stop())
         finishedDeferred.addCallback(lambda ign: self.display.quit())
 
         return finishedDeferred
+
+
+    def stop(self):
+        """
+        Stop updating this window and handling events for it.
+        """
+        self._inputCall.stop()
 
 
     def playerCreated(self, player):
@@ -216,21 +230,46 @@ class PlayerView(ViewMixin):
     A view for a player.
 
     @ivar player: The L{game.player.Player} object.
+
+    @ivar _image: The L{pygame.Surface} which will be drawn to the display.  An
+        attempt is made to keep the color depth of this image the same as the
+        color depth of the display.
+
+    @ivar image: The L{pygame.Surface} image which corresponds to a player.
+        This is the original image loaded from disk.
     """
 
-    def __init__(self, player):
+    def __init__(self, player, loader=loadImage):
+        """
+        @param loader: A callable like L{loadImage}.
+        """
         self.player = player
         # look up the image data based on model object (and whether it
         # is friday the 13th)
-        self.image = loadImage(
+        self._image = self.image = loader(
             FilePath(__file__).sibling("data").child("player.png"))
+
+
+    def displayInitialized(self, surface):
+        """
+        Convert the loaded player image to the same depth as the given display
+        surface, to help performance of all future paint operations.
+        """
+        bits = surface.get_bitsize()
+        # XXX Only bother converting if we learned a number of bits.  This is a
+        # hack to keep the unit tests happy, where sometimes an actual
+        # pygame.Surface is loaded as self.image and the conversion then fails
+        # because the display is not initialized (which corresponds to the times
+        # when the surface does not know its color depth)
+        if bits is not None:
+            self._image = self.image.convert(bits)
 
 
     def paint(self):
         """
         Paint an image of the player at the player's current location.
         """
-        self.parent.draw(self.image, self.player.getPosition())
+        self.parent.draw(self._image, self.player.getPosition())
 
 
 
@@ -242,11 +281,28 @@ class TerrainView(ViewMixin):
     @ivar terrain: The terrain data, mapping positions to terrain types.
 
     @ivar loader: A callable like L{loadImage}.
+
+    @ivar _depth: The color depth of the display surface or C{None} if it is not
+        yet known.
     """
+    _depth = None
 
     def __init__(self, terrain, loader):
         self.terrain = terrain
         self.loader = loader
+        self._images = {}
+
+
+    def displayInitialized(self, surface):
+        """
+        Capture the display surface color depth so that terrain images can be
+        properly converted.
+
+        Also discard the terrain image cache so all images returned in the
+        future are converted to the correct depth.
+        """
+        self._depth = surface.get_bitsize()
+        self._images.clear()
 
 
     def paint(self):
@@ -264,5 +320,10 @@ class TerrainView(ViewMixin):
         @rtype: L{Surface}
         @return: An image which represents the given C{terrainType}.
         """
-        return self.loader(
-            FilePath(gameFile).sibling('data').child(terrainType + '.png'))
+        if terrainType not in self._images:
+            image = self.loader(
+                FilePath(gameFile).sibling('data').child(terrainType + '.png'))
+            if self._depth is not None:
+                image = image.convert(self._depth)
+            self._images[terrainType] = image
+        return self._images[terrainType]
