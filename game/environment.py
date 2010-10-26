@@ -29,6 +29,9 @@ class SimulationTime(Clock):
         0.5 seconds, and so on. This number directly represents the
         B{model} frames per second.
 
+    @ivar terrain: A C{dict} mapping two-tuples of (x, y) model
+        coordinates to terrain types.
+
     @ivar _call: The result of the latest call to C{scheduler}.
     """
     _call = None
@@ -37,6 +40,14 @@ class SimulationTime(Clock):
         Clock.__init__(self)
         self.granularity = granularity
         self.platformClock = platformClock
+        self.terrain = {}
+
+
+    def setTerrain(self, terrain):
+        """
+        Replace the existing terrain with the given new terrain.
+        """
+        self.terrain = terrain
 
 
     def _update(self, frames):

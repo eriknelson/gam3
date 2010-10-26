@@ -9,7 +9,7 @@ from twisted.internet.protocol import ClientFactory, Protocol
 from twisted.internet.defer import succeed
 from twisted.internet.task import Clock
 
-from game.view import PlayerView
+from game.view import TerrainView, PlayerView, loadImage
 from game.controller import PlayerController
 from game.network import NetworkController
 from game.environment import Environment
@@ -231,21 +231,55 @@ class UITests(TestCase):
         self.assertEqual(starts, [True])
 
 
-    def test_initialPlayer(self):
+    def test_gotIntroducedWithInitialPlayer(self):
         """
-        The initial L{Player} in the L{Environment} should have a view in and a
-        controller on the window.
+        The initial L{Player} in the L{Environment} should be passed
+        to L{UI.gotInitialPlayer}.
         """
         player = object()
         environment = Environment(10, Clock())
         environment.setInitialPlayer(player)
+        initialEvents = []
+        def gotInitialPlayer(player):
+            initialEvents.append(('player', player))
+        def gotTerrain(terrain):
+            initialEvents.append(('terrain', terrain))
+        self.ui.gotInitialPlayer = gotInitialPlayer
+        self.ui.gotTerrain = gotTerrain
         self.ui.gotIntroduced(environment)
-        self.assertEqual(len(self.ui.window.views), 1)
-        self.assertTrue(isinstance(self.ui.window.views[0], PlayerView))
-        self.assertIdentical(self.ui.window.views[0].player, player)
+        self.assertEqual(initialEvents, [('terrain', environment.terrain),
+                                         ('player', player)])
+
+
+    def test_gotInitialPlayer(self):
+        """
+        After L{UI.gotInitialPlayer}, that player should have a view
+        in and a controller on the window.
+        """
+        player = object()
+        window = self.ui.window = StubWindow(None, None)
+        self.ui.gotInitialPlayer(player)
+        self.assertEqual(len(window.views), 1)
+        self.assertTrue(isinstance(window.views[0], PlayerView))
+        self.assertIdentical(window.views[0].player, player)
         self.assertTrue(
-            isinstance(self.ui.window.controller, PlayerController))
-        self.assertIdentical(self.ui.window.controller.player, player)
+            isinstance(window.controller, PlayerController))
+        self.assertIdentical(window.controller.player, player)
+
+
+    def test_gotTerrain(self):
+        """
+        L{UI.gotTerrain} should pass the terrain it receives on to its
+        environment.
+        """
+        terrain = object()
+        window = self.ui.window = StubWindow(None, None)
+        self.ui.environment = Environment(10, Clock())
+        self.ui.gotTerrain(terrain)
+        self.assertEqual(len(window.views), 1)
+        self.assertTrue(isinstance(window.views[0], TerrainView))
+        self.assertIdentical(window.views[0].terrain, terrain)
+        self.assertIdentical(window.views[0].loader, loadImage)
 
 
     def test_noInitialPlayer(self):
@@ -254,6 +288,8 @@ class UITests(TestCase):
         controller should be created.
         """
         environment = Environment(10, Clock())
+        initialPlayers = []
+        self.ui.gotInitialPlayer = initialPlayers.append
         self.ui.gotIntroduced(environment)
-        self.assertEqual(len(self.ui.window.views), 0)
+        self.assertEqual(len(initialPlayers), 0)
         self.assertIdentical(self.ui.window.controller, None)

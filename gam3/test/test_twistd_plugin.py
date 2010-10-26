@@ -7,6 +7,7 @@ from os.path import join
 
 from zope.interface.verify import verifyObject
 
+from twisted.python.filepath import FilePath
 from twisted.trial.unittest import TestCase
 from twisted.application.service import IServiceMaker
 from twisted.application.internet import TCPServer
@@ -16,6 +17,8 @@ from twisted.plugin import IPlugin
 from twisted.plugins.gam3_twistd import gam3plugin
 from gam3.network import Gam3Factory
 from gam3.world import TCP_SERVICE_NAME, GAM3_SERVICE_NAME, Gam3Service, World
+
+from game.terrain import GRASS, MOUNTAIN, DESERT
 
 
 class TwistdPluginTests(TestCase):
@@ -39,7 +42,8 @@ class TwistdPluginTests(TestCase):
         portNumber = 123
         service = gam3plugin.makeService({
                 'port': portNumber,
-                'log-directory': None})
+                'log-directory': None,
+                'terrain': None})
         tcp = service.getServiceNamed(TCP_SERVICE_NAME)
         self.assertTrue(isinstance(tcp, TCPServer))
         gotPortNumber, factory = tcp.args
@@ -60,7 +64,8 @@ class TwistdPluginTests(TestCase):
         logDirectory = self.mktemp()
         service = gam3plugin.makeService({
                 'port': 123,
-                'log-directory': logDirectory})
+                'log-directory': logDirectory,
+                'terrain': None})
         tcp = service.getServiceNamed(TCP_SERVICE_NAME)
         portNumber, factory = tcp.args
         self.assertTrue(isinstance(factory, TrafficLoggingFactory))
@@ -85,7 +90,43 @@ class TwistdPluginTests(TestCase):
         The plugin should construct a World with appropriate defaults.
         """
         from twisted.internet import reactor
-        service = gam3plugin.makeService({"port": 123, 'log-directory': None})
+        service = gam3plugin.makeService({
+                'port': 123,
+                'log-directory': None,
+                'terrain': None})
         world = service.getServiceNamed(GAM3_SERVICE_NAME).world
         self.assertEqual(world.granularity, 100)
         self.assertEqual(world.platformClock, reactor)
+
+
+    def test_terrain(self):
+        """
+        If the terrain option is specified, terrain data is loaded from it.
+        """
+        terrain = self.mktemp()
+        FilePath(terrain).setContent("GGG\nGGM\nGMM\nGMD\n")
+        service = gam3plugin.makeService({
+                "port": 123, 'log-directory': None, 'terrain': terrain})
+        gam3 = service.getServiceNamed(GAM3_SERVICE_NAME)
+        self.assertEquals(
+            gam3.world.terrain,
+            {(0, 192): GRASS, (64, 192): GRASS, (128, 192): GRASS,
+             (0, 128): GRASS, (64, 128): GRASS, (128, 128): MOUNTAIN,
+             (0, 64): GRASS, (64, 64): MOUNTAIN, (128, 64): MOUNTAIN,
+             (0, 0): GRASS, (64, 0): MOUNTAIN, (128, 0): DESERT})
+
+
+    def test_ignoreTrailingWhitespace(self):
+        """
+        Trailing whitespace in the terrain file does not affect the resulting
+        terrain data.
+        """
+        terrain = self.mktemp()
+        FilePath(terrain).setContent("GM\nMD\n\n")
+        service = gam3plugin.makeService({
+                "port": 123, 'log-directory': None, 'terrain': terrain})
+        gam3 = service.getServiceNamed(GAM3_SERVICE_NAME)
+        self.assertEquals(
+            gam3.world.terrain,
+            {(0, 64): GRASS, (64, 64): MOUNTAIN,
+             (0, 0): MOUNTAIN, (64, 0): DESERT})

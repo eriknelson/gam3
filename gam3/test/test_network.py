@@ -10,9 +10,10 @@ from twisted.internet.task import Clock
 from twisted.test.proto_helpers import StringTransport
 
 from game.network import (Introduce, SetMyDirection, SetDirectionOf,
-                          Direction, NewPlayer, RemovePlayer)
+                          Direction, NewPlayer, RemovePlayer, SetTerrain)
 from game.player import Player
 from game.direction import WEST, EAST
+from game.terrain import GRASS, MOUNTAIN
 
 from gam3.world import World
 from gam3.network import Gam3Factory, Gam3Server
@@ -74,6 +75,15 @@ class NetworkTests(TestCase):
         self.calls = []
 
 
+    def getCommands(self, commandClass):
+        """
+        Return a list of all of the commands of the given type which have been
+        sent (and captured by the fake L{callRemote}).
+        """
+        return [
+            (cmd, args) for (cmd, args) in self.calls if cmd is commandClass]
+
+
     def callRemote(self, command, **kw):
         """
         Add a call to C{self.calls}.
@@ -93,11 +103,11 @@ class NetworkTests(TestCase):
 
     def test_introduction(self):
         """
-        The server should respond to L{Introduce} commands with
-        environment parameters and new player's data.
+        The server should respond to L{Introduce} commands with environment
+        parameters and new player data.
         """
         world = FakeWorld()
-        protocol = Gam3Server(world)
+        protocol = Gam3Server(world, clock=Clock())
         responder = protocol.lookupFunction(Introduce.commandName)
         d = responder({})
 
@@ -117,8 +127,7 @@ class NetworkTests(TestCase):
 
     def test_createMorePlayers(self):
         """
-        When a player is created, all existing clients must be
-        notified of it.
+        When a player is created, all existing clients must be notified of it.
         """
         clock = Clock()
         world = World()
@@ -133,15 +142,15 @@ class NetworkTests(TestCase):
         player = world.createPlayer()
         x, y = player.getPosition()
         self.assertEqual(
-            self.calls,
+            self.getCommands(NewPlayer),
             [(NewPlayer, {'identifier': protocol.identifierForPlayer(player),
                           'x': x, 'y': y, 'speed': player.speed})])
 
 
     def test_introductionDoesNotSendNewPlayer(self):
         """
-        When introducing the first character, no L{NewPlayer} command
-        should be sent.
+        When introducing the first character, no L{NewPlayer} command should be
+        sent.
         """
         world = World()
         protocol = Gam3Server(world)
@@ -150,11 +159,42 @@ class NetworkTests(TestCase):
         self.assertEqual(self.calls, [])
 
 
+    def test_sendTerrain(self):
+        """
+        When a player connects and introduces himself, he should shortly
+        thereafter get a L{SetTerrain} for the terrain surrounding his location.
+        """
+        clock = Clock()
+        world = World()
+        world.terrain.update({
+                (0, 0): GRASS,
+                (1, 1): GRASS,
+                (2, 1): MOUNTAIN,
+                })
+
+        protocol = Gam3Server(world, clock=clock)
+        protocol.callRemote = self.callRemote
+
+        protocol.introduce()
+
+        # Advance because SetTerrain isn't sent until later FIXME BUG XXX see
+        # #2671.
+        clock.advance(0)
+
+        self.assertEqual(
+            self.getCommands(SetTerrain),
+            [(SetTerrain, {'terrain': [
+                            # XXX This ordering only works by accident.
+                            {'type': 'grass', 'x': 0, 'y': 0},
+                            {'type': 'grass', 'x': 1, 'y': 1},
+                            {'type': 'mountain', 'x': 2, 'y': 1},
+                            ]})])
+
+
     def test_oldPlayerNewPlayer(self):
         """
-        When a player connects and introduces himself, he should
-        shortly thereafter get L{NewPlayer} commands for all
-        already-connected players.
+        When a player connects and introduces himself, he should shortly
+        thereafter get L{NewPlayer} commands for all already-connected players.
         """
         clock = Clock()
         world = World()
@@ -177,7 +217,8 @@ class NetworkTests(TestCase):
         # see #2671
         clock.advance(0)
 
-        self.assertEqual(len(self.calls), 3)
+        calls = self.getCommands(NewPlayer)
+        self.assertEqual(len(calls), 3)
 
         for newPlayer in [(NewPlayer,
                            {"identifier": protocol.identifierForPlayer(player1),
@@ -198,7 +239,7 @@ class NetworkTests(TestCase):
                             "y": player3.getPosition()[1],
                             }),
                           ]:
-            self.assertTrue(newPlayer in self.calls)
+            self.assertTrue(newPlayer in calls)
 
 
     def test_sendOtherPlayersDirection(self):
@@ -236,7 +277,7 @@ class NetworkTests(TestCase):
         # see #2671
         clock.advance(0)
         protocol.player.setDirection(EAST)
-        self.assertEqual(self.calls, [])
+        self.assertEqual(self.getCommands(SetDirectionOf), [])
 
 
     def test_sendDirectionOfNewPlayers(self):
@@ -266,9 +307,9 @@ class NetworkTests(TestCase):
 
     def test_playerRemoved(self):
         """
-        The L{Gam3Server} should respond to C{playerRemoved} events by
-        sending a L{RemovePlayer} command and no longer tracking the
-        removed L{Player}'s identifier.
+        The L{Gam3Server} should respond to C{playerRemoved} events by sending a
+        L{RemovePlayer} command and no longer tracking the removed L{Player}'s
+        identifier.
         """
         world = World()
         protocol = Gam3Server(world)
@@ -303,7 +344,7 @@ class NetworkTests(TestCase):
         change direction of the specified L{Player} model object.
         """
         world = FakeWorld()
-        protocol = Gam3Server(world)
+        protocol = Gam3Server(world, clock=Clock())
         protocol.introduce()
         responder = protocol.lookupFunction(SetMyDirection.commandName)
         d = responder({"direction": Direction().toString(WEST)})

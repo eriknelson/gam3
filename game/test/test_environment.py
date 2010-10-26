@@ -65,7 +65,7 @@ class SimulationTimeTestsMixin(object):
         self.assertEqual(self.simulation.seconds(), 1)
 
 
-    def test_subsecond_granularity(self):
+    def test_subsecondGranularity(self):
         """
         Same as L{test_granularity}, but with subsecond granularity.
         """
@@ -147,6 +147,24 @@ class EnvironmentTests(TestCase):
         self.clock = Clock()
         self.environment = Environment(1, self.clock)
         self.environment.start()
+
+
+    def test_terrain(self):
+        """
+        An L{Environment} should start with an empty terrain dictionary.
+        """
+        self.assertEqual(self.environment.terrain, {})
+
+
+    def test_setTerrain(self):
+        """
+        L{Environment.setTerrain} should replace the existing terrain
+        dictionary with the specified new terrain dictionary.
+        """
+        replacementTerrain = {(1, 1): object()}
+        self.environment.terrain[(0, 0)] = object()
+        self.environment.setTerrain(replacementTerrain)
+        self.assertEqual(self.environment.terrain, replacementTerrain)
 
 
     def test_createPlayer(self):

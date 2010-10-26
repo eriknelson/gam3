@@ -42,7 +42,8 @@ class NetworkClient(NetworkClientBase):
         # a way that will work if the errback is synchronous
         self.log.startLogging(sys.stdout)
         d = self.uiFactory().start((host, int(port)))
-        d.addErrback(self.log.err)
+        d.addErrback(self.log.err, "Problem running UI")
+        d.addCallback(lambda ignored: self.reactor.stop())
         self.reactor.run()
 
 
