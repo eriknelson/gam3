@@ -126,8 +126,8 @@ class SetMyDirection(Command):
 
     arguments = [('direction', Direction())]
 
-    response = [('x', Integer()),
-                ('y', Integer())]
+    response = [('x', Float()),
+                ('y', Float())]
 
 
 

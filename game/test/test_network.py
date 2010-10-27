@@ -204,7 +204,7 @@ class RemovePlayerCommandTests(CommandTestMixin, TestCase):
     responseObjects = responseStrings = {}
 
     argumentObjects = {'identifier': 123}
-    argumentStrings = {'identifier': '123'}
+    argumentStrings = stringifyDictValues(argumentObjects)
 
 
 
@@ -217,8 +217,8 @@ class SetMyDirectionTests(CommandTestMixin, TestCase):
     argumentObjects = {'direction': RIGHT}
     argumentStrings = {'direction': Direction().toString(RIGHT)}
 
-    responseObjects = {'x': 32, 'y': 939}
-    responseStrings = {'x': '32', 'y': '939'}
+    responseObjects = {'x': 32.5, 'y': 939.5}
+    responseStrings = stringifyDictValues(responseObjects)
 
 
 
