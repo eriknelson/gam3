@@ -154,8 +154,8 @@ class NewPlayerCommandTests(CommandTestMixin, TestCase):
 
     argumentObjects = {
         'identifier': 123,
-        'x': 505,
-        'y': 23489,
+        'x': 505.5,
+        'y': 23489.5,
         'speed': 3999}
 
     argumentStrings = stringifyDictValues(argumentObjects)
