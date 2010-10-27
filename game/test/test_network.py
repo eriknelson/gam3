@@ -232,8 +232,8 @@ class SetDirectionOfTests(CommandTestMixin, TestCase):
     argumentObjects = {
         'identifier': 595,
         'direction': RIGHT,
-        'x': 939,
-        'y': -93999}
+        'x': 939.5,
+        'y': -93999.5}
 
     argumentStrings = stringifyDictValues(argumentObjects)
     argumentStrings['direction'] = Direction().toString(RIGHT)

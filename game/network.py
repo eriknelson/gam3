@@ -148,8 +148,8 @@ class SetDirectionOf(Command):
 
     arguments = [('identifier', Integer()),
                  ('direction', Direction()),
-                 ('x', Integer()),
-                 ('y', Integer()),
+                 ('x', Float()),
+                 ('y', Float()),
                  ]
 
 
