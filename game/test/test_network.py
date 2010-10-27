@@ -21,7 +21,7 @@ class DirectionArgumentTests(TestCase):
     """
     def test_cardinalConversion(self):
         """
-        The cardinal directions should round trip through the L{Complex}
+        The cardinal directions should round trip through the L{Direction}
         argument.
         """
         argument = Direction()
@@ -33,7 +33,7 @@ class DirectionArgumentTests(TestCase):
 
     def test_intercardinalConversion(self):
         """
-        The intercardinal directions should round trip through the L{Complex}
+        The intercardinal directions should round trip through the L{Direction}
         argument.
         """
         argument = Direction()
@@ -137,8 +137,8 @@ class IntroduceCommandTests(CommandTestMixin, TestCase):
         'identifier': 123,
         'granularity': 20,
         'speed': 12,
-        'x': -3,
-        'y': 2}
+        'x': -3.5,
+        'y': 2.5}
     responseStrings = stringifyDictValues(responseObjects)
 
     argumentObjects = argumentStrings = {}

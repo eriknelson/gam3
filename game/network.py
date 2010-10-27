@@ -7,7 +7,7 @@ Network support for Game.
 from struct import pack, unpack
 
 from twisted.protocols.amp import (
-    AMP, AmpList, Command, Integer, String, Argument)
+    AMP, AmpList, Command, Integer, Float, String, Argument)
 
 from game.environment import Environment
 
@@ -46,8 +46,8 @@ class Introduce(Command):
     response = [('identifier', Integer()),
                 ('granularity', Integer()),
                 ('speed', Integer()),
-                ('x', Integer()),
-                ('y', Integer())]
+                ('x', Float()),
+                ('y', Float())]
 
 
 
