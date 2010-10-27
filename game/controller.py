@@ -4,20 +4,19 @@
 Input handling.
 """
 
-from pygame import (K_LEFT as LEFT,
-                    K_RIGHT as RIGHT,
-                    K_UP as UP,
-                    K_DOWN as DOWN)
+from pygame import (
+    K_LEFT, K_RIGHT, K_UP, K_DOWN)
 
-from game.direction import (WEST, EAST, NORTH, SOUTH,
-                            NORTH_SOUTH_ZERO, EAST_WEST_ZERO)
+from game.direction import (
+    FORWARD, BACKWARD, LEFT, RIGHT,
+    FORWARD_ZERO, SIDEWAYS_ZERO)
 
 
 KEYS_TO_DIRECTIONS = {
-    LEFT: WEST,
-    RIGHT: EAST,
-    UP: NORTH,
-    DOWN: SOUTH,
+    K_LEFT: LEFT,
+    K_RIGHT: RIGHT,
+    K_UP: FORWARD,
+    K_DOWN: BACKWARD,
     }
 
 
@@ -65,14 +64,14 @@ class PlayerController(object):
         Given a list of keys (sorted by their press-time), calculate
         the direction that the player should be moving in.
         """
-        northSouthDir = NORTH_SOUTH_ZERO
-        eastWestDir = EAST_WEST_ZERO
+        forwardDir = FORWARD_ZERO
+        sidewaysDir = SIDEWAYS_ZERO
 
         if pressedKeys:
             for key in pressedKeys:
                 direction = KEYS_TO_DIRECTIONS[key]
-                if direction in (NORTH, SOUTH):
-                    northSouthDir = direction
-                if direction in (WEST, EAST):
-                    eastWestDir = direction
-            return northSouthDir + eastWestDir
+                if direction in (FORWARD, BACKWARD):
+                    forwardDir = direction
+                if direction in (LEFT, RIGHT):
+                    sidewaysDir = direction
+            return forwardDir + sidewaysDir

@@ -4,7 +4,7 @@ from twisted.internet import reactor
 from twisted.trial.unittest import TestCase
 
 from game.environment import Environment
-from game.direction import EAST
+from game.direction import RIGHT
 from game.player import Player
 
 from game.controller import PlayerController
@@ -72,7 +72,7 @@ class PlayerTests(FunctionalTestMixin, TestCase):
         window = Window(self.environment)
         view = PlayerView(self.player)
         window.add(view)
-        self.player.setDirection(EAST)
+        self.player.setDirection(RIGHT)
         return window.go()
 
 

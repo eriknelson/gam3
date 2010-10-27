@@ -17,7 +17,7 @@ from game.terrain import GRASS
 from game.view import (
     Viewport, Window, PlayerView, loadImage, TerrainView)
 from game.test.util import PlayerCreationMixin, MockWindow, MockSurface
-from game.controller import LEFT
+from game.controller import K_LEFT
 from game.environment import Environment
 
 
@@ -296,7 +296,7 @@ class WindowTests(TestCase):
         self.window.submitTo(controller)
         self.event.events = [Event(pygame.KEYDOWN, key=pygame.K_LEFT)]
         self.window.handleInput()
-        self.assertEquals(controller.downs, [LEFT])
+        self.assertEquals(controller.downs, [K_LEFT])
 
 
     def test_controllerGetsKeyUpEvents(self):
@@ -307,7 +307,7 @@ class WindowTests(TestCase):
         self.window.submitTo(controller)
         self.event.events = [Event(pygame.KEYUP, key=pygame.K_LEFT)]
         self.window.handleInput()
-        self.assertEquals(controller.ups, [LEFT])
+        self.assertEquals(controller.ups, [K_LEFT])
 
 
     def test_playerCreated(self):

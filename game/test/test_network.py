@@ -12,7 +12,7 @@ from game.environment import Environment
 from game.network import (Direction, Introduce, SetPositionOf, SetDirectionOf,
                           NetworkController, NewPlayer, SetMyDirection,
                           RemovePlayer, SetTerrain, Terrain)
-from game.direction import NORTH, SOUTH, EAST, WEST
+from game.direction import FORWARD, BACKWARD, LEFT, RIGHT
 from game.terrain import GRASS, MOUNTAIN, DESERT
 
 class DirectionArgumentTests(TestCase):
@@ -25,7 +25,7 @@ class DirectionArgumentTests(TestCase):
         argument.
         """
         argument = Direction()
-        for direction in (NORTH, SOUTH, EAST, WEST):
+        for direction in (FORWARD, BACKWARD, LEFT, RIGHT):
             netrepr = argument.toString(direction)
             self.assertIdentical(type(netrepr), str)
             self.assertEqual(argument.fromString(netrepr), direction)
@@ -37,8 +37,8 @@ class DirectionArgumentTests(TestCase):
         argument.
         """
         argument = Direction()
-        for latitudinalSign in (NORTH, SOUTH):
-            for longitudinalSign in (EAST, WEST):
+        for latitudinalSign in (FORWARD, BACKWARD):
+            for longitudinalSign in (LEFT, RIGHT):
                 direction = latitudinalSign + longitudinalSign
                 netrepr = argument.toString(direction)
                 self.assertIdentical(type(netrepr), str)
@@ -214,8 +214,8 @@ class SetMyDirectionTests(CommandTestMixin, TestCase):
     """
     command = SetMyDirection
 
-    argumentObjects = {'direction': WEST}
-    argumentStrings = {'direction': Direction().toString(WEST)}
+    argumentObjects = {'direction': RIGHT}
+    argumentStrings = {'direction': Direction().toString(RIGHT)}
 
     responseObjects = {'x': 32, 'y': 939}
     responseStrings = {'x': '32', 'y': '939'}
@@ -231,12 +231,12 @@ class SetDirectionOfTests(CommandTestMixin, TestCase):
 
     argumentObjects = {
         'identifier': 595,
-        'direction': WEST,
+        'direction': RIGHT,
         'x': 939,
         'y': -93999}
 
     argumentStrings = stringifyDictValues(argumentObjects)
-    argumentStrings['direction'] = Direction().toString(WEST)
+    argumentStrings['direction'] = Direction().toString(RIGHT)
 
     responseObjects = responseStrings = {}
 
@@ -349,7 +349,7 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         self.controller.addModelObject(self.identifier, self.player)
 
         responder = self.controller.lookupFunction(SetDirectionOf.commandName)
-        direction = Direction().toString(NORTH)
+        direction = Direction().toString(FORWARD)
         x, y = (234, 5985)
         d = responder({
                 'identifier': str(self.identifier),
@@ -358,7 +358,7 @@ class ControllerTests(TestCase, PlayerCreationMixin):
                 'y': str(y)})
 
         def gotDirectionSetting(ign):
-            self.assertEqual(self.player.direction, NORTH)
+            self.assertEqual(self.player.direction, FORWARD)
             self.assertEqual(self.player.getPosition(), (x, y))
         d.addCallback(gotDirectionSetting)
         return d
@@ -434,11 +434,11 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         network call by L{NetworkController}.
         """
         self.controller.addModelObject(self.identifier, self.player)
-        self.player.setDirection(NORTH)
+        self.player.setDirection(FORWARD)
         self.assertEqual(len(self.calls), 1)
         result, command, kw = self.calls.pop(0)
         self.assertIdentical(command, SetMyDirection)
-        self.assertEqual(kw, {"direction": NORTH})
+        self.assertEqual(kw, {"direction": FORWARD})
 
 
     def test_directionChangedResponse(self):
@@ -493,7 +493,7 @@ class ControllerTests(TestCase, PlayerCreationMixin):
                        "x": "1", "y": "2", "speed": "99"})
         def gotResult(ign):
             player = self.controller.objectByIdentifier(identifier)
-            player.setDirection(WEST)
+            player.setDirection(RIGHT)
             self.assertEqual(self.calls, [])
         d.addCallback(gotResult)
         return d

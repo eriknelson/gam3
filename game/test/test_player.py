@@ -1,7 +1,6 @@
 from twisted.trial import unittest
 
-from game.direction import NORTH, WEST, SOUTH, EAST
-from game.player import Player
+from game.direction import FORWARD, BACKWARD, LEFT, RIGHT
 from game.test.util import PlayerCreationMixin
 
 
@@ -51,7 +50,7 @@ class PlayerTests(unittest.TestCase, PlayerCreationMixin):
         called after they have been moving around a little bit.
         """
         player = self.makePlayer((1, 2))
-        player.setDirection(NORTH)
+        player.setDirection(FORWARD)
         self.advanceTime(1)
         player.setPosition((-2, 1))
         self.assertEqual(player.getPosition(), (-2, 1))
@@ -75,10 +74,10 @@ class PlayerTests(unittest.TestCase, PlayerCreationMixin):
         of the player's movement.
         """
         player = self.makePlayer((3, 2))
-        player.setDirection(NORTH + EAST)
-        self.assertEqual(player.direction, NORTH + EAST)
-        player.setDirection(SOUTH)
-        self.assertEqual(player.direction, SOUTH)
+        player.setDirection(FORWARD + LEFT)
+        self.assertEqual(player.direction, FORWARD + LEFT)
+        player.setDirection(BACKWARD)
+        self.assertEqual(player.direction, BACKWARD)
 
 
     def test_getPositionWithoutMovementAfterTimePasses(self):
@@ -97,7 +96,7 @@ class PlayerTests(unittest.TestCase, PlayerCreationMixin):
         """
         x, y = 3, -2
         player = self.makePlayer((x, y))
-        player.setDirection(WEST)
+        player.setDirection(LEFT)
         self.advanceTime(1)
         self.assertEqual(player.getPosition(), (x - 1, y))
 
@@ -109,7 +108,7 @@ class PlayerTests(unittest.TestCase, PlayerCreationMixin):
         x, y = 2, 0
         speed = 5
         player = self.makePlayer((x, y), speed=speed)
-        player.setDirection(EAST)
+        player.setDirection(RIGHT)
         self.advanceTime(1)
         self.assertEqual(player.getPosition(), (x + speed, y))
 
@@ -121,11 +120,11 @@ class PlayerTests(unittest.TestCase, PlayerCreationMixin):
         """
         x, y = 3, -2
         player = self.makePlayer((x, y))
-        player.setDirection(EAST)
+        player.setDirection(RIGHT)
         self.advanceTime(1)
         self.assertEqual(player.getPosition(), (x + 1, y))
 
-        player.setDirection(NORTH)
+        player.setDirection(FORWARD)
         self.advanceTime(1)
         self.assertEquals(player.getPosition(), (x + 1, y + 1))
 
@@ -141,7 +140,7 @@ class PlayerTests(unittest.TestCase, PlayerCreationMixin):
         self.advanceTime(1)
         self.assertEqual(player.getPosition(), (x, y))
 
-        player.setDirection(EAST)
+        player.setDirection(RIGHT)
         self.advanceTime(1)
         self.assertEqual(player.getPosition(), (x + 1, y))
 
@@ -159,8 +158,8 @@ class PlayerTests(unittest.TestCase, PlayerCreationMixin):
         player = self.makePlayer(position)
         observer = DirectionObserver()
         player.addObserver(observer)
-        player.setDirection(NORTH)
-        self.assertEqual(observer.changes, [(player, position, NORTH)])
+        player.setDirection(FORWARD)
+        self.assertEqual(observer.changes, [(player, position, FORWARD)])
 
 
     def test_getPositionInsideObserver(self):
@@ -170,7 +169,7 @@ class PlayerTests(unittest.TestCase, PlayerCreationMixin):
         """
         position = (1, 1)
         player = self.makePlayer(position)
-        player.setDirection(EAST)
+        player.setDirection(RIGHT)
         self.advanceTime(1)
         observer = DirectionObserver()
         player.addObserver(observer)

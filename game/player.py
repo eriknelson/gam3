@@ -12,8 +12,9 @@ class Player(object):
     @ivar seconds: A no-argument callable which returns the current time in
     seconds.
 
-    @ivar direction: C{NORTH}, C{EAST} the additive inverse of one of these, or
-    the sum of any two non-additive-inverse of these four values.
+    @ivar direction: C{FORWARD}, C{LEFT}, the additive inverse of one of these,
+        or the sum of any two non-additive-inverse of these four values,
+        indicating the player's current direction of movement.
 
     @ivar speed: The distance which can be covered when the player
     is in motion (probably in something like cm/sec, if x and y are in cm.
@@ -60,8 +61,8 @@ class Player(object):
         observers by invoking their C{directionChanged} method with no
         arguments.
 
-        @param direction: One of the constants C{NORTH}, C{SOUTH}, etc, or
-        C{None} if there is no movement.
+        @param direction: One of the constants C{FORWARD}, C{BACKWARD}, etc, or
+            C{None} if there is no movement.
         """
         self._lastPosition = self.getPosition()
         self._lastDirectionChange = self.seconds()

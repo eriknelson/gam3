@@ -5,9 +5,8 @@ Tests for L{game.controller}.
 
 from twisted.trial.unittest import TestCase
 
-from game.controller import PlayerController, LEFT, RIGHT, UP, DOWN
-from game.player import Player
-from game.direction import NORTH, WEST, EAST, SOUTH
+from game.controller import PlayerController, K_LEFT, K_RIGHT, K_UP, K_DOWN
+from game.direction import FORWARD, BACKWARD, LEFT, RIGHT
 from game.test.util import PlayerCreationMixin
 
 
@@ -31,8 +30,8 @@ class PlayerControllerTests(TestCase, PlayerCreationMixin):
 
     def _directionTest(self, keys, direction):
         """
-        Test helper for intercardinal direction setting, e.g. northeast,
-        southwest, etc.
+        Test helper for intercardinal direction setting, e.g. forward and left,
+        backwards and right, etc.
 
         @param keys: The keypresses to simulate.
         @param direction: The direction that should result.
@@ -45,113 +44,112 @@ class PlayerControllerTests(TestCase, PlayerCreationMixin):
         self.assertEqual(self.player.direction, None)
 
 
-    def test_moveWest(self):
+    def test_moveLeft(self):
         """
-        L{PlayerController.keyDown} should set the player's direction to WEST
-        if the input is LEFT.
+        L{PlayerController.keyDown} should set the player's direction to LEFT if
+        the input is K_LEFT.
         """
-        self._directionTest([LEFT], WEST)
+        self._directionTest([K_LEFT], LEFT)
 
 
-    def test_moveEast(self):
+    def test_moveRight(self):
         """
-        Similar to L{test_moveWest}, but for eastearn movement.
+        Similar to L{test_moveLeft}, but for rightward movement.
         """
-        return self._directionTest([RIGHT], EAST)
+        return self._directionTest([K_RIGHT], RIGHT)
 
 
-    def test_moveNorth(self):
+    def test_moveForward(self):
         """
-        Similar to L{test_moveWest}, but for northern movement.
+        Similar to L{test_moveLeft}, but for forward movement.
         """
-        return self._directionTest([UP], NORTH)
+        return self._directionTest([K_UP], FORWARD)
 
 
-    def test_moveSouth(self):
+    def test_moveBackward(self):
         """
-        Similar to L{test_moveWest}, but for southern movement.
+        Similar to L{test_moveLeft}, but for backward movement.
         """
-        return self._directionTest([DOWN], SOUTH)
+        return self._directionTest([K_DOWN], BACKWARD)
 
 
-    def test_moveNortheast(self):
+    def test_moveForwardAndRight(self):
         """
-        Similar to L{test_moveWest}, but for northeasterly movement.
+        Similar to L{test_moveLeft}, but for forward, rightward movement.
         """
-        self._directionTest([UP, RIGHT], NORTH + EAST)
-        self._directionTest([RIGHT, UP], NORTH + EAST)
+        self._directionTest([K_UP, K_RIGHT], FORWARD + RIGHT)
+        self._directionTest([K_RIGHT, K_UP], FORWARD + RIGHT)
 
 
-    def test_moveNorthwest(self):
+    def test_moveForwardAndLeft(self):
         """
-        Similar to L{test_moveWest}, but for northwesterly movement.
+        Similar to L{test_moveLeft}, but for forward, leftward movement.
         """
-        self._directionTest([UP, LEFT], NORTH + WEST)
-        self._directionTest([LEFT, UP], NORTH + WEST)
+        self._directionTest([K_UP, K_LEFT], FORWARD + LEFT)
+        self._directionTest([K_LEFT, K_UP], FORWARD + LEFT)
 
 
-    def test_moveSouthwest(self):
+    def test_moveBackwardAndLeft(self):
         """
-        Similar to L{test_moveWest}, but for southwesterly movement.
+        Similar to L{test_moveLeft}, but for backward, leftward movement.
         """
-        self._directionTest([DOWN, LEFT], SOUTH + WEST)
-        self._directionTest([LEFT, DOWN], SOUTH + WEST)
+        self._directionTest([K_DOWN, K_LEFT], BACKWARD + LEFT)
+        self._directionTest([K_LEFT, K_DOWN], BACKWARD + LEFT)
 
 
-    def test_moveSoutheast(self):
+    def test_moveBackwardAndRight(self):
         """
-        Similar to L{test_moveWest}, but for southeasterly movement.
+        Similar to L{test_moveLeft}, but for backward, rightward movement.
         """
-        self._directionTest([DOWN, RIGHT], SOUTH + EAST)
-        self._directionTest([RIGHT, DOWN], SOUTH + EAST)
+        self._directionTest([K_DOWN, K_RIGHT], BACKWARD + RIGHT)
+        self._directionTest([K_RIGHT, K_DOWN], BACKWARD + RIGHT)
 
 
-    def test_moveEastThenWest(self):
+    def test_moveLeftThenRight(self):
         """
-        Holding left and then holding right should make the player go east.
+        Holding left and then holding right should make the player go right.
         """
-        self.controller.keyDown(LEFT)
-        self.controller.keyDown(RIGHT)
-        self.assertEqual(self.player.direction, EAST)
+        self.controller.keyDown(K_LEFT)
+        self.controller.keyDown(K_RIGHT)
+        self.assertEqual(self.player.direction, RIGHT)
 
 
-    def test_moveEastThenWestThenDropEast(self):
+    def test_moveLeftThenRightThenDropLeft(self):
         """
-        Holding left, then holding right, then releasing left, should
-        leave the player moving EAST.
+        Holding left, then holding right, then releasing left, should leave the
+        player moving right.
         """
-        self.controller.keyDown(LEFT)
-        self.controller.keyDown(RIGHT)
-        self.controller.keyUp(LEFT)
-        self.assertEqual(self.player.direction, EAST)
+        self.controller.keyDown(K_LEFT)
+        self.controller.keyDown(K_RIGHT)
+        self.controller.keyUp(K_LEFT)
+        self.assertEqual(self.player.direction, RIGHT)
 
 
-    def test_moveWestThenEastThenDropEast(self):
+    def test_moveLeftThenRightThenDropRight(self):
         """
-        Holding left, then holding right, then releasing right, should
-        leave the player moving WEST.
+        Holding left, then holding right, then releasing right, should leave the
+        player moving left.
         """
-        self.controller.keyDown(LEFT)
-        self.controller.keyDown(RIGHT)
-        self.controller.keyUp(RIGHT)
-        self.assertEqual(self.player.direction, WEST)
+        self.controller.keyDown(K_LEFT)
+        self.controller.keyDown(K_RIGHT)
+        self.controller.keyUp(K_RIGHT)
+        self.assertEqual(self.player.direction, LEFT)
 
 
-    def test_moveWestThenEastThenNorth(self):
+    def test_moveLeftThenRightThenForward(self):
         """
-        Holding left, then holding right, then holding up should leave
-        the player moving NORTH + EAST.
+        Holding left, then holding right, then holding up should leave the
+        player moving forward and rightward.
 
-        NOTE: This will not actually work in many hardware
-        configurations, probably because either keyboard hardware does
-        not send enough simultaneous keydown events or the keyboard
-        driver does not handle them.
+        NOTE: This will not actually work in many hardware configurations,
+        probably because either keyboard hardware does not send enough
+        simultaneous keydown events or the keyboard driver does not handle them.
 
         """
-        self.controller.keyDown(LEFT)
-        self.controller.keyDown(RIGHT)
-        self.controller.keyDown(UP)
-        self.assertEqual(self.player.direction, NORTH + EAST)
+        self.controller.keyDown(K_LEFT)
+        self.controller.keyDown(K_RIGHT)
+        self.controller.keyDown(K_UP)
+        self.assertEqual(self.player.direction, FORWARD + RIGHT)
 
 
 
@@ -181,22 +179,21 @@ class CalculateDirectionTest(TestCase, PlayerCreationMixin):
         Any arrow key in isolation should return the appropriate
         cardinal direction.
         """
-        self.assertEqual(self.controller.calculateDirection([RIGHT]), EAST)
-        self.assertEqual(self.controller.calculateDirection([LEFT]), WEST)
-        self.assertEqual(self.controller.calculateDirection([UP]), NORTH)
-        self.assertEqual(self.controller.calculateDirection([DOWN]), SOUTH)
+        self.assertEqual(self.controller.calculateDirection([K_RIGHT]), RIGHT)
+        self.assertEqual(self.controller.calculateDirection([K_LEFT]), LEFT)
+        self.assertEqual(self.controller.calculateDirection([K_UP]), FORWARD)
+        self.assertEqual(self.controller.calculateDirection([K_DOWN]), BACKWARD)
 
 
     def test_calculateDirectionIntercardinal(self):
         """
-        Any non-opposing arrow keys held simultaneously should produce
-        the intercardinal direction between their associated
-        directions.
+        Any non-opposing arrow keys held simultaneously should produce the
+        intercardinal direction between their associated directions.
         """
-        directions = [((UP, RIGHT), NORTH + EAST),
-                      ((UP, LEFT), NORTH + WEST),
-                      ((DOWN, LEFT), SOUTH + WEST),
-                      ((DOWN, RIGHT), SOUTH + EAST),
+        directions = [((K_UP, K_RIGHT), FORWARD + RIGHT),
+                      ((K_UP, K_LEFT), FORWARD + LEFT),
+                      ((K_DOWN, K_LEFT), BACKWARD + LEFT),
+                      ((K_DOWN, K_RIGHT), BACKWARD + RIGHT),
                       ]
 
         for arrows, answer in directions:
@@ -208,4 +205,4 @@ class CalculateDirectionTest(TestCase, PlayerCreationMixin):
 
 
     # XXX Test that PRESS-RIGHT, PRESS-DOWN, RELEASE-DOWN leaves the
-    # player going EAST.
+    # player going RIGHT.
