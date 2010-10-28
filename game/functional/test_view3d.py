@@ -26,3 +26,20 @@ class ThreeDeeTests(FunctionalTestMixin, TestCase):
         self.window.scene.add(
             Sphere(Vertex(0, 0, -3), 0.5, Color(1.0, 0.0, 0.0)))
         return self.window.go()
+
+
+    def test_cameraTranslationX(self):
+        """
+        A red circle should appear in the center of the window, then move
+        smoothly to the left, then move smoothly back to the center.
+        """
+        sphere = Sphere(Vertex(0, 0, -3), 0.5, Color(1.0, 0.0, 0.0))
+        self.window.scene.add(sphere)
+        def move(amount):
+            sphere.center.x += amount
+        for i in range(100):
+            reactor.callLater(1 + (i / 100.0), move, -0.01)
+        for i in range(100):
+            reactor.callLater(2 + (i / 100.0), move, 0.01)
+        return self.window.go()
+

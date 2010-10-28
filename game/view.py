@@ -7,10 +7,10 @@ View code!
 from __future__ import division
 
 from OpenGL.GL import (
-    GL_PROJECTION, GL_MODELVIEW,
+    GL_PROJECTION, GL_MODELVIEW, GL_COLOR_BUFFER_BIT,
     glMatrixMode, glViewport,
     glLoadIdentity, glPushMatrix, glPopMatrix,
-    glColor,
+    glClear, glColor,
     glTranslate)
 from OpenGL.GLU import (
     gluPerspective, gluNewQuadric, gluSphere)
@@ -159,12 +159,17 @@ class Viewport(object):
         Set up the viewport.
         """
         x, y = self.viewSize
+
+        # Create the OpenGL viewport, setting the size of the window (in pixels)
+        # and defining how the scene is projected onto it.
         glViewport(0, 0, x, y)
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
+        # Field of view, aspect ratio, near clipping, far clipping
         gluPerspective(60.0, x / y, 0.5, 1000.0)
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
+
 
 
 class Window(object):
@@ -240,6 +245,8 @@ class Window(object):
                 self._paintCall.cancel()
             self._paintCall = None
 
+        # Clear anything already rendered.
+        glClear(GL_COLOR_BUFFER_BIT)
         self.scene.paint()
         self.display.flip()
 
