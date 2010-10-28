@@ -11,7 +11,7 @@ from OpenGL.GL import (
     glMatrixMode, glViewport,
     glLoadIdentity, glPushMatrix, glPopMatrix,
     glClear, glColor,
-    glTranslate)
+    glTranslate, glRotate)
 from OpenGL.GLU import (
     gluPerspective, gluNewQuadric, gluSphere)
 
@@ -24,6 +24,18 @@ from twisted.internet import reactor
 from epsilon.structlike import record
 
 from game import __file__ as gameFile
+
+
+def loadImage(path):
+    """
+    Load an image from the L{FilePath} into a L{pygame.Surface}.
+
+    @type path: L{FilePath}
+
+    @rtype: L{pygame.Surface}
+    """
+    return pygame.image.load(path.path)
+
 
 
 class Color(record("red green blue")):
@@ -63,17 +75,6 @@ class Sphere(record("center radius color")):
         glPopMatrix()
 
 
-def loadImage(path):
-    """
-    Load an image from the L{FilePath} into a L{pygame.Surface}.
-
-    @type path: L{FilePath}
-
-    @rtype: L{pygame.Surface}
-    """
-    return pygame.image.load(path.path)
-
-
 
 class ViewMixin(object):
     """
@@ -91,6 +92,25 @@ class ViewMixin(object):
         self.parent = parent
 
 
+class StaticCamera(record('position orientation')):
+    """
+    The viewing perspective from which the scene will be observed.
+
+    @ivar position: A L{Vertex} giving the coordinates in the space of the
+        perspective.
+
+    @ivar orientation: A L{Vertex} giving three rotations to orient the
+        perspective.
+    """
+    def paint(self):
+        """
+        """
+        glRotate(self.orientation.x, 1.0, 0.0, 0.0)
+        glRotate(self.orientation.y, 0.0, 1.0, 0.0)
+        glRotate(self.orientation.z, 0.0, 0.0, 1.0)
+        glTranslate(-self.position.x, -self.position.y, -self.position.z)
+
+
 
 class Scene(ViewMixin):
     """
@@ -99,6 +119,8 @@ class Scene(ViewMixin):
     @ivar _items: A C{list} of things which are part of this scene and which
         will be rendered when this scene is rendered.
     """
+    camera = None
+
     def __init__(self):
         self._items = []
 
@@ -112,6 +134,12 @@ class Scene(ViewMixin):
 
 
     def paint(self):
+        # First put things back to the unmodified state.
+        glLoadIdentity()
+        # Then set up the camera transformations.
+        if self.camera is not None:
+            self.camera.paint()
+        # Then put everything into the scene.
         for item in self._items:
             item.paint()
 
@@ -206,6 +234,8 @@ class Window(object):
         self.controller = None
         self.event = event
         self.scene = Scene()
+        self.scene.camera = StaticCamera(Vertex(0, 0, 0), Vertex(0, 0, 0))
+
 
 
     def dirty(self):
@@ -281,7 +311,7 @@ class Window(object):
         pygame.init()
         self.screen = self.display.set_mode(
             self.viewport.viewSize,
-            pygame.locals.OPENGL)
+            pygame.locals.DOUBLEBUF | pygame.locals.OPENGL)
         self.viewport.initialize()
         for view in self.views:
             view.displayInitialized(self.screen)
