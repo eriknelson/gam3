@@ -134,6 +134,9 @@ class Scene(ViewMixin):
 
 
     def paint(self):
+        """
+        Display this scene.
+        """
         # First put things back to the unmodified state.
         glLoadIdentity()
         # Then set up the camera transformations.
