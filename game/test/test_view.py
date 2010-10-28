@@ -15,6 +15,7 @@ from pygame.event import Event
 from game import __file__ as gameFile
 from game.terrain import GRASS
 from game.view import (
+    Vertex, Color, Scene,
     Viewport, Window, PlayerView, loadImage, TerrainView)
 from game.test.util import PlayerCreationMixin, MockWindow, MockSurface
 from game.controller import K_LEFT
@@ -503,3 +504,60 @@ class TerrainViewTests(TestCase):
         self.assertEquals(image.label, "grass.png")
         self.assertEqual(
             paths, [FilePath(gameFile).sibling('data').child('grass.png')])
+
+
+
+class VertexTests(TestCase):
+    """
+    Tests for L{Vertex}.
+    """
+    def test_attributes(self):
+        """
+        The three arguments passed to the L{Vertex} initializer are bound to its
+        C{x}, C{y}, and C{z} attributes.
+        """
+        v = Vertex(1, 2, 3)
+        self.assertEquals(v.x, 1)
+        self.assertEquals(v.y, 2)
+        self.assertEquals(v.z, 3)
+
+
+
+class ColorTests(TestCase):
+    """
+    Tests for L{Color}.
+    """
+    def test_attributes(self):
+        """
+        The three arguments passed to the L{Color} initializer are bound to its
+        C{red}, C{green}, and C{blue} attributes.
+        """
+        c = Color(1, 2, 3)
+        self.assertEquals(c.red, 1)
+        self.assertEquals(c.green, 2)
+        self.assertEquals(c.blue, 3)
+
+
+
+class SceneTests(TestCase):
+    """
+    Tests for L{Scene}.
+    """
+    def test_paint(self):
+        """
+        L{Scene.paint} calls C{paint} on all objects previously added to it.
+        """
+        class Paintable(object):
+            paints = 0
+
+            def paint(self):
+                self.paints += 1
+
+        p = Paintable()
+        scene = Scene()
+        scene.add(p)
+        self.assertEquals(p.paints, 0)
+        scene.paint()
+        self.assertEquals(p.paints, 1)
+        scene.paint()
+        self.assertEquals(p.paints, 2)

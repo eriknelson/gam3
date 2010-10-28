@@ -4,13 +4,63 @@
 View code!
 """
 
+from __future__ import division
+
+from OpenGL.GL import (
+    GL_PROJECTION, GL_MODELVIEW,
+    glMatrixMode, glViewport,
+    glLoadIdentity, glPushMatrix, glPopMatrix,
+    glColor,
+    glTranslate)
+from OpenGL.GLU import (
+    gluPerspective, gluNewQuadric, gluSphere)
+
 import pygame.display, pygame.locals
 
 from twisted.python.filepath import FilePath
 from twisted.internet.task import LoopingCall
 from twisted.internet import reactor
 
+from epsilon.structlike import record
+
 from game import __file__ as gameFile
+
+
+class Color(record("red green blue")):
+    """
+    An RGB color.
+    """
+
+
+
+class Vertex(record("x y z")):
+    """
+    A coordinate in three dimensional space.
+    """
+
+
+
+class Sphere(record("center radius color")):
+    """
+    A renderer for a sphere.
+
+    @ivar center: A L{Vertex} giving the center of this sphere.
+
+    @ivar radius: A number giving the radius of this sphere.
+
+    @ivar color: A L{Color} giving the color of this sphere.
+    """
+    def __init__(self, *args, **kwargs):
+        super(Sphere, self).__init__(*args, **kwargs)
+        self.quad = gluNewQuadric()
+
+
+    def paint(self):
+        glPushMatrix()
+        glColor(self.color.red, self.color.green, self.color.blue)
+        glTranslate(self.center.x, self.center.y, self.center.z)
+        gluSphere(self.quad, self.radius, 25, 25)
+        glPopMatrix()
 
 
 def loadImage(path):
@@ -22,6 +72,48 @@ def loadImage(path):
     @rtype: L{pygame.Surface}
     """
     return pygame.image.load(path.path)
+
+
+
+class ViewMixin(object):
+    """
+    A mixin which allows subclasses to have a parent.
+
+    @ivar parent: The L{Window} to draw to.
+    """
+
+    def setParent(self, parent):
+        """
+        Set the C{parent} attribute.
+
+        Do not call this unless you are L{Window.add}.
+        """
+        self.parent = parent
+
+
+
+class Scene(ViewMixin):
+    """
+    A collection of things to be rendered.
+
+    @ivar _items: A C{list} of things which are part of this scene and which
+        will be rendered when this scene is rendered.
+    """
+    def __init__(self):
+        self._items = []
+
+
+    def displayInitialized(self, display):
+        pass
+
+
+    def add(self, item):
+        self._items.append(item)
+
+
+    def paint(self):
+        for item in self._items:
+            item.paint()
 
 
 
@@ -62,6 +154,18 @@ class Viewport(object):
             self.viewSize[1] - (position[1] - self.modelPosition[1]))
 
 
+    def initialize(self):
+        """
+        Set up the viewport.
+        """
+        x, y = self.viewSize
+        glViewport(0, 0, x, y)
+        glMatrixMode(GL_PROJECTION)
+        glLoadIdentity()
+        gluPerspective(60.0, x / y, 0.5, 1000.0)
+        glMatrixMode(GL_MODELVIEW)
+        glLoadIdentity()
+
 
 class Window(object):
     """
@@ -96,6 +200,7 @@ class Window(object):
         self._paintCall = None
         self.controller = None
         self.event = event
+        self.scene = Scene()
 
 
     def dirty(self):
@@ -134,9 +239,8 @@ class Window(object):
             if self._paintCall.active():
                 self._paintCall.cancel()
             self._paintCall = None
-        self.screen.fill((0, 0, 0))
-        for view in self.views:
-            view.paint()
+
+        self.scene.paint()
         self.display.flip()
 
 
@@ -170,7 +274,8 @@ class Window(object):
         pygame.init()
         self.screen = self.display.set_mode(
             self.viewport.viewSize,
-            pygame.locals.DOUBLEBUF)
+            pygame.locals.OPENGL)
+        self.viewport.initialize()
         for view in self.views:
             view.displayInitialized(self.screen)
 
@@ -206,23 +311,6 @@ class Window(object):
             if isinstance(view, PlayerView) and view.player is player:
                 self.views.remove(view)
                 return
-
-
-class ViewMixin(object):
-    """
-    A mixin which allows subclasses to have a parent.
-
-    @ivar parent: The L{Window} to draw to.
-    """
-
-    def setParent(self, parent):
-        """
-        Set the C{parent} attribute.
-
-        Do not call this unless you are L{Window.add}.
-        """
-        self.parent = parent
-
 
 
 class PlayerView(ViewMixin):

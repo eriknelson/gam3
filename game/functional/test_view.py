@@ -13,18 +13,7 @@ from game.view import Window, loadImage
 from game.view import PlayerView, TerrainView
 from game.terrain import GRASS
 
-
-class FunctionalTestMixin:
-    def setUp(self):
-        # XXX PRIVATE VARIABLE USAGE ZOMG
-        print getattr(self, self._testMethodName).__doc__
-
-
-    def tearDown(self):
-        if not raw_input("Did it work?").lower().startswith('y'):
-            self.fail("User specified test failure")
-
-
+from game.functional.util import FunctionalTestMixin
 
 class PlayerTests(FunctionalTestMixin, TestCase):
     def setUp(self):
