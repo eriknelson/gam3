@@ -29,8 +29,8 @@ class FakeWorld(object):
     identifier = 1
     granularity = 7
     speed = 3
-    x = 129
-    y = -299999
+    x = 129.5
+    y = -299999.5
 
     def __init__(self):
         self.players = []

@@ -75,8 +75,8 @@ class SetPositionOf(Command):
     """
 
     arguments = [('identifier', Integer()),
-                 ('x', Integer()),
-                 ('y', Integer())]
+                 ('x', Float()),
+                 ('y', Float())]
 
 
 
