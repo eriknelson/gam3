@@ -329,14 +329,14 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         """
         self.controller.addModelObject(self.identifier, self.player)
 
-        x = str(23)
-        y = str(32)
+        x = str(23.5)
+        y = str(32.5)
         identifier = str(self.identifier)
         responder = self.controller.lookupFunction(SetPositionOf.commandName)
         d = responder({'identifier': identifier, 'x': x, 'y': y})
 
         def gotPositionSetting(ign):
-            self.assertEqual(self.player.getPosition(), (int(x), int(y)))
+            self.assertEqual(self.player.getPosition(), (float(x), float(y)))
         d.addCallback(gotPositionSetting)
         return d
 
