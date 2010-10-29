@@ -140,7 +140,8 @@ class IntroduceCommandTests(CommandTestMixin, TestCase):
         'granularity': 20,
         'speed': 12,
         'x': -3.5,
-        'y': 2.5}
+        'y': 2.5,
+        'z': 0.5}
     responseStrings = stringifyDictValues(responseObjects)
 
     argumentObjects = argumentStrings = {}
@@ -158,6 +159,7 @@ class NewPlayerCommandTests(CommandTestMixin, TestCase):
         'identifier': 123,
         'x': 505.5,
         'y': 23489.5,
+        'z': -10.5,
         'speed': 3999}
 
     argumentStrings = stringifyDictValues(argumentObjects)
@@ -219,7 +221,7 @@ class SetMyDirectionTests(CommandTestMixin, TestCase):
     argumentObjects = {'direction': RIGHT}
     argumentStrings = {'direction': Direction().toString(RIGHT)}
 
-    responseObjects = {'x': 32.5, 'y': 939.5}
+    responseObjects = {'x': 32.5, 'y': 939.5, 'z': 5.5}
     responseStrings = stringifyDictValues(responseObjects)
 
 
@@ -235,7 +237,8 @@ class SetDirectionOfTests(CommandTestMixin, TestCase):
         'identifier': 595,
         'direction': RIGHT,
         'x': 939.5,
-        'y': -93999.5}
+        'y': -93999.5,
+        'z': 10.5}
 
     argumentStrings = stringifyDictValues(argumentObjects)
     argumentStrings['direction'] = Direction().toString(RIGHT)
@@ -354,16 +357,17 @@ class ControllerTests(TestCase, PlayerCreationMixin):
 
         responder = self.controller.lookupFunction(SetDirectionOf.commandName)
         direction = Direction().toString(FORWARD)
-        x, y = (234, 5985)
+        x, y, z = (234.5, 5985.5, 12.5)
         d = responder({
                 'identifier': str(self.identifier),
                 'direction': direction,
                 'x': str(x),
-                'y': str(y)})
+                'y': str(y),
+                'z': str(z)})
 
         def gotDirectionSetting(ign):
             self.assertEqual(self.player.direction, FORWARD)
-            self.assertEqual(self.player.getPosition(), (x, y))
+            self.assertEqual(self.player.getPosition(), Vertex(x, y, z))
         d.addCallback(gotDirectionSetting)
         return d
 
@@ -381,7 +385,7 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         L{NetworkController._createInitialPlayer} should create the player
         object for this client.
         """
-        x, y = (3, 2)
+        x, y, z = (3, 2, 12)
         speed = 40
         granularity = 22
         environment = Environment(granularity, self.clock)
@@ -389,12 +393,11 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         environment.addObserver(observer)
 
         self.controller.createInitialPlayer(
-            environment, self.identifier, (x, y), speed)
+            environment, self.identifier, Vertex(x, y, z), speed)
 
         self.assertEqual(len(observer.createdPlayers), 1)
-        player = observer.createdPlayers.pop()
         self._assertThingsAboutPlayerCreation(
-            environment, (x, y), speed)
+            environment, Vertex(x, y, z), speed)
 
 
     def test_greetServer(self):
@@ -405,7 +408,7 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         """
         self.controller.modelObjects.clear()
 
-        x, y = (3, 2)
+        x, y, z = (3, 2, -5)
         speed = 40
         granularity = 22
         introduced = self.controller.introduce()
@@ -420,10 +423,11 @@ class ControllerTests(TestCase, PlayerCreationMixin):
                          'granularity': granularity,
                          'speed': speed,
                          'x': x,
-                         'y': y})
+                         'y': y,
+                         'z': z})
 
         self._assertThingsAboutPlayerCreation(
-            self.controller.environment, (x, y), speed)
+            self.controller.environment, Vertex(x, y, z), speed)
         self.assertTrue(isinstance(self.controller.environment, Environment))
         self.assertEqual(self.controller.environment.granularity, granularity)
         self.assertEqual(self.controller.environment.platformClock, self.clock)
@@ -453,9 +457,9 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         """
         self.controller.directionChanged(self.player)
         self.assertEquals(len(self.calls), 1)
-        x, y = (123, 5398)
-        self.calls[0][0].callback({"x": x, "y": y})
-        self.assertEqual(self.player.getPosition(), (x, y))
+        x, y, z = (123, 5398, 10.5)
+        self.calls[0][0].callback({"x": x, "y": y, "z": z})
+        self.assertEqual(self.player.getPosition(), Vertex(x, y, z))
 
 
     def test_newPlayer(self):
@@ -468,14 +472,15 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         self.controller.environment = Environment(10, self.clock)
         self.controller.environment.addObserver(observer)
         responder = self.controller.lookupFunction(NewPlayer.commandName)
-        x, y = (3, 500)
+        x, y, z = (3, 500, 5)
         speed = 999
-        d = responder({"identifier": "123", "x": str(x), "y": str(y),
-                       "speed": str(speed)})
+        d = responder({
+                "identifier": "123", "x": str(x), "y": str(y), "z": str(z),
+                "speed": str(speed)})
         def gotResult(ign):
             self.assertEqual(len(observer.createdPlayers), 1)
             player = observer.createdPlayers[0]
-            self.assertEqual(player.getPosition(), (x, y))
+            self.assertEqual(player.getPosition(), Vertex(x, y, z))
             self.assertEqual(player.speed, speed)
             obj = self.controller.objectByIdentifier(
                 self.controller.identifierByObject(player))
@@ -494,7 +499,7 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         responder = self.controller.lookupFunction(NewPlayer.commandName)
         identifier = 123
         d = responder({"identifier": str(identifier),
-                       "x": "1", "y": "2", "speed": "99"})
+                       "x": "1", "y": "2", "z": "3", "speed": "99"})
         def gotResult(ign):
             player = self.controller.objectByIdentifier(identifier)
             player.setDirection(RIGHT)
@@ -514,7 +519,7 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         observer = PlayerVisibilityObserver()
         environment.addObserver(observer)
         identifier = 123
-        self.controller.newPlayer(identifier, 23, 32, 939)
+        self.controller.newPlayer(identifier, 23, 32, 13, 939)
         responder = self.controller.lookupFunction(RemovePlayer.commandName)
         d = responder({"identifier": str(identifier)})
         def gotResult(ignored):

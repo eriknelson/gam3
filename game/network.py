@@ -10,7 +10,7 @@ from twisted.protocols.amp import (
     AMP, AmpList, Command, Integer, Float, String, Argument)
 
 from game.environment import Environment
-
+from game.player import Vertex
 
 class Direction(Argument):
     """
@@ -47,7 +47,8 @@ class Introduce(Command):
                 ('granularity', Integer()),
                 ('speed', Integer()),
                 ('x', Float()),
-                ('y', Float())]
+                ('y', Float()),
+                ('z', Float())]
 
 
 
@@ -76,7 +77,8 @@ class SetPositionOf(Command):
 
     arguments = [('identifier', Integer()),
                  ('x', Float()),
-                 ('y', Float())]
+                 ('y', Float()),
+                 ('z', Float())]
 
 
 
@@ -94,6 +96,7 @@ class NewPlayer(Command):
     arguments = [('identifier', Integer()),
                  ('x', Float()),
                  ('y', Float()),
+                 ('z', Float()),
                  ('speed', Integer())]
 
 
@@ -127,7 +130,8 @@ class SetMyDirection(Command):
     arguments = [('direction', Direction())]
 
     response = [('x', Float()),
-                ('y', Float())]
+                ('y', Float()),
+                ('z', Float())]
 
 
 
@@ -150,7 +154,7 @@ class SetDirectionOf(Command):
                  ('direction', Direction()),
                  ('x', Float()),
                  ('y', Float()),
-                 ]
+                 ('z', Float())]
 
 
 class NetworkController(AMP):
@@ -187,6 +191,7 @@ class NetworkController(AMP):
         """
         d = self.callRemote(SetMyDirection, direction=modelObject.direction)
         d.addCallback(self._gotNewPosition, modelObject)
+        # XXX Add an errback
 
 
     def _gotNewPosition(self, position, player):
@@ -197,7 +202,7 @@ class NetworkController(AMP):
         @param position: Dict with C{x} and C{y} keys, whose values should be
         integers specifying position.
         """
-        player.setPosition((position['x'], position['y']))
+        player.setPosition(Vertex(position['x'], position['y'], position['z']))
 
 
     def createInitialPlayer(self, environment, identifier, position,
@@ -219,7 +224,7 @@ class NetworkController(AMP):
         d = self.callRemote(Introduce)
         def cbIntroduce(box):
             granularity = box['granularity']
-            position = box['x'], box['y']
+            position = Vertex(box['x'], box['y'], box['z'])
             speed = box['speed']
             self.environment = Environment(granularity, self.clock)
             self.createInitialPlayer(
@@ -256,38 +261,39 @@ class NetworkController(AMP):
         raise ValueError("identifierByObject passed unknown model objects")
 
 
-    def setPositionOf(self, identifier, x, y):
+    def setPositionOf(self, identifier, x, y, z):
         """
         Set the position of a local model object.
 
         @type identifier: L{int}
-        @type x: L{int}
-        @type y: L{int}
+        @type x: L{float}
+        @type y: L{float}
+        @type z: L{float}
 
-        @see SetPosition
+        @see: L{SetPosition}
         """
-        self.objectByIdentifier(identifier).setPosition((x, y))
+        self.objectByIdentifier(identifier).setPosition(Vertex(x, y, z))
         return {}
     SetPositionOf.responder(setPositionOf)
 
 
-    def setDirectionOf(self, identifier, direction, x, y):
+    def setDirectionOf(self, identifier, direction, x, y, z):
         """
         Set the direction of a local model object.
 
         @type identifier: L{int}
         @type direction: One of the L{game.direction} direction constants
 
-        @see SetDirectionOf
+        @see: L{SetDirectionOf}
         """
         player = self.objectByIdentifier(identifier)
         player.setDirection(direction)
-        player.setPosition((x, y))
+        player.setPosition(Vertex(x, y, z))
         return {}
     SetDirectionOf.responder(setDirectionOf)
 
 
-    def newPlayer(self, identifier, x, y, speed):
+    def newPlayer(self, identifier, x, y, z, speed):
         """
         Add a new L{Player} object to the L{Environment} and start
         tracking its identifier on the network.
@@ -295,8 +301,9 @@ class NetworkController(AMP):
         @param identifier: The network-level identifier of the player.
         @param x: The x position of the new L{Player}.
         @param y: The y position of the new L{Player}.
+        @param z: The z position of the new L{Player}.
         """
-        player = self.environment.createPlayer((x, y), speed)
+        player = self.environment.createPlayer(Vertex(x, y, z), speed)
         self.modelObjects[identifier] = player
         return {}
     NewPlayer.responder(newPlayer)

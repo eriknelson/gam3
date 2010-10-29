@@ -57,6 +57,7 @@ class Player(object):
         """
         Absolutely reposition this player.
         """
+        assert isinstance(position, Vertex)
         self._lastPosition = position
         self._lastDirectionChange = self.seconds()
 
@@ -65,7 +66,7 @@ class Player(object):
         """
         Retrieve the current position.
 
-        @return: A two-tuple of ints giving the current position of the player.
+        @return: A L{Vertex} giving the current position of the player.
         """
         v = self._lastPosition
         now = self.seconds()
