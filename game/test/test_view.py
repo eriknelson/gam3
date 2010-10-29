@@ -17,10 +17,10 @@ from game.terrain import GRASS
 from game.view import (
     Color, Scene,
     Viewport, Window, loadImage, TerrainView)
-from game.test.util import PlayerCreationMixin, MockWindow, MockSurface
+from game.test.util import MockSurface
 from game.controller import K_LEFT
 from game.environment import Environment
-from game.player import Vertex
+from game.player import Vertex, Player
 
 
 class MockDisplay(object):
@@ -59,35 +59,13 @@ class MockView(object):
     """
     An object that is supposed to look like L{PersonView}.
     """
-    parent = None
-    painted = False
-    _initializedDisplay = None
-
-    def setParent(self, parent):
-        """
-        Set the C{parent} attribute.
-        """
-        self.parent = parent
-
-
-    def displayInitialized(self, surface):
-        """
-        Called when the display surface is initialized (perhaps more than once).
-
-        This implementation requires that the surface supplied not be C{None}
-        and records it.
-        """
-        if surface is None:
-            raise RuntimeError(
-                "Display should never be None if it is initialized.")
-        self._initializedDisplay = surface
-
+    paints = 0
 
     def paint(self):
         """
         Set the C{painted} attribute to True.
         """
-        self.painted = True
+        self.paints += 1
 
 
 
@@ -148,7 +126,7 @@ class WindowTests(TestCase):
         """
         It should be possible to set the window's controller.
         """
-        controller = object()
+        controller = MockController(self.clock)
         self.window.submitTo(controller)
         self.assertEquals(self.window.controller, controller)
 
@@ -157,7 +135,7 @@ class WindowTests(TestCase):
         """
         The controller should be called with key-down events.
         """
-        controller = MockController()
+        controller = MockController(self.clock)
         self.window.submitTo(controller)
         self.event.events = [Event(pygame.KEYDOWN, key=pygame.K_LEFT)]
         self.window.handleInput()
@@ -168,7 +146,7 @@ class WindowTests(TestCase):
         """
         The controller should be called with key-up events.
         """
-        controller = MockController()
+        controller = MockController(self.clock)
         self.window.submitTo(controller)
         self.event.events = [Event(pygame.KEYUP, key=pygame.K_LEFT)]
         self.window.handleInput()
@@ -195,6 +173,22 @@ class WindowTests(TestCase):
         self.environment.removePlayer(player)
 
 
+    def test_go(self):
+        """
+        L{Window.go} initializes the display and returns a L{Deferred} which
+        fires when the Window is closed.
+        """
+        d = self.window.go()
+        L = []
+        d.addBoth(L.append)
+        self.assertEquals(L, [])
+        self.window.stop()
+        self.assertEquals(L, [None])
+        self.assertEquals(
+            self.display._screen.size, self.window.viewport.viewSize)
+
+
+
 
 class MockEventSource(object):
     """
@@ -212,6 +206,7 @@ class MockEventSource(object):
         return self.events
 
 
+
 class MockController(object):
     """
     A controller which records events.
@@ -219,15 +214,18 @@ class MockController(object):
     @ivar downs: The recorded key-down events.
     @ivar ups: The recorded key-up events.
     """
-    def __init__(self):
+    def __init__(self, clock):
         self.downs = []
         self.ups = []
+        self.player = Player(Vertex(0, 0, 0), 1, clock.seconds)
+
 
     def keyDown(self, key):
         """
         Record a key-down event.
         """
         self.downs.append(key)
+
 
     def keyUp(self, key):
         """
@@ -339,13 +337,7 @@ class SceneTests(TestCase):
         """
         L{Scene.paint} calls C{paint} on all objects previously added to it.
         """
-        class Paintable(object):
-            paints = 0
-
-            def paint(self):
-                self.paints += 1
-
-        p = Paintable()
+        p = MockView()
         scene = Scene()
         scene.add(p)
         self.assertEquals(p.paints, 0)

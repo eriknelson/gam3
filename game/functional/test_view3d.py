@@ -198,11 +198,10 @@ class TerrainViewTests(FunctionalTestMixin, TestCase):
         The left, right, up, and down arrow keys should allow the camera
         position to be moved left, right, forward, and backward.
         """
-        v = self.origin(0, 0, 0)
-        player = Player(v, 2.0, reactor.seconds)
+        player = Player(self.origin(0, 1, 0), 2.0, reactor.seconds)
         controller = PlayerController(player)
         self.window.submitTo(controller)
-        self.window.scene.camera = FollowCamera(player)
+        v = self.origin(0, 0, 0)
         self.terrain.update({
                 (v.x - 1, v.y, v.z - 4): "grass",
                 (v.x + 0, v.y, v.z - 4): "mountain",

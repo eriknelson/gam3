@@ -75,22 +75,6 @@ class Sphere(record("center radius color")):
 
 
 
-class ViewMixin(object):
-    """
-    A mixin which allows subclasses to have a parent.
-
-    @ivar parent: The L{Window} to draw to.
-    """
-
-    def setParent(self, parent):
-        """
-        Set the C{parent} attribute.
-
-        Do not call this unless you are L{Window.add}.
-        """
-        self.parent = parent
-
-
 class StaticCamera(record('position orientation')):
     """
     A fixed viewing perspective from which the scene will be observed.
@@ -139,7 +123,7 @@ class StaticLight(record('position')):
 
 
 
-class Scene(ViewMixin):
+class Scene(object):
     """
     A collection of things to be rendered.
 
@@ -284,7 +268,6 @@ class Window(object):
         self.viewport = Viewport((0, 0), (320, 240))
         self.clock = clock
         self.display = display
-        self._paintCall = None
         self.controller = None
         self.event = event
         self.scene = Scene()
@@ -292,24 +275,11 @@ class Window(object):
 
 
 
-    def dirty(self):
-        """
-        Mark the view as out of date and schedule a re-paint.
-        """
-        if self._paintCall is None:
-            self._paintCall = self.clock.callLater(0, self.paint)
-
-
     def paint(self):
         """
         Call C{paint} on all views which have been directly added to
         this Window.
         """
-        if self._paintCall is not None:
-            if self._paintCall.active():
-                self._paintCall.cancel()
-            self._paintCall = None
-
         self.scene.paint()
         self.display.flip()
 
@@ -379,7 +349,7 @@ class Window(object):
 
 
 
-class TerrainView(ViewMixin):
+class TerrainView(object):
     """
     A view for terrain over a tract of land.
 
@@ -387,12 +357,7 @@ class TerrainView(ViewMixin):
     @ivar terrain: The terrain data, mapping positions to terrain types.
 
     @ivar loader: A callable like L{loadImage}.
-
-    @ivar _depth: The color depth of the display surface or C{None} if it is not
-        yet known.
     """
-    _depth = None
-
     square = [(0, 0), (1, 0), (1, 1), (0, 1)]
 
     directions = [
@@ -405,9 +370,9 @@ class TerrainView(ViewMixin):
         # backward
         ((0, 0, 1), [(0, -1, 1), (1, -1, 1), (1, 0, 1), (0, 0, 1)]),
         # right
-        ((1, 0, 0), [(0, -1, 0), (0, 0, 0), (0, 0, 1), (0, -1, 1)]),
+        ((-1, 0, 0), [(0, -1, 0), (0, 0, 0), (0, 0, 1), (0, -1, 1)]),
          # left
-        ((-1, 0, 0), [(1, -1, 0), (1, 0, 0), (1, 0, 1), (1, -1, 1)]),
+        ((1, 0, 0), [(1, -1, 0), (1, 0, 0), (1, 0, 1), (1, -1, 1)]),
         ]
 
     def __init__(self, terrain, loader):
@@ -427,8 +392,6 @@ class TerrainView(ViewMixin):
         if terrainType not in self._images:
             image = self.loader(
                 FilePath(gameFile).sibling('data').child(terrainType + '.png'))
-            if self._depth is not None:
-                image = image.convert(self._depth)
             self._images[terrainType] = image
         return self._images[terrainType]
 
