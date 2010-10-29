@@ -103,7 +103,7 @@ class FollowCamera(record('player')):
     def paint(self):
         v = self.player.getPosition()
         # glRotate(self.orientation.x, 1.0, 0.0, 0.0)
-        # glRotate(self.orientation.y, 0.0, 1.0, 0.0)
+        # glRotate(180, 0.0, 1.0, 0.0)
         # glRotate(self.orientation.z, 0.0, 0.0, 1.0)
         glTranslate(-v.x, -v.y, -v.z)
 
@@ -357,6 +357,13 @@ class TerrainView(object):
     @ivar terrain: The terrain data, mapping positions to terrain types.
 
     @ivar loader: A callable like L{loadImage}.
+
+    @ivar _images: A cache of L{pygame.Surface} instances, keyed on terrain
+        types.  These images are the source for texture data for each type of
+        terrain.
+
+    @ivar _textures: A cache of texture identifiers, keyed on terrain types.
+        The values are suitable for use with L{glBindTexture}.
     """
     square = [(0, 0), (1, 0), (1, 1), (0, 1)]
 
@@ -426,6 +433,9 @@ class TerrainView(object):
 
 
     def paint(self):
+        """
+        For all of the known terrain, render whatever faces are exposed.
+        """
         for (x, y, z), terrainType in self.terrain.iteritems():
             for (dx, dy, dz), coordinates in self.directions:
                 if (x + dx, y + dy, z + dz) in self.terrain:
@@ -439,5 +449,3 @@ class TerrainView(object):
                     glTexCoord2d(tx, ty)
                     glVertex3f(x + dx, y + dy, z + dz)
                 glEnd()
-
-

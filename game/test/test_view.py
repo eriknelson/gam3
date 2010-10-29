@@ -200,8 +200,10 @@ class MockEventSource(object):
     def __init__(self):
         self.events = []
 
+
     def get(self):
-        """Return the previously specified events.
+        """
+        Return the previously specified events.
         """
         return self.events
 

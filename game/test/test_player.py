@@ -122,7 +122,7 @@ class PlayerTests(unittest.TestCase, PlayerCreationMixin):
 
         player.setDirection(FORWARD)
         self.advanceTime(1)
-        self.assertEquals(player.getPosition(), Vertex(v.x + 1, v.y, v.z + 1))
+        self.assertEquals(player.getPosition(), Vertex(v.x + 1, v.y, v.z - 1))
 
 
     def test_stop(self):

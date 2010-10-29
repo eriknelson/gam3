@@ -73,7 +73,7 @@ class Player(object):
         elapsedTime = now - self._lastDirectionChange
         s = (self.direction or 0j) * elapsedTime * self.speed
         # XXX Get some trig, dummy.
-        return Vertex(v.x + s.imag, v.y, v.z + s.real)
+        return Vertex(v.x + s.imag, v.y, v.z - s.real)
 
 
     def setDirection(self, direction):
