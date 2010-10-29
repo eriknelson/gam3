@@ -10,7 +10,7 @@ from twisted.internet.defer import Deferred
 from twisted.internet import reactor
 
 from game.network import NetworkController
-from game.view import TerrainView, PlayerView, Window, loadImage
+from game.view import TerrainView, Window, loadImage
 from game.controller import PlayerController
 
 
@@ -81,7 +81,7 @@ class UI(object):
         Hook up a L{PlayerView} and a L{PlayerController} for the
         given L{Player}.
         """
-        self.window.add(PlayerView(player))
+        # XXX Do something with the view!
         self.window.submitTo(PlayerController(player))
 
 

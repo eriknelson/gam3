@@ -9,7 +9,7 @@ from twisted.internet.protocol import ClientFactory, Protocol
 from twisted.internet.defer import succeed
 from twisted.internet.task import Clock
 
-from game.view import TerrainView, PlayerView, loadImage
+from game.view import TerrainView, loadImage
 from game.controller import PlayerController
 from game.network import NetworkController
 from game.environment import Environment
@@ -260,7 +260,7 @@ class UITests(TestCase):
         window = self.ui.window = StubWindow(None, None)
         self.ui.gotInitialPlayer(player)
         self.assertEqual(len(window.views), 1)
-        self.assertTrue(isinstance(window.views[0], PlayerView))
+        # XXX The view needs to do something, maybe.
         self.assertIdentical(window.views[0].player, player)
         self.assertTrue(
             isinstance(window.controller, PlayerController))

@@ -2,9 +2,7 @@ from twisted.trial import unittest
 
 from game.direction import FORWARD, BACKWARD, LEFT, RIGHT
 from game.test.util import PlayerCreationMixin
-
-
-# XXX Test that the position is ints
+from game.player import Vertex
 
 
 class DirectionObserver(object):
@@ -39,9 +37,9 @@ class PlayerTests(unittest.TestCase, PlayerCreationMixin):
         """
         Players have a position which can be set with C{setPosition}.
         """
-        player = self.makePlayer((1, 2))
-        player.setPosition((-2, 1))
-        self.assertEqual(player.getPosition(), (-2, 1))
+        player = self.makePlayer(Vertex(1, 0, 2))
+        player.setPosition(Vertex(-2, 0, 1))
+        self.assertEqual(player.getPosition(), Vertex(-2, 0, 1))
 
 
     def test_setPositionAfterSomeMotion(self):
@@ -49,11 +47,11 @@ class PlayerTests(unittest.TestCase, PlayerCreationMixin):
         Players should be placed at the correct position if C{setPosition} is
         called after they have been moving around a little bit.
         """
-        player = self.makePlayer((1, 2))
+        player = self.makePlayer(Vertex(1, 0, 2))
         player.setDirection(FORWARD)
         self.advanceTime(1)
-        player.setPosition((-2, 1))
-        self.assertEqual(player.getPosition(), (-2, 1))
+        player.setPosition(Vertex(-2, 0, 1))
+        self.assertEqual(player.getPosition(), Vertex(-2, 0, 1))
 
 
     def test_getPosition(self):
@@ -61,11 +59,9 @@ class PlayerTests(unittest.TestCase, PlayerCreationMixin):
         Players have a C{getPosition} method the initial return value of which
         is based on initializer parameters.
         """
-        player = self.makePlayer((0, 0))
-        x, y = player.getPosition()
-        self.assertEqual((x, y), (0, 0))
-        self.assertTrue(isinstance(x, (int, long)))
-        self.assertTrue(isinstance(y, (int, long)))
+        player = self.makePlayer(Vertex(0, 0, 0))
+        v = player.getPosition()
+        self.assertEqual(v, Vertex(0, 0, 0))
 
 
     def test_setDirection(self):
@@ -73,7 +69,7 @@ class PlayerTests(unittest.TestCase, PlayerCreationMixin):
         L{Player.setDirection} should accept a vector which sets the direction
         of the player's movement.
         """
-        player = self.makePlayer((3, 2))
+        player = self.makePlayer(Vertex(3, 0, 2))
         player.setDirection(FORWARD + LEFT)
         self.assertEqual(player.direction, FORWARD + LEFT)
         player.setDirection(BACKWARD)
@@ -84,7 +80,7 @@ class PlayerTests(unittest.TestCase, PlayerCreationMixin):
         """
         Directionless L{Player}s should remain stationary.
         """
-        position = (2, 3)
+        position = Vertex(2, 5, 3)
         player = self.makePlayer(position)
         self.advanceTime(10)
         self.assertEqual(player.getPosition(), position)
@@ -94,23 +90,23 @@ class PlayerTests(unittest.TestCase, PlayerCreationMixin):
         """
         Directed L{Player}s should change position.
         """
-        x, y = 3, -2
-        player = self.makePlayer((x, y))
+        v = Vertex(3, 0, -2)
+        player = self.makePlayer(v)
         player.setDirection(LEFT)
         self.advanceTime(1)
-        self.assertEqual(player.getPosition(), (x - 1, y))
+        self.assertEqual(player.getPosition(), Vertex(v.x - 1, v.y, v.z))
 
 
     def test_greaterSpeedResultsInGreaterDisplacement(self):
         """
         A L{Player} which is moving more quickly should travel further.
         """
-        x, y = 2, 0
+        v = Vertex(2, 3, 0)
         speed = 5
-        player = self.makePlayer((x, y), speed=speed)
+        player = self.makePlayer(v, speed=speed)
         player.setDirection(RIGHT)
         self.advanceTime(1)
-        self.assertEqual(player.getPosition(), (x + speed, y))
+        self.assertEqual(player.getPosition(), Vertex(v.x + speed, v.y, v.z))
 
 
     def test_getPositionWithMovementAfterTimePassesTwice(self):
@@ -118,35 +114,34 @@ class PlayerTests(unittest.TestCase, PlayerCreationMixin):
         Twice-directed players should have an accurate position after each
         change in direction after some time passes.
         """
-        x, y = 3, -2
-        player = self.makePlayer((x, y))
+        v = Vertex(3, 0, -2)
+        player = self.makePlayer(v)
         player.setDirection(RIGHT)
         self.advanceTime(1)
-        self.assertEqual(player.getPosition(), (x + 1, y))
+        self.assertEqual(player.getPosition(), Vertex(v.x + 1, v.y, v.z))
 
         player.setDirection(FORWARD)
         self.advanceTime(1)
-        self.assertEquals(player.getPosition(), (x + 1, y + 1))
+        self.assertEquals(player.getPosition(), Vertex(v.x + 1, v.y, v.z + 1))
 
 
     def test_stop(self):
         """
-        Setting the player's direction to C{None} should make the
-        player cease moving.
+        Setting the player's direction to C{None} makes the player cease moving.
         """
         x, y = 49, 27
-        player = self.makePlayer((x, y))
+        player = self.makePlayer(Vertex(x, 0, y))
         player.setDirection(None)
         self.advanceTime(1)
-        self.assertEqual(player.getPosition(), (x, y))
+        self.assertEqual(player.getPosition(), Vertex(x, 0, y))
 
         player.setDirection(RIGHT)
         self.advanceTime(1)
-        self.assertEqual(player.getPosition(), (x + 1, y))
+        self.assertEqual(player.getPosition(), Vertex(x + 1, 0, y))
 
         player.setDirection(None)
         self.advanceTime(1)
-        self.assertEqual(player.getPosition(), (x + 1, y))
+        self.assertEqual(player.getPosition(), Vertex(x + 1, 0, y))
 
 
     def test_observeDirection(self):
@@ -154,7 +149,7 @@ class PlayerTests(unittest.TestCase, PlayerCreationMixin):
         Setting the player's direction should notify any observers registered
         with that player of the new direction.
         """
-        position = (6, 2)
+        position = Vertex(6, 3, 2)
         player = self.makePlayer(position)
         observer = DirectionObserver()
         player.addObserver(observer)
@@ -167,11 +162,11 @@ class PlayerTests(unittest.TestCase, PlayerCreationMixin):
         L{Player.getPosition} should return an accurate value when called
         within an observer's C{directionChanged} callback.
         """
-        position = (1, 1)
+        position = Vertex(1, 0, 1)
         player = self.makePlayer(position)
         player.setDirection(RIGHT)
         self.advanceTime(1)
         observer = DirectionObserver()
         player.addObserver(observer)
         player.setDirection(None)
-        self.assertEqual(observer.changes, [(player, (2, 1), None)])
+        self.assertEqual(observer.changes, [(player, Vertex(2, 0, 1), None)])

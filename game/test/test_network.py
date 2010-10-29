@@ -14,6 +14,8 @@ from game.network import (Direction, Introduce, SetPositionOf, SetDirectionOf,
                           RemovePlayer, SetTerrain, Terrain)
 from game.direction import FORWARD, BACKWARD, LEFT, RIGHT
 from game.terrain import GRASS, MOUNTAIN, DESERT
+from game.player import Vertex
+
 
 class DirectionArgumentTests(TestCase):
     """
@@ -254,7 +256,7 @@ class ControllerTests(TestCase, PlayerCreationMixin):
     def setUp(self):
         self.calls = []
         self.identifier = 123
-        self.player = self.makePlayer((1, 2))
+        self.player = self.makePlayer(Vertex(1, 2, 3))
         self.clock = Clock()
         self.controller = NetworkController(self.clock)
         self.controller.callRemote = self.callRemote
@@ -331,12 +333,13 @@ class ControllerTests(TestCase, PlayerCreationMixin):
 
         x = str(23)
         y = str(32)
+        z = str(13)
         identifier = str(self.identifier)
         responder = self.controller.lookupFunction(SetPositionOf.commandName)
-        d = responder({'identifier': identifier, 'x': x, 'y': y})
+        d = responder({'identifier': identifier, 'x': x, 'y': y, 'z': z})
 
         def gotPositionSetting(ign):
-            self.assertEqual(self.player.getPosition(), (int(x), int(y)))
+            self.assertEqual(self.player.getPosition(), Vertex(23, 32, 13))
         d.addCallback(gotPositionSetting)
         return d
 
