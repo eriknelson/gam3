@@ -61,6 +61,7 @@ class SetTerrain(Command):
     arguments = [('terrain', AmpList([
                     ('x', Integer()),
                     ('y', Integer()),
+                    ('z', Integer()),
                     ('type', Terrain())]))]
 
 
@@ -330,7 +331,7 @@ class NetworkController(AMP):
             keys.
         """
         for info in terrain:
-            self.environment.terrain[info["x"], info["y"]] = info["type"]
+            self.environment.terrain[
+                info["x"], info["y"], info["z"]] = info["type"]
         return {}
     SetTerrain.responder(setTerrain)
-

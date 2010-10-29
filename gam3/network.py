@@ -10,7 +10,6 @@ from twisted.protocols.amp import AMP
 
 from game.network import (Introduce, SetDirectionOf, NewPlayer,
                           SetMyDirection, RemovePlayer, SetTerrain)
-from game.terrain import GRASS
 
 
 class Gam3Server(AMP):
@@ -96,8 +95,8 @@ class Gam3Server(AMP):
         self.callRemote(
             SetTerrain,
             terrain=[
-                dict(x=x, y=y, type=type) for
-                ((x, y), type) in self.world.terrain.iteritems()])
+                dict(x=x, y=y, z=z, type=type) for
+                ((x, y, z), type) in self.world.terrain.iteritems()])
 
 
     def sendExistingPlayers(self):

@@ -171,9 +171,9 @@ class NetworkTests(TestCase):
         clock = Clock()
         world = World()
         world.terrain.update({
-                (0, 0): GRASS,
-                (1, 1): GRASS,
-                (2, 1): MOUNTAIN,
+                (0, 0, 0): GRASS,
+                (1, 3, 1): GRASS,
+                (2, -1, 1): MOUNTAIN,
                 })
 
         protocol = Gam3Server(world, clock=clock)
@@ -189,9 +189,9 @@ class NetworkTests(TestCase):
             self.getCommands(SetTerrain),
             [(SetTerrain, {'terrain': [
                             # XXX This ordering only works by accident.
-                            {'type': 'grass', 'x': 0, 'y': 0},
-                            {'type': 'grass', 'x': 1, 'y': 1},
-                            {'type': 'mountain', 'x': 2, 'y': 1},
+                            {'type': 'grass', 'x': 1, 'y': 3, 'z': 1},
+                            {'type': 'grass', 'x': 0, 'y': 0, 'z': 0},
+                            {'type': 'mountain', 'x': 2, 'y': -1, 'z': 1},
                             ]})])
 
 

@@ -117,12 +117,11 @@ class FollowCamera(record('player')):
     @ivar player: The L{Player} this camera follows.
     """
     def paint(self):
-        x, z = self.player.getPosition()
-        y = 7
+        v = self.player.getPosition()
         # glRotate(self.orientation.x, 1.0, 0.0, 0.0)
         # glRotate(self.orientation.y, 0.0, 1.0, 0.0)
         # glRotate(self.orientation.z, 0.0, 0.0, 1.0)
-        glTranslate(-x, -y, -z)
+        glTranslate(-v.x, -v.y, -v.z)
 
 
 
@@ -334,6 +333,8 @@ class Window(object):
         events.
         """
         self.controller = controller
+        # XXX Next line untested
+        self.scene.camera = FollowCamera(controller.player)
 
 
     def go(self):

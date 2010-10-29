@@ -178,9 +178,11 @@ class SetTerrainCommandTests(CommandTestMixin, TestCase):
     argumentObjects = {
         'terrain': [{'x': 393,
                      'y': 292,
+                     'z': 12,
                      'type': GRASS},
                     {'x': 23,
                      'y': 99,
+                     'z': -15,
                      'type': MOUNTAIN}]}
 
     argumentStrings = {
@@ -188,10 +190,12 @@ class SetTerrainCommandTests(CommandTestMixin, TestCase):
             '\x00\x04' 'type' '\x00\x05' 'grass'
             '\x00\x01' 'x'    '\x00\x03' '393'
             '\x00\x01' 'y'    '\x00\x03' '292'
+            '\x00\x01' 'z'    '\x00\x02' '12'
             '\x00\x00'
             '\x00\x04' 'type' '\x00\x08' 'mountain'
             '\x00\x01' 'x'    '\x00\x02' '23'
             '\x00\x01' 'y'    '\x00\x02' '99'
+            '\x00\x01' 'z'    '\x00\x03' '-15'
             '\x00\x00')}
 
     responseObjects = responseStrings = {}
@@ -541,10 +545,11 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         terrainArgument = AmpList([
                 ('x', Integer()),
                 ('y', Integer()),
+                ('z', Integer()),
                 ('type', Terrain())])
         terrainModel = [
-            {'x': 123, 'y': 456, 'type': GRASS},
-            {'x': 654, 'y': 321, 'type': DESERT}]
+            {'x': 123, 'y': 456, 'z': 5, 'type': GRASS},
+            {'x': 654, 'y': 321, 'z': 10, 'type': DESERT}]
         terrainBytes = terrainArgument.toStringProto(
             terrainModel,
             self.controller)
@@ -552,9 +557,10 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         def gotResult(ignored):
             self.assertEqual(
                 environment.terrain,
-                dict(((element['x'], element['y']), element['type'])
-                      for element
-                      in terrainModel))
+                dict(((element['x'], element['y'], element['z']),
+                      element['type'])
+                     for element
+                     in terrainModel))
         d.addCallback(gotResult)
         return d
 
