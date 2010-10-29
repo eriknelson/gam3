@@ -90,7 +90,7 @@ class UI(object):
         Create a L{TerrainView} for the given terrain and add it to my
         L{Window}.
         """
-        self.window.add(TerrainView(terrain, loadImage))
+        self.window.scene.add(TerrainView(terrain, loadImage))
 
 
     def gotIntroduced(self, environment):
