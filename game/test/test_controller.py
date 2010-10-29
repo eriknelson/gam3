@@ -8,6 +8,7 @@ from twisted.trial.unittest import TestCase
 from game.controller import PlayerController, K_LEFT, K_RIGHT, K_UP, K_DOWN
 from game.direction import FORWARD, BACKWARD, LEFT, RIGHT
 from game.test.util import PlayerCreationMixin
+from game.player import Vertex
 
 
 class PlayerControllerTests(TestCase, PlayerCreationMixin):
@@ -15,7 +16,7 @@ class PlayerControllerTests(TestCase, PlayerCreationMixin):
         """
         Set up a player and a controller.
         """
-        self.player = self.makePlayer((2, 4))
+        self.player = self.makePlayer(Vertex(2, 4, -6))
         self.controller = PlayerController(self.player)
 
 
@@ -163,7 +164,7 @@ class CalculateDirectionTest(TestCase, PlayerCreationMixin):
         """
         Set up a player and a controller.
         """
-        self.player = self.makePlayer((2, 4))
+        self.player = self.makePlayer(Vertex(2, -8.5, 4))
         self.controller = PlayerController(self.player)
 
 
