@@ -64,8 +64,6 @@ class PlayerTests(unittest.TestCase, PlayerCreationMixin):
         player = self.makePlayer((0, 0))
         x, y = player.getPosition()
         self.assertEqual((x, y), (0, 0))
-        self.assertTrue(isinstance(x, (int, long)))
-        self.assertTrue(isinstance(y, (int, long)))
 
 
     def test_setDirection(self):
