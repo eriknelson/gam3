@@ -20,7 +20,8 @@ from game.view import (
 from game.test.util import MockSurface
 from game.controller import K_LEFT
 from game.environment import Environment
-from game.player import Vertex, Player
+from game.player import Player
+from game.vec3 import vec3
 
 
 class MockDisplay(object):
@@ -160,7 +161,7 @@ class WindowTests(TestCase):
         XXX It should do something.
         """
         # This calls playerCreated, since the Window adds itself as an observer.
-        self.environment.createPlayer(Vertex(1, 0, 2), 3)
+        self.environment.createPlayer(vec3(1, 0, 2), 3)
 
 
     def test_playerRemoved(self):
@@ -169,7 +170,7 @@ class WindowTests(TestCase):
 
         XXX It should do something.
         """
-        player = self.environment.createPlayer(Vertex(1, 0, 2), 3)
+        player = self.environment.createPlayer(vec3(1, 0, 2), 3)
         self.environment.removePlayer(player)
 
 
@@ -219,7 +220,7 @@ class MockController(object):
     def __init__(self, clock):
         self.downs = []
         self.ups = []
-        self.player = Player(Vertex(0, 0, 0), 1, clock.seconds)
+        self.player = Player(vec3(0, 0, 0), 1, clock.seconds)
 
 
     def keyDown(self, key):
@@ -272,46 +273,6 @@ class TerrainViewTests(TestCase):
         self.assertEquals(image.label, "grass.png")
         self.assertEqual(
             paths, [FilePath(gameFile).sibling('data').child('grass.png')])
-
-
-
-class VertexTests(TestCase):
-    """
-    Tests for L{Vertex}.
-    """
-    def test_attributes(self):
-        """
-        The three arguments passed to the L{Vertex} initializer are bound to its
-        C{x}, C{y}, and C{z} attributes.
-        """
-        v = Vertex(1, 2, 3)
-        self.assertEquals(v.x, 1)
-        self.assertEquals(v.y, 2)
-        self.assertEquals(v.z, 3)
-
-
-    def test_addition(self):
-        """
-        The result of adding two L{Vertex} instances is a L{Vertex} with
-        components equal to the sum of the components of the operands.
-        """
-        v1 = Vertex(1, 2, 3)
-        v2 = Vertex(2, -1, 5)
-        v3 = v1 + v2
-        self.assertEquals(v3.x, 3)
-        self.assertEquals(v3.y, 1)
-        self.assertEquals(v3.z, 8)
-
-
-    def test_equality(self):
-        """
-        Two L{Vertex} instances with equal components are equal to each other.
-        """
-        v1 = Vertex(1, 2, 3)
-        v2 = Vertex(1, 2, 3)
-        self.assertTrue(v1 == v2)
-        v3 = Vertex(1, 2, 4)
-        self.assertFalse(v1 == v3)
 
 
 

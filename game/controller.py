@@ -59,6 +59,13 @@ class PlayerController(object):
                 self.calculateDirection(self.downDirections))
 
 
+    def mouseMotion(self, position, (x, y), buttons):
+        """
+        Handle mouse motion to change the orientation of the player.
+        """
+        self.player.turn(y * 0.1, x * 0.1)
+
+
     def calculateDirection(self, pressedKeys):
         """
         Given a list of keys (sorted by their press-time), calculate

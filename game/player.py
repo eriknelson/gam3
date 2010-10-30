@@ -1,22 +1,10 @@
 # -*- test-case-name: game.test.test_player -*-
 
-from twisted.python.util import FancyEqMixin
+from math import cos, sin, pi
 
-from epsilon.structlike import record
+from vec3 import vec3
 
-class Vertex(record("x y z"), FancyEqMixin):
-    """
-    A coordinate in three dimensional space.
-    """
-    compareAttributes = ['x', 'y', 'z']
-
-    def __add__(self, other):
-        return Vertex(
-            self.x + other.x,
-            self.y + other.y,
-            self.z + other.z)
-
-
+from game.direction import FORWARD, BACKWARD, LEFT, RIGHT
 
 class Player(object):
     """
@@ -45,9 +33,10 @@ class Player(object):
     direction = None
 
     def __init__(self, position, speed, seconds):
-        assert isinstance(position, Vertex)
+        assert isinstance(position, vec3)
         self._lastPosition = position
         self._lastDirectionChange = seconds()
+        self.orientation = vec3(0, 0, 0)
         self.speed = speed
         self.seconds = seconds
         self.observers = []
@@ -57,23 +46,47 @@ class Player(object):
         """
         Absolutely reposition this player.
         """
-        assert isinstance(position, Vertex)
+        assert isinstance(position, vec3)
         self._lastPosition = position
         self._lastDirectionChange = self.seconds()
 
+
+    offset = {
+        FORWARD: 0,
+        BACKWARD: pi,
+        LEFT: -pi / 2,
+        RIGHT: pi / 2,
+        FORWARD + LEFT: -pi / 4,
+        FORWARD + RIGHT: pi / 4,
+        BACKWARD + LEFT: -pi / 4 * 3,
+        BACKWARD + RIGHT: pi / 4 * 3}
 
     def getPosition(self):
         """
         Retrieve the current position.
 
-        @return: A L{Vertex} giving the current position of the player.
+        @return: A L{vec3} giving the current position of the player.
         """
         v = self._lastPosition
+
+        movement = self.direction
+        if movement is None:
+            return v
+
         now = self.seconds()
         elapsedTime = now - self._lastDirectionChange
-        s = (self.direction or 0j) * elapsedTime * self.speed
-        # XXX Get some trig, dummy.
-        return Vertex(v.x + s.imag, v.y, v.z - s.real)
+        magnitude = elapsedTime * self.speed
+
+        y = self.orientation.y / 180 * pi + self.offset[movement]
+        direction = vec3(sin(y), 0, -cos(y))
+
+        # Multiply by the magnitude to get the distance traveled and add to the
+        # current position to get the new position. XXX This may be the wrong
+        # time to update _lastPosition and _lastDirectionChange.
+        self._lastPosition = v + direction * magnitude
+        self._lastDirectionChange = self.seconds()
+
+        return self._lastPosition
 
 
     def setDirection(self, direction):
@@ -91,6 +104,14 @@ class Player(object):
 
         for observer in self.observers:
             observer.directionChanged(self)
+
+
+    def turn(self, x, y):
+        """
+        Rotate the perspective by the given amount.
+        """
+        self.orientation.x += x
+        self.orientation.y += y
 
 
     def addObserver(self, observer):

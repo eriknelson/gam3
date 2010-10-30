@@ -13,7 +13,7 @@ from epsilon.structlike import record
 
 from gam3.world import Gam3Service, World, point
 
-from game.player import Vertex
+from game.vec3 import vec3
 from game.test.test_environment import SimulationTimeTestsMixin
 from game.test.util import PlayerVisibilityObserver
 
@@ -51,7 +51,7 @@ class WorldTests(TestCase):
         """
         bottomLeft = point(3, 7)
         topRight = point(21, 19)
-        expected = Vertex(7, 1, 15)
+        expected = vec3(7, 1, 15)
 
         random = StubRandom({(bottomLeft.x, topRight.x): expected.x,
                              (bottomLeft.y, topRight.y): expected.z})

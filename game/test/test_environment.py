@@ -8,7 +8,7 @@ from twisted.internet.task import Clock
 
 from game.environment import Environment, SimulationTime
 from game.test.util import PlayerVisibilityObserver
-from game.player import Vertex
+from game.vec3 import vec3
 
 
 class SimulationTimeTestsMixin(object):
@@ -173,7 +173,7 @@ class EnvironmentTests(TestCase):
         L{Environment.createPlayer} should instantiate a L{Player} and
         broadcast it to all registered observers.
         """
-        position = Vertex(1, 2, 3)
+        position = vec3(1, 2, 3)
         speed = 20
         observer = PlayerVisibilityObserver()
         self.environment.addObserver(observer)
@@ -189,7 +189,7 @@ class EnvironmentTests(TestCase):
         L{Environment.removePlayer} should broadcast C{playerRemoved}
         to all registered observers.
         """
-        position = Vertex(1, 2, 3)
+        position = vec3(1, 2, 3)
         speed = 20
         observer = PlayerVisibilityObserver()
         self.environment.addObserver(observer)

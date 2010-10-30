@@ -8,7 +8,7 @@ from twisted.trial.unittest import TestCase
 from game.controller import PlayerController, K_LEFT, K_RIGHT, K_UP, K_DOWN
 from game.direction import FORWARD, BACKWARD, LEFT, RIGHT
 from game.test.util import PlayerCreationMixin
-from game.player import Vertex
+from game.vec3 import vec3
 
 
 class PlayerControllerTests(TestCase, PlayerCreationMixin):
@@ -16,7 +16,7 @@ class PlayerControllerTests(TestCase, PlayerCreationMixin):
         """
         Set up a player and a controller.
         """
-        self.player = self.makePlayer(Vertex(2, 4, -6))
+        self.player = self.makePlayer(vec3(2, 4, -6))
         self.controller = PlayerController(self.player)
 
 
@@ -164,7 +164,7 @@ class CalculateDirectionTest(TestCase, PlayerCreationMixin):
         """
         Set up a player and a controller.
         """
-        self.player = self.makePlayer(Vertex(2, -8.5, 4))
+        self.player = self.makePlayer(vec3(2, -8.5, 4))
         self.controller = PlayerController(self.player)
 
 
@@ -207,3 +207,27 @@ class CalculateDirectionTest(TestCase, PlayerCreationMixin):
 
     # XXX Test that PRESS-RIGHT, PRESS-DOWN, RELEASE-DOWN leaves the
     # player going RIGHT.
+
+
+
+class MouseLookTests(TestCase, PlayerCreationMixin):
+    """
+    Tests for mouse motion events which control the direction the player is
+    facing.
+    """
+    def setUp(self):
+        """
+        Set up a player and a controller.
+        """
+        self.player = self.makePlayer(vec3(2, 4, -6))
+        self.controller = PlayerController(self.player)
+
+
+    def test_lookLeft(self):
+        """
+        A mouse motion event with a negative relative X component rotates the
+        player's perspective to the left.
+        """
+        self.controller.mouseMotion((100, 200), (-20, 20), None)
+        self.assertEquals(self.player.orientation.y, -2)
+
