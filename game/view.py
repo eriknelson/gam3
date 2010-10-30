@@ -290,14 +290,17 @@ class Window(object):
         Handle currently available pygame input events.
         """
         for event in self.event.get():
-            if event.type == pygame.locals.QUIT:
+            if event.type == pygame.locals.QUIT or \
+                    event.type == pygame.KEYDOWN and event.key == pygame.K_q:
                 self.stop()
-            elif self.controller and event.type == pygame.KEYDOWN:
-                self.controller.keyDown(event.key)
-            elif self.controller and event.type == pygame.KEYUP:
-                self.controller.keyUp(event.key)
-            elif event.type == pygame.MOUSEMOTION:
-                self.controller.mouseMotion(event.pos, event.rel, event.buttons)
+            elif self.controller is not None:
+                if event.type == pygame.KEYDOWN:
+                    self.controller.keyDown(event.key)
+                elif event.type == pygame.KEYUP:
+                    self.controller.keyUp(event.key)
+                elif event.type == pygame.MOUSEMOTION:
+                    self.controller.mouseMotion(
+                        event.pos, event.rel, event.buttons)
 
 
     def submitTo(self, controller):
@@ -317,6 +320,8 @@ class Window(object):
         @return: A Deferred that fires when this window is closed by the user.
         """
         pygame.init()
+        pygame.event.set_grab(True)
+        pygame.mouse.set_visible(False)
         self.screen = self.display.set_mode(
             self.viewport.viewSize,
             pygame.locals.DOUBLEBUF | pygame.locals.OPENGL)

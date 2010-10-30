@@ -7,9 +7,15 @@ from game.player import Player
 from game.vec3 import vec3
 
 class StdoutReportingController(object):
+    # XXX Make an interface for the controller and verify this fake.
     def __init__(self):
         self.player = Player(vec3(0, 0, 0), 0, reactor.seconds)
 
+    def keyUp(self, key):
+        pass
+
+    def keyDown(self, key):
+        pass
 
     def mouseMotion(self, pos, rel, buttons):
         """
@@ -35,4 +41,5 @@ class MouseInputTests(SceneMixin, TestCase):
         When the mouse moves, the direction of movement is written to stdout.
         """
         self.window.submitTo(StdoutReportingController())
+        reactor.callLater(2.0, self.window.stop)
         return self.window.go()
