@@ -9,7 +9,7 @@ from twisted.protocols.amp import AmpList, Integer
 
 from game.test.util import PlayerCreationMixin, PlayerVisibilityObserver
 from game.environment import Environment
-from game.network import (Direction, Introduce, SetPositionOf, SetDirectionOf,
+from game.network import (Direction, Introduce, SetDirectionOf,
                           NetworkController, NewPlayer, SetMyDirection,
                           RemovePlayer, SetTerrain, Terrain)
 from game.direction import FORWARD, BACKWARD, LEFT, RIGHT
@@ -244,7 +244,8 @@ class SetDirectionOfTests(CommandTestMixin, TestCase):
         'direction': RIGHT,
         'x': 939.5,
         'y': -93999.5,
-        'z': 10.5}
+        'z': 10.5,
+        'orientation': 2.25}
 
     argumentStrings = stringifyDictValues(argumentObjects)
     argumentStrings['direction'] = Direction().toString(RIGHT)
@@ -334,46 +335,29 @@ class ControllerTests(TestCase, PlayerCreationMixin):
             self.controller.identifierByObject, self.player)
 
 
-    def test_setPositionOf(self):
-        """
-        When L{SetPositionOf} is issued the L{Player}'s position should be set.
-        """
-        self.controller.addModelObject(self.identifier, self.player)
-
-        x = str(23.5)
-        y = str(32.5)
-        z = str(13.5)
-        identifier = str(self.identifier)
-        responder = self.controller.lookupFunction(SetPositionOf.commandName)
-        d = responder({'identifier': identifier, 'x': x, 'y': y, 'z': z})
-
-        def gotPositionSetting(ign):
-            self.assertEqual(
-                self.player.getPosition(), vec3(23.5, 32.5, 13.5))
-        d.addCallback(gotPositionSetting)
-        return d
-
-
     def test_setDirectionOf(self):
         """
-        When L{SetDirectionOf} is issued, the L{Player}'s direction and
-        position should be set.
+        When L{SetDirectionOf} is issued, the L{Player}'s direction, position,
+        and orientation should be set.
         """
         self.controller.addModelObject(self.identifier, self.player)
 
         responder = self.controller.lookupFunction(SetDirectionOf.commandName)
         direction = Direction().toString(FORWARD)
         x, y, z = (234.5, 5985.5, 12.5)
+        orientation = 3.5
         d = responder({
                 'identifier': str(self.identifier),
                 'direction': direction,
                 'x': str(x),
                 'y': str(y),
-                'z': str(z)})
+                'z': str(z),
+                'orientation': str(orientation)})
 
         def gotDirectionSetting(ign):
-            self.assertEqual(self.player.direction, FORWARD)
-            self.assertEqual(self.player.getPosition(), vec3(x, y, z))
+            self.assertEquals(self.player.direction, FORWARD)
+            self.assertEquals(self.player.getPosition(), vec3(x, y, z))
+            self.assertEquals(self.player.orientation.y, orientation)
         d.addCallback(gotDirectionSetting)
         return d
 

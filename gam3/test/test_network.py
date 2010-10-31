@@ -261,6 +261,7 @@ class NetworkTests(TestCase):
         protocol.callRemote = self.callRemote
         protocol.sendExistingPlayers()
         self.calls = []
+        player.orientation.y = 1.5
         player.setDirection(LEFT)
         v = player.getPosition()
         self.assertEqual(self.calls,
@@ -269,7 +270,8 @@ class NetworkTests(TestCase):
                             "direction": LEFT,
                             "x": v.x,
                             "y": v.y,
-                            "z": v.z})])
+                            "z": v.z,
+                            "orientation": 1.5})])
 
 
     def test_sendOnlyOtherDirectionOfPlayers(self):
@@ -304,6 +306,7 @@ class NetworkTests(TestCase):
         clock.advance(0)
         player = world.createPlayer()
         self.calls = [] #ignore other calls
+        player.orientation.y = -1.5
         player.setDirection(RIGHT)
         v = player.getPosition()
         self.assertEqual(self.calls,
@@ -312,7 +315,8 @@ class NetworkTests(TestCase):
                             "direction": RIGHT,
                             "x": v.x,
                             "y": v.y,
-                            "z": v.z})])
+                            "z": v.z,
+                            "orientation": -1.5})])
 
 
     def test_playerRemoved(self):

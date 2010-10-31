@@ -16,7 +16,7 @@ from game import __file__ as gameFile
 from game.terrain import GRASS
 from game.view import (
     Color, Scene,
-    Viewport, Window, loadImage, TerrainView)
+    Viewport, Window, loadImage, TerrainView, PlayerView)
 from game.test.util import MockSurface
 from game.controller import K_LEFT
 from game.environment import Environment
@@ -156,12 +156,14 @@ class WindowTests(TestCase):
 
     def test_playerCreated(self):
         """
-        L{Window.playerCreated} does nothing.
-
-        XXX It should do something.
+        L{Window.playerCreated} adds a L{PlayerView} to the scene, wrapped
+        around the created player.
         """
         # This calls playerCreated, since the Window adds itself as an observer.
-        self.environment.createPlayer(vec3(1, 0, 2), 3)
+        player = self.environment.createPlayer(vec3(1, 0, 2), 3)
+        view = self.window.scene._items[-1]
+        self.assertIsInstance(view, PlayerView)
+        self.assertIdentical(view.player, player)
 
 
     def test_playerRemoved(self):

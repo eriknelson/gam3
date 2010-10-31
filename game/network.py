@@ -66,20 +66,6 @@ class SetTerrain(Command):
 
 
 
-class SetPositionOf(Command):
-    """
-    Set the position of a L{Player}.
-
-    @param identifier: The unique identifier for the player whose position will
-        be set.
-    @param x: The x position.
-    @param y: The y position.
-    """
-
-    arguments = [('identifier', Integer()),
-                 ('x', Float()),
-                 ('y', Float()),
-                 ('z', Float())]
 
 
 
@@ -142,7 +128,7 @@ class SetMyDirection(Command):
 
 class SetDirectionOf(Command):
     """
-    Set the direction of a L{Player}.
+    Set the position, orientation, and direction of a L{Player}.
 
     This is a server to client command which indicates the new direction and
     position of a L{Player}.
@@ -154,13 +140,15 @@ class SetDirectionOf(Command):
     @param x: The x coordinate at the time of change in direction.
     @param y: The y coordinate at the time of change in direction.
     @param z: The z coordinate at the time of change in direction.
+    @param orientation: The y angle of the orientation of the player.
     """
 
     arguments = [('identifier', Integer()),
                  ('direction', Direction()),
                  ('x', Float()),
                  ('y', Float()),
-                 ('z', Float())]
+                 ('z', Float()),
+                 ('orientation', Float())]
 
 
 class NetworkController(AMP):
@@ -269,23 +257,7 @@ class NetworkController(AMP):
         raise ValueError("identifierByObject passed unknown model objects")
 
 
-    def setPositionOf(self, identifier, x, y, z):
-        """
-        Set the position of a local model object.
-
-        @type identifier: L{int}
-        @type x: L{float}
-        @type y: L{float}
-        @type z: L{float}
-
-        @see: L{SetPosition}
-        """
-        self.objectByIdentifier(identifier).setPosition(vec3(x, y, z))
-        return {}
-    SetPositionOf.responder(setPositionOf)
-
-
-    def setDirectionOf(self, identifier, direction, x, y, z):
+    def setDirectionOf(self, identifier, direction, x, y, z, orientation):
         """
         Set the direction of a local model object.
 
@@ -297,6 +269,7 @@ class NetworkController(AMP):
         player = self.objectByIdentifier(identifier)
         player.setDirection(direction)
         player.setPosition(vec3(x, y, z))
+        player.orientation.y = orientation
         return {}
     SetDirectionOf.responder(setDirectionOf)
 
