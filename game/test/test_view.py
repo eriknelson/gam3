@@ -168,12 +168,14 @@ class WindowTests(TestCase):
 
     def test_playerRemoved(self):
         """
-        L{Window.playerRemoved} does nothing.
-
-        XXX It should do something.
+        L{Window.playerRemoved} removes the L{PlayerView} for the L{Player}
+        instanced passed to it.
         """
         player = self.environment.createPlayer(vec3(1, 0, 2), 3)
         self.environment.removePlayer(player)
+        for view in self.window.scene._items:
+            if isinstance(view, PlayerView) and view.player is player:
+                self.fail("Found PlayerView for removed player")
 
 
     def test_go(self):

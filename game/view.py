@@ -357,6 +357,10 @@ class Window(object):
         """
         Remove a L{PlayerView}.
         """
+        for view in self.scene._items:
+            if isinstance(view, PlayerView) and view.player is player:
+                self.scene._items.remove(view)
+                return
 
 
 
