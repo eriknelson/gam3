@@ -102,8 +102,6 @@ class Player(object):
         self._lastDirectionChange = self.seconds()
         self.direction = direction
 
-        print 'Changed direction at', self._lastPosition, 'to', self.direction
-
         for observer in self.observers:
             observer.directionChanged(self)
 

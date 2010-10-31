@@ -229,5 +229,6 @@ class MouseLookTests(TestCase, PlayerCreationMixin):
         player's perspective to the left.
         """
         self.controller.mouseMotion((100, 200), (-20, 20), None)
-        self.assertEquals(self.player.orientation.y, -2)
+        self.assertEquals(
+            self.player.orientation.y, -20 * self.controller.mouseSensitivity)
 

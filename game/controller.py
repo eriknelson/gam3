@@ -26,7 +26,12 @@ class PlayerController(object):
 
     @ivar player: The player being controlled.
     @ivar downDirections: List of currently held arrow keys.
+
+    @ivar mouseSensitivity: A multipler for how much rotation each unit of
+        relative mouse movement should result in.
     """
+
+    mouseSensitivity = 0.25
 
     def __init__(self, player):
         self.player = player
@@ -63,7 +68,8 @@ class PlayerController(object):
         """
         Handle mouse motion to change the orientation of the player.
         """
-        self.player.turn(y * 0.25, x * 0.25)
+        self.player.turn(
+            y * self.mouseSensitivity, x * self.mouseSensitivity)
 
 
     def calculateDirection(self, pressedKeys):
