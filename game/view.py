@@ -106,6 +106,9 @@ class FollowCamera(record('player')):
         glRotate(o.x, 1.0, 0.0, 0.0)
         glRotate(o.y, 0.0, 1.0, 0.0)
         glRotate(o.z, 0.0, 0.0, 1.0)
+        # XXX Put the camera somewhere in the middle-ish of the player model.
+        # This is a wild guess for now, camera position data should be available
+        # from the model at some later point.
         glTranslate(-v.x - 0.5, -v.y - 1, -v.z - 0.5)
 
 
