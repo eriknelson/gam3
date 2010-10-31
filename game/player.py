@@ -12,21 +12,21 @@ class Player(object):
 
     # XXX Call this class Character.
 
-    @ivar _lastPosition: A tuple of (x,y), specifying the last computed
-    position of player.
+    @ivar _lastPosition: A L{vec3} instance, specifying the last computed
+        position of player.
 
     @ivar seconds: A no-argument callable which returns the current time in
-    seconds.
+        seconds.
 
     @ivar direction: C{FORWARD}, C{LEFT}, the additive inverse of one of these,
         or the sum of any two non-additive-inverse of these four values,
         indicating the player's current direction of movement.
 
-    @ivar speed: The distance which can be covered when the player
-    is in motion (probably in something like cm/sec, if x and y are in cm.
+    @ivar speed: The distance which can be covered when the player is in motion
+        (probably in something like cm/sec, if x and y are in cm).
 
     @ivar observers: A C{list} of objects notified about state changes of this
-    object.
+        object.
     """
 
     # XXX: This shouldn't be public. (make it a property without a setter?)
@@ -102,6 +102,8 @@ class Player(object):
         self._lastDirectionChange = self.seconds()
         self.direction = direction
 
+        print 'Changed direction at', self._lastPosition, 'to', self.direction
+
         for observer in self.observers:
             observer.directionChanged(self)
 
@@ -112,6 +114,9 @@ class Player(object):
         """
         self.orientation.x += x
         self.orientation.y += y
+
+        for observer in self.observers:
+            observer.directionChanged(self)
 
 
     def addObserver(self, observer):

@@ -122,13 +122,17 @@ class SetMyDirection(Command):
     @type direction: L{Direction}
     @param direction: The new direction.
 
+    @param y: The direction the player is facing.
+    @type y: L{Float}
 
     @return x: The x coordinate of the player at the time the server received
         the Command.
     @return y: Same as x, save for the y coordinate.
+    @return z: Same as x, save for the z coordinate.
     """
 
-    arguments = [('direction', Direction())]
+    arguments = [('direction', Direction()),
+                 ('y', Float())]
 
     response = [('x', Float()),
                 ('y', Float()),
@@ -149,6 +153,7 @@ class SetDirectionOf(Command):
     @param direction: The new direction of the player.
     @param x: The x coordinate at the time of change in direction.
     @param y: The y coordinate at the time of change in direction.
+    @param z: The z coordinate at the time of change in direction.
     """
 
     arguments = [('identifier', Integer()),
@@ -190,7 +195,9 @@ class NetworkController(AMP):
 
         @param modelObject: The L{Player} whose direction has changed.
         """
-        d = self.callRemote(SetMyDirection, direction=modelObject.direction)
+        d = self.callRemote(
+            SetMyDirection,
+            direction=modelObject.direction, y=modelObject.orientation.y)
         d.addCallback(self._gotNewPosition, modelObject)
         # XXX Add an errback
 

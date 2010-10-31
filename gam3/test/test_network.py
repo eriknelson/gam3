@@ -357,12 +357,14 @@ class NetworkTests(TestCase):
         protocol = Gam3Server(world, clock=Clock())
         protocol.introduce()
         responder = protocol.lookupFunction(SetMyDirection.commandName)
-        d = responder({"direction": Direction().toString(RIGHT)})
+        d = responder({"direction": Direction().toString(RIGHT),
+                       'y': '1.5'})
 
         def gotResult(box):
-            self.assertEqual(protocol.player.direction, RIGHT)
+            self.assertEquals(protocol.player.direction, RIGHT)
+            self.assertEquals(protocol.player.orientation.y, 1.5)
             v = protocol.player.getPosition()
-            self.assertEqual(box, {'x': str(v.x), 'y': str(v.y), 'z': str(v.z)})
+            self.assertEquals(box, {'x': str(v.x), 'y': str(v.y), 'z': str(v.z)})
 
         d.addCallback(gotResult)
         return d

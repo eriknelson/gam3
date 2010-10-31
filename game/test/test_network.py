@@ -222,8 +222,10 @@ class SetMyDirectionTests(CommandTestMixin, TestCase):
     """
     command = SetMyDirection
 
-    argumentObjects = {'direction': RIGHT}
-    argumentStrings = {'direction': Direction().toString(RIGHT)}
+    argumentObjects = {'direction': RIGHT, 'y': 1.5}
+    argumentStrings = {
+        'direction': Direction().toString(RIGHT),
+        'y': '1.5'}
 
     responseObjects = {'x': 32.5, 'y': 939.5, 'z': 5.5}
     responseStrings = stringifyDictValues(responseObjects)
@@ -440,17 +442,31 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         return introduced
 
 
-    def test_directionChanged(self):
+    def test_movementDirectionChanged(self):
         """
-        Change of direction by model objects should be translated into a
-        network call by L{NetworkController}.
+        Change of direction of movement by model objects should be translated
+        into a network call by L{NetworkController}.
         """
         self.controller.addModelObject(self.identifier, self.player)
+        self.player.orientation.y = 2.0
         self.player.setDirection(FORWARD)
         self.assertEqual(len(self.calls), 1)
         result, command, kw = self.calls.pop(0)
         self.assertIdentical(command, SetMyDirection)
-        self.assertEqual(kw, {"direction": FORWARD})
+        self.assertEqual(kw, {"direction": FORWARD, "y": 2.0})
+
+
+    def test_orientationDirectionChanged(self):
+        """
+        Change of direction of orientation by model objects should be translated
+        into a network call by L{NetworkController}.
+        """
+        self.controller.addModelObject(self.identifier, self.player)
+        self.player.turn(0.0, 1.5)
+        self.assertEqual(len(self.calls), 1)
+        result, command, kw = self.calls.pop(0)
+        self.assertIdentical(command, SetMyDirection)
+        self.assertEqual(kw, {"direction": None, "y": 1.5})
 
 
     def test_directionChangedResponse(self):
