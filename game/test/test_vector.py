@@ -9,12 +9,26 @@ class VectorTests(TestCase):
     def test_attributes(self):
         """
         The three arguments passed to the L{Vector} initializer are bound to its
-        C{x}, C{y}, and C{z} attributes.
+        C{x}, C{y}, and C{z} attributes.  The attributes are always of type
+        C{float} even if C{int} are passed to the initializer.
         """
         v = Vector(1, 2, 3)
         self.assertEquals(v.x, 1)
         self.assertEquals(v.y, 2)
         self.assertEquals(v.z, 3)
+        self.assertIsInstance(v.x, float)
+        self.assertIsInstance(v.y, float)
+        self.assertIsInstance(v.z, float)
+
+
+    def test_repr(self):
+        """
+        The string representation of a L{Vector} instance returned by L{repr}
+        includes the names and values of each of its three attributes, and
+        identifies the type itself as well.
+        """
+        self.assertEquals(
+            repr(Vector(1.5, 2.5, -3.5)), "<Vector x=1.5 y=2.5 z=-3.5>")
 
 
     def test_addition(self):
@@ -28,6 +42,17 @@ class VectorTests(TestCase):
         self.assertEquals(v3.x, 3)
         self.assertEquals(v3.y, 1)
         self.assertEquals(v3.z, 8)
+
+
+    def test_multiplication(self):
+        """
+        The result of multiplying a L{Vector} by a number is a L{Vector} in the
+        same direction as the original but with a magnitude greater by a factor
+        of the multiplier.
+        """
+        v1 = Vector(1, 2, 3)
+        v2 = v1 * 2.5
+        self.assertEquals(v2, Vector(2.5, 5, 7.5))
 
 
     def test_equality(self):

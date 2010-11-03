@@ -4,12 +4,12 @@ from twisted.internet import reactor
 
 from game.functional.test_view3d import SceneMixin
 from game.player import Player
-from game.vec3 import vec3
+from game.vector import Vector
 
 class StdoutReportingController(object):
     # XXX Make an interface for the controller and verify this fake.
     def __init__(self):
-        self.player = Player(vec3(0, 0, 0), 0, reactor.seconds)
+        self.player = Player(Vector(0, 0, 0), 0, reactor.seconds)
 
     def keyUp(self, key):
         pass

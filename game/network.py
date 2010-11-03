@@ -10,7 +10,7 @@ from twisted.protocols.amp import (
     AMP, AmpList, Command, Integer, Float, String, Argument)
 
 from game.environment import Environment
-from game.vec3 import vec3
+from game.vector import Vector
 
 class Direction(Argument):
     """
@@ -210,7 +210,7 @@ class NetworkController(AMP):
         @param position: Dict with C{x} and C{y} keys, whose values should be
         integers specifying position.
         """
-        player.setPosition(vec3(position['x'], position['y'], position['z']))
+        player.setPosition(Vector(position['x'], position['y'], position['z']))
 
 
     def createInitialPlayer(self, environment, identifier, position,
@@ -232,7 +232,7 @@ class NetworkController(AMP):
         d = self.callRemote(Introduce)
         def cbIntroduce(box):
             granularity = box['granularity']
-            position = vec3(box['x'], box['y'], box['z'])
+            position = Vector(box['x'], box['y'], box['z'])
             speed = box['speed']
             self.environment = Environment(granularity, self.clock)
             self.createInitialPlayer(
@@ -280,7 +280,7 @@ class NetworkController(AMP):
 
         @see: L{SetPosition}
         """
-        self.objectByIdentifier(identifier).setPosition(vec3(x, y, z))
+        self.objectByIdentifier(identifier).setPosition(Vector(x, y, z))
         return {}
     SetPositionOf.responder(setPositionOf)
 
@@ -296,7 +296,7 @@ class NetworkController(AMP):
         """
         player = self.objectByIdentifier(identifier)
         player.setDirection(direction)
-        player.setPosition(vec3(x, y, z))
+        player.setPosition(Vector(x, y, z))
         return {}
     SetDirectionOf.responder(setDirectionOf)
 
@@ -311,7 +311,7 @@ class NetworkController(AMP):
         @param y: The y position of the new L{Player}.
         @param z: The z position of the new L{Player}.
         """
-        player = self.environment.createPlayer(vec3(x, y, z), speed)
+        player = self.environment.createPlayer(Vector(x, y, z), speed)
         self.modelObjects[identifier] = player
         return {}
     NewPlayer.responder(newPlayer)

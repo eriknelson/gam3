@@ -13,7 +13,7 @@ import random
 
 from twisted.application.service import Service
 
-from game.vec3 import vec3
+from game.vector import Vector
 from game.player import Player
 from game.environment import SimulationTime
 
@@ -64,7 +64,7 @@ class World(SimulationTime):
         x = self.random.randrange(sw.x, ne.x)
         y = 1.0
         z = self.random.randrange(sw.y, ne.y)
-        player = Player(vec3(x, y, z), 2, self.seconds)
+        player = Player(Vector(x, y, z), 2, self.seconds)
         for observer in self.observers:
             observer.playerCreated(player)
         self.players.append(player)

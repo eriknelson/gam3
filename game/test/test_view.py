@@ -21,7 +21,7 @@ from game.test.util import MockSurface
 from game.controller import K_LEFT
 from game.environment import Environment
 from game.player import Player
-from game.vec3 import vec3
+from game.vector import Vector
 
 
 class MockDisplay(object):
@@ -161,7 +161,7 @@ class WindowTests(TestCase):
         XXX It should do something.
         """
         # This calls playerCreated, since the Window adds itself as an observer.
-        self.environment.createPlayer(vec3(1, 0, 2), 3)
+        self.environment.createPlayer(Vector(1, 0, 2), 3)
 
 
     def test_playerRemoved(self):
@@ -170,7 +170,7 @@ class WindowTests(TestCase):
 
         XXX It should do something.
         """
-        player = self.environment.createPlayer(vec3(1, 0, 2), 3)
+        player = self.environment.createPlayer(Vector(1, 0, 2), 3)
         self.environment.removePlayer(player)
 
 
@@ -220,7 +220,7 @@ class MockController(object):
     def __init__(self, clock):
         self.downs = []
         self.ups = []
-        self.player = Player(vec3(0, 0, 0), 1, clock.seconds)
+        self.player = Player(Vector(0, 0, 0), 1, clock.seconds)
 
 
     def keyDown(self, key):
