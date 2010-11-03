@@ -10,7 +10,6 @@ from twisted.protocols.amp import AMP
 
 from game.network import (Introduce, SetDirectionOf, NewPlayer,
                           SetMyDirection, RemovePlayer, SetTerrain)
-from game.terrain import GRASS
 
 
 class Gam3Server(AMP):
@@ -59,10 +58,10 @@ class Gam3Server(AMP):
         """
         Notify the client that a new L{Player} has been created.
         """
-        x, y = player.getPosition()
+        v = player.getPosition()
         self.callRemote(NewPlayer,
                         identifier=self.identifierForPlayer(player),
-                        x=x, y=y, speed=player.speed)
+                        x=v.x, y=v.y, z=v.z, speed=player.speed)
 
 
     def introduce(self):
@@ -73,15 +72,16 @@ class Gam3Server(AMP):
         """
         player = self.world.createPlayer()
         identifier = self.identifierForPlayer(player)
-        x, y = player.getPosition()
+        v = player.getPosition()
         # XXX FIXME BUG: Instead, we should do what twisted:#2671 wants.
         self.clock.callLater(0, self.sendExistingState)
         self.player = player
         return {"granularity": self.world.granularity,
                 "identifier": identifier,
                 "speed": player.speed,
-                "x": x,
-                "y": y}
+                "x": v.x,
+                "y": v.y,
+                "z": v.z}
     Introduce.responder(introduce)
 
 
@@ -95,8 +95,8 @@ class Gam3Server(AMP):
         self.callRemote(
             SetTerrain,
             terrain=[
-                dict(x=x, y=y, type=type) for
-                ((x, y), type) in self.world.terrain.iteritems()])
+                dict(x=x, y=y, z=z, type=type) for
+                ((x, y, z), type) in self.world.terrain.iteritems()])
 
 
     def sendExistingPlayers(self):
@@ -116,11 +116,11 @@ class Gam3Server(AMP):
         """
         A L{Player}'s direction has changed: Send it to the client.
         """
-        x, y = player.getPosition()
+        v = player.getPosition()
         self.callRemote(SetDirectionOf,
                         identifier=self.identifierForPlayer(player),
                         direction=player.direction,
-                        x=x, y=y)
+                        x=v.x, y=v.y, z=v.z)
 
     # AMP responders
     def setMyDirection(self, direction):
@@ -131,8 +131,8 @@ class Gam3Server(AMP):
         @param direction: A L{game.direction} direction.
         """
         self.player.setDirection(direction)
-        x, y = self.player.getPosition()
-        return {'x': x, 'y': y}
+        v = self.player.getPosition()
+        return {'x': v.x, 'y': v.y, 'z': v.z}
     SetMyDirection.responder(setMyDirection)
 
 

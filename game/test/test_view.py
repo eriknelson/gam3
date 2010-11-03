@@ -15,10 +15,12 @@ from pygame.event import Event
 from game import __file__ as gameFile
 from game.terrain import GRASS
 from game.view import (
-    Viewport, Window, PlayerView, loadImage, TerrainView)
-from game.test.util import PlayerCreationMixin, MockWindow, MockSurface
+    Color, Scene,
+    Viewport, Window, loadImage, TerrainView)
+from game.test.util import MockSurface
 from game.controller import K_LEFT
 from game.environment import Environment
+from game.player import Vertex, Player
 
 
 class MockDisplay(object):
@@ -57,35 +59,13 @@ class MockView(object):
     """
     An object that is supposed to look like L{PersonView}.
     """
-    parent = None
-    painted = False
-    _initializedDisplay = None
-
-    def setParent(self, parent):
-        """
-        Set the C{parent} attribute.
-        """
-        self.parent = parent
-
-
-    def displayInitialized(self, surface):
-        """
-        Called when the display surface is initialized (perhaps more than once).
-
-        This implementation requires that the surface supplied not be C{None}
-        and records it.
-        """
-        if surface is None:
-            raise RuntimeError(
-                "Display should never be None if it is initialized.")
-        self._initializedDisplay = surface
-
+    paints = 0
 
     def paint(self):
         """
         Set the C{painted} attribute to True.
         """
-        self.painted = True
+        self.paints += 1
 
 
 
@@ -142,148 +122,11 @@ class WindowTests(TestCase):
         self.assertIdentical(window.clock, reactor)
 
 
-    def test_addBeforeGo(self):
-        """
-        Adding a view to a Window should set the window as the view's parent but
-        not initial the view with a display if L{Window.go} has not been called
-        yet.
-        """
-        view = MockView()
-        self.window.add(view)
-        self.assertIdentical(view.parent, self.window)
-
-
-    def test_addAfterGo(self):
-        """
-        If L{Window.go} has been called already, L{Window.add} calls the view's
-        C{initialize} method with the display surface.
-        """
-        view = MockView()
-        self.window.go()
-        self.addCleanup(self.window.stop)
-        self.window.add(view)
-        self.assertIdentical(view._initializedDisplay, self.display._screen)
-
-
-    def test_goAfterAdd(self):
-        """
-        If views have been added to the L{Window}, L{Window.go} causes the
-        display surface tobe passed to their C{displayInitialized} methods.
-        """
-        view = MockView()
-        self.window.add(view)
-        self.window.go()
-        self.addCleanup(self.window.stop)
-        self.assertIdentical(view._initializedDisplay, self.display._screen)
-
-
-    def test_dirty(self):
-        """
-        Dirtying a L{Window} should schedule a painting of the entire scene.
-        """
-        self.window.dirty()
-        self.assertEqual(len(self.clock.calls), 1)
-        call = self.clock.calls[0]
-        self.assertEqual(call.getTime(), 0)
-        self.assertEqual(call.func, self.window.paint)
-
-
-    def test_duplicateDirty(self):
-        """
-        Dirtying a L{Window} again before the painting for a previous C{dirty}
-        call has happened should not schedule a new call.
-        """
-        self.window.dirty()
-        self.window.dirty()
-        self.assertEqual(len(self.clock.calls), 1)
-        call = self.clock.calls[0]
-        self.assertEqual(call.getTime(), 0)
-        self.assertEqual(call.func, self.window.paint)
-
-
-    def test_dirtiedAgain(self):
-        """
-        Dirtying a L{Window} again after the painting for a previous C{dirty}
-        call has happened should schedule a new call.
-        """
-        self.window.dirty()
-        self.clock.advance(1)
-        self.assertEqual(self.clock.calls, [])
-        self.window.dirty()
-        self.assertEqual(len(self.clock.calls), 1)
-        call = self.clock.calls[0]
-        self.assertEqual(call.getTime(), 1)
-        self.assertEqual(call.func, self.window.paint)
-
-
-    def test_addDirties(self):
-        """
-        Adding a child should schedule painting of the entire scene.
-        """
-        view = MockView()
-        self.window.add(view)
-        self.assertEqual(len(self.clock.calls), 1)
-        call = self.clock.calls[0]
-        self.assertEqual(call.getTime(), 0)
-        self.assertEqual(call.func, self.window.paint)
-
-
-    def test_explicitPaintCancelsDirtyPaint(self):
-        """
-        Calling L{Window.paint} explicitly before the painting for a previous
-        C{dirty} call has happened should cancel the pending paint call.
-        """
-        self.window.dirty()
-        self.window.paint()
-        self.assertEqual(self.clock.calls, [])
-
-
-    def test_paint(self):
-        """
-        Painting a window should paint all of its views.
-        """
-        view1 = MockView()
-        view2 = MockView()
-        self.window.add(view1)
-        self.window.add(view2)
-        self.window.paint()
-        self.assertEqual(view1.painted, True)
-        self.assertEqual(view2.painted, True)
-
-
-    def test_paintFlipsAndClears(self):
-        """
-        Painting a window should flip the display and fill it with black.
-        """
-        self.window.paint()
-        self.assertEqual(self.surface.fills, [(0, 0, 0)])
-        self.assertEqual(self.display.flipped, 1)
-
-
-    def test_draw(self):
-        """
-        Drawing an image at a location should blit it onto the screen
-        at the correct position.
-        """
-        imageSize = (3, 8)
-        drawPosition = (13, -1)
-        viewSize = (32, 24)
-        self.window.viewport.viewSize = viewSize
-        self.window.go()
-        self.addCleanup(self.window.stop)
-        image = MockSurface("foo", imageSize)
-        self.window.draw(image, drawPosition)
-        self.assertEqual(
-            self.window.screen.blits,
-            [(image, (drawPosition[0],
-                      viewSize[1] - drawPosition[1] - imageSize[1]))])
-
-
     def test_submitTo(self):
         """
         It should be possible to set the window's controller.
         """
-        controller = object()
+        controller = MockController(self.clock)
         self.window.submitTo(controller)
         self.assertEquals(self.window.controller, controller)
 
@@ -292,7 +135,7 @@ class WindowTests(TestCase):
         """
         The controller should be called with key-down events.
         """
-        controller = MockController()
+        controller = MockController(self.clock)
         self.window.submitTo(controller)
         self.event.events = [Event(pygame.KEYDOWN, key=pygame.K_LEFT)]
         self.window.handleInput()
@@ -303,7 +146,7 @@ class WindowTests(TestCase):
         """
         The controller should be called with key-up events.
         """
-        controller = MockController()
+        controller = MockController(self.clock)
         self.window.submitTo(controller)
         self.event.events = [Event(pygame.KEYUP, key=pygame.K_LEFT)]
         self.window.handleInput()
@@ -312,35 +155,38 @@ class WindowTests(TestCase):
 
     def test_playerCreated(self):
         """
-        L{Window.playerCreated} should wrap the created player in a
-        L{PlayerView} and add it to itself.
+        L{Window.playerCreated} does nothing.
+
+        XXX It should do something.
         """
-        player = self.environment.createPlayer((1, 2), 3)
-        self.assertEqual(len(self.window.views), 1)
-        self.assertTrue(isinstance(self.window.views[0], PlayerView))
-        self.assertIdentical(self.window.views[0].player, player)
+        # This calls playerCreated, since the Window adds itself as an observer.
+        self.environment.createPlayer(Vertex(1, 0, 2), 3)
 
 
     def test_playerRemoved(self):
         """
-        L{Window.playerRemoved} should remove the L{PlayerView} for
-        the removed L{Player}.
+        L{Window.playerRemoved} does nothing.
+
+        XXX It should do something.
         """
-        player = self.environment.createPlayer((1, 2), 3)
+        player = self.environment.createPlayer(Vertex(1, 0, 2), 3)
         self.environment.removePlayer(player)
-        self.assertEqual(self.window.views, [])
 
 
-    def test_playerRemovedIgnoresTerrain(self):
+    def test_go(self):
         """
-        If there is a L{TerrainView} in the L{Window}, L{Window.playerRemoved}
-        ignores it.
+        L{Window.go} initializes the display and returns a L{Deferred} which
+        fires when the Window is closed.
         """
-        terrain = TerrainView(GRASS, loadImage)
-        self.window.add(terrain)
-        player = self.environment.createPlayer((1, 2), 3)
-        self.environment.removePlayer(player)
-        self.assertEqual(self.window.views, [terrain])
+        d = self.window.go()
+        L = []
+        d.addBoth(L.append)
+        self.assertEquals(L, [])
+        self.window.stop()
+        self.assertEquals(L, [None])
+        self.assertEquals(
+            self.display._screen.size, self.window.viewport.viewSize)
+
 
 
 
@@ -354,10 +200,13 @@ class MockEventSource(object):
     def __init__(self):
         self.events = []
 
+
     def get(self):
-        """Return the previously specified events.
+        """
+        Return the previously specified events.
         """
         return self.events
+
 
 
 class MockController(object):
@@ -367,9 +216,11 @@ class MockController(object):
     @ivar downs: The recorded key-down events.
     @ivar ups: The recorded key-up events.
     """
-    def __init__(self):
+    def __init__(self, clock):
         self.downs = []
         self.ups = []
+        self.player = Player(Vertex(0, 0, 0), 1, clock.seconds)
+
 
     def keyDown(self, key):
         """
@@ -377,63 +228,12 @@ class MockController(object):
         """
         self.downs.append(key)
 
+
     def keyUp(self, key):
         """
         Record a key-up event.
         """
         self.ups.append(key)
-
-
-class PlayerViewTests(TestCase, PlayerCreationMixin):
-    def setUp(self):
-        self.paths = []
-        def loadImage(path):
-            self.paths.append(path)
-            return MockSurface(path.basename(), (64, 64))
-        self.player = self.makePlayer((3, 2))
-        self.view = PlayerView(self.player, loadImage)
-
-
-    def test_initialization(self):
-        """
-        L{PlayerView} should take the player model as an argument to
-        the initializer.
-        """
-        self.assertIdentical(self.view.player, self.player)
-
-
-    def test_setParent(self):
-        """
-        Calling L{PlayerView.setParent} should set the C{parent}
-        attribute of the player view.
-        """
-        self.view.setParent(2)
-        self.assertEqual(self.view.parent, 2)
-
-
-    def test_paint(self):
-        """
-        Calling L{PlayerView.paint} should draw an image object to the
-        window.
-        """
-        window = MockWindow()
-        self.view.setParent(window)
-        self.view.paint()
-        self.assertEqual(window.draws, [(self.view.image, (3, 2))])
-
-
-    def test_imageConverted(self):
-        """
-        If the L{PlayerView} knows about a display surface, it converts the
-        player image to a depth matching it.
-        """
-        window = MockWindow()
-        self.view.setParent(window)
-        display = MockSurface("<display>", (0, 0), 12)
-        self.view.displayInitialized(display)
-        self.view.paint()
-        [(image, position)] = window.draws
-        self.assertEquals(image.depth, 12)
 
 
 
@@ -458,48 +258,92 @@ class TerrainViewTests(TestCase):
     """
     Tests for L{game.terrain.TerrainView}.
     """
-
-    def test_paint(self):
-        """
-        The view should blit images representing terrain types at appropriate
-        locations in the view.
-        """
-        window = MockWindow()
-        terrainModel = {(0, 0): GRASS}
-        view = TerrainView(terrainModel, lambda x: MockSurface(x, (64, 64)))
-        view.setParent(window)
-        view.paint()
-        grassImage = view.getImageForTerrain(GRASS)
-        self.assertEqual(window.draws, [(grassImage, (0, 0))])
-
-
-    def test_convertImageToDisplayDepth(self):
-        """
-        The image returned by L{TerrainView.getImageForTerrain} has the same
-        color depth as the display surface passed to
-        L{Terrain.displayInitialized}.
-        """
-        depth = 8
-        view = TerrainView({}, lambda x: MockSurface(x, (64, 64)))
-        # Trick it into caching the result with the wrong depth.
-        view.getImageForTerrain(GRASS)
-        # Give it the depth information.
-        view.displayInitialized(MockSurface("<display>", (0, 0), depth))
-        # Make sure it is correct on this later call.
-        self.assertEquals(view.getImageForTerrain(GRASS).depth, depth)
-
-
     def test_getImageForTerrain(self):
         """
-        There should be a method for getting an image representing a particular
-        terrain type.
+        L{TerrainView._getImageForTerrain} returns a surface holding an image
+        suitable for the given terrain type.
         """
         paths = []
         def loadImage(path):
             paths.append(path)
             return MockSurface(path.basename(), (64, 64))
         view = TerrainView({}, loader=loadImage)
-        image = view.getImageForTerrain(GRASS)
+        image = view._getImageForTerrain(GRASS)
         self.assertEquals(image.label, "grass.png")
         self.assertEqual(
             paths, [FilePath(gameFile).sibling('data').child('grass.png')])
+
+
+
+class VertexTests(TestCase):
+    """
+    Tests for L{Vertex}.
+    """
+    def test_attributes(self):
+        """
+        The three arguments passed to the L{Vertex} initializer are bound to its
+        C{x}, C{y}, and C{z} attributes.
+        """
+        v = Vertex(1, 2, 3)
+        self.assertEquals(v.x, 1)
+        self.assertEquals(v.y, 2)
+        self.assertEquals(v.z, 3)
+
+
+    def test_addition(self):
+        """
+        The result of adding two L{Vertex} instances is a L{Vertex} with
+        components equal to the sum of the components of the operands.
+        """
+        v1 = Vertex(1, 2, 3)
+        v2 = Vertex(2, -1, 5)
+        v3 = v1 + v2
+        self.assertEquals(v3.x, 3)
+        self.assertEquals(v3.y, 1)
+        self.assertEquals(v3.z, 8)
+
+
+    def test_equality(self):
+        """
+        Two L{Vertex} instances with equal components are equal to each other.
+        """
+        v1 = Vertex(1, 2, 3)
+        v2 = Vertex(1, 2, 3)
+        self.assertTrue(v1 == v2)
+        v3 = Vertex(1, 2, 4)
+        self.assertFalse(v1 == v3)
+
+
+
+class ColorTests(TestCase):
+    """
+    Tests for L{Color}.
+    """
+    def test_attributes(self):
+        """
+        The three arguments passed to the L{Color} initializer are bound to its
+        C{red}, C{green}, and C{blue} attributes.
+        """
+        c = Color(1, 2, 3)
+        self.assertEquals(c.red, 1)
+        self.assertEquals(c.green, 2)
+        self.assertEquals(c.blue, 3)
+
+
+
+class SceneTests(TestCase):
+    """
+    Tests for L{Scene}.
+    """
+    def test_paint(self):
+        """
+        L{Scene.paint} calls C{paint} on all objects previously added to it.
+        """
+        p = MockView()
+        scene = Scene()
+        scene.add(p)
+        self.assertEquals(p.paints, 0)
+        scene.paint()
+        self.assertEquals(p.paints, 1)
+        scene.paint()
+        self.assertEquals(p.paints, 2)

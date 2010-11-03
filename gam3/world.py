@@ -13,7 +13,7 @@ import random
 
 from twisted.application.service import Service
 
-from game.player import Player
+from game.player import Vertex, Player
 from game.environment import SimulationTime
 
 from epsilon.structlike import record
@@ -47,7 +47,7 @@ class World(SimulationTime):
                  granularity=1, platformClock=None):
         SimulationTime.__init__(self, granularity, platformClock)
         if playerCreationRectangle is None:
-            playerCreationRectangle = point(-1, -1), point(200, 200)
+            playerCreationRectangle = point(-1, -1), point(3, 3)
         self.random = random
         self.playerCreationRectangle = playerCreationRectangle
         self.observers = []
@@ -61,8 +61,9 @@ class World(SimulationTime):
         """
         sw, ne = self.playerCreationRectangle
         x = self.random.randrange(sw.x, ne.x)
-        y = self.random.randrange(sw.y, ne.y)
-        player = Player((x, y), 100, self.seconds)
+        y = 1.0
+        z = self.random.randrange(sw.y, ne.y)
+        player = Player(Vertex(x, y, z), 2, self.seconds)
         for observer in self.observers:
             observer.playerCreated(player)
         self.players.append(player)

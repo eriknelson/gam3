@@ -13,6 +13,7 @@ from epsilon.structlike import record
 
 from gam3.world import Gam3Service, World, point
 
+from game.player import Vertex
 from game.test.test_environment import SimulationTimeTestsMixin
 from game.test.util import PlayerVisibilityObserver
 
@@ -50,15 +51,15 @@ class WorldTests(TestCase):
         """
         bottomLeft = point(3, 7)
         topRight = point(21, 19)
-        x, y = 7, 15
+        expected = Vertex(7, 1, 15)
 
-        random = StubRandom({(bottomLeft.x, topRight.x): x,
-                             (bottomLeft.y, topRight.y): y})
+        random = StubRandom({(bottomLeft.x, topRight.x): expected.x,
+                             (bottomLeft.y, topRight.y): expected.z})
 
         world = World(random, (bottomLeft, topRight))
         player = world.createPlayer()
 
-        self.assertEqual(player.getPosition(), (x, y))
+        self.assertEqual(player.getPosition(), expected)
 
 
     def test_removePlayer(self):
@@ -114,9 +115,10 @@ class WorldTests(TestCase):
         """
         world = World()
         player = world.createPlayer()
-        x, y = player.getPosition()
-        self.assertTrue(isinstance(x, float))
-        self.assertTrue(isinstance(y, float))
+        v = player.getPosition()
+        self.assertTrue(isinstance(v.x, float))
+        self.assertTrue(isinstance(v.y, float))
+        self.assertTrue(isinstance(v.z, float))
 
 
     def test_createPlayerEmitsEvent(self):

@@ -9,7 +9,7 @@ from twisted.internet.protocol import ClientFactory, Protocol
 from twisted.internet.defer import succeed
 from twisted.internet.task import Clock
 
-from game.view import TerrainView, PlayerView, loadImage
+from game.view import Scene, TerrainView, loadImage
 from game.controller import PlayerController
 from game.network import NetworkController
 from game.environment import Environment
@@ -42,13 +42,13 @@ class StubReactor(object):
         """
 
 
+
 class StubWindow(object):
     """
     A thing that is looks like L{game.view.Window}.
 
     @ivar environment: The first argument to the initializer.
     @ivar clock: The second argument to the initializer.
-    @ivar views: A list of view objects passed to L{add}.
     @ivar controller: The controller being submitted to.
     """
 
@@ -56,9 +56,8 @@ class StubWindow(object):
         self.environment = environment
         self.clock = clock
         self.went = []
-        self.views = []
-        self.add = self.views.append
         self.controller = None
+        self.scene = Scene()
 
 
     def submitTo(self, controller):
@@ -259,9 +258,7 @@ class UITests(TestCase):
         player = object()
         window = self.ui.window = StubWindow(None, None)
         self.ui.gotInitialPlayer(player)
-        self.assertEqual(len(window.views), 1)
-        self.assertTrue(isinstance(window.views[0], PlayerView))
-        self.assertIdentical(window.views[0].player, player)
+        # XXX The view needs to do something, maybe.
         self.assertTrue(
             isinstance(window.controller, PlayerController))
         self.assertIdentical(window.controller.player, player)
@@ -276,10 +273,10 @@ class UITests(TestCase):
         window = self.ui.window = StubWindow(None, None)
         self.ui.environment = Environment(10, Clock())
         self.ui.gotTerrain(terrain)
-        self.assertEqual(len(window.views), 1)
-        self.assertTrue(isinstance(window.views[0], TerrainView))
-        self.assertIdentical(window.views[0].terrain, terrain)
-        self.assertIdentical(window.views[0].loader, loadImage)
+        [view] = window.scene._items
+        self.assertTrue(isinstance(view, TerrainView))
+        self.assertIdentical(view.terrain, terrain)
+        self.assertIdentical(view.loader, loadImage)
 
 
     def test_noInitialPlayer(self):

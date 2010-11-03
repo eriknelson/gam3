@@ -110,10 +110,10 @@ class TwistdPluginTests(TestCase):
         gam3 = service.getServiceNamed(GAM3_SERVICE_NAME)
         self.assertEquals(
             gam3.world.terrain,
-            {(0, 192): GRASS, (64, 192): GRASS, (128, 192): GRASS,
-             (0, 128): GRASS, (64, 128): GRASS, (128, 128): MOUNTAIN,
-             (0, 64): GRASS, (64, 64): MOUNTAIN, (128, 64): MOUNTAIN,
-             (0, 0): GRASS, (64, 0): MOUNTAIN, (128, 0): DESERT})
+            {(0, 0, 3): GRASS, (1, 0, 3): GRASS, (2, 0, 3): GRASS,
+             (0, 0, 2): GRASS, (1, 0, 2): GRASS, (2, 0, 2): MOUNTAIN,
+             (0, 0, 1): GRASS, (1, 0, 1): MOUNTAIN, (2, 0, 1): MOUNTAIN,
+             (0, 0, 0): GRASS, (1, 0, 0): MOUNTAIN, (2, 0, 0): DESERT})
 
 
     def test_ignoreTrailingWhitespace(self):
@@ -128,5 +128,5 @@ class TwistdPluginTests(TestCase):
         gam3 = service.getServiceNamed(GAM3_SERVICE_NAME)
         self.assertEquals(
             gam3.world.terrain,
-            {(0, 64): GRASS, (64, 64): MOUNTAIN,
-             (0, 0): MOUNTAIN, (64, 0): DESERT})
+            {(0, 0, 1): GRASS, (1, 0, 1): MOUNTAIN,
+             (0, 0, 0): MOUNTAIN, (1, 0, 0): DESERT})

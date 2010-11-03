@@ -1,5 +1,23 @@
 # -*- test-case-name: game.test.test_player -*-
 
+from twisted.python.util import FancyEqMixin
+
+from epsilon.structlike import record
+
+class Vertex(record("x y z"), FancyEqMixin):
+    """
+    A coordinate in three dimensional space.
+    """
+    compareAttributes = ['x', 'y', 'z']
+
+    def __add__(self, other):
+        return Vertex(
+            self.x + other.x,
+            self.y + other.y,
+            self.z + other.z)
+
+
+
 class Player(object):
     """
     An object with a position.
@@ -27,6 +45,7 @@ class Player(object):
     direction = None
 
     def __init__(self, position, speed, seconds):
+        assert isinstance(position, Vertex)
         self._lastPosition = position
         self._lastDirectionChange = seconds()
         self.speed = speed
@@ -38,6 +57,7 @@ class Player(object):
         """
         Absolutely reposition this player.
         """
+        assert isinstance(position, Vertex)
         self._lastPosition = position
         self._lastDirectionChange = self.seconds()
 
@@ -46,13 +66,14 @@ class Player(object):
         """
         Retrieve the current position.
 
-        @return: A two-tuple of ints giving the current position of the player.
+        @return: A L{Vertex} giving the current position of the player.
         """
-        x, y = self._lastPosition
+        v = self._lastPosition
         now = self.seconds()
         elapsedTime = now - self._lastDirectionChange
         s = (self.direction or 0j) * elapsedTime * self.speed
-        return x + s.imag, y + s.real
+        # XXX Get some trig, dummy.
+        return Vertex(v.x + s.imag, v.y, v.z - s.real)
 
 
     def setDirection(self, direction):

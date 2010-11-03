@@ -11,7 +11,7 @@ from twisted.test.proto_helpers import StringTransport
 
 from game.network import (Introduce, SetMyDirection, SetDirectionOf,
                           Direction, NewPlayer, RemovePlayer, SetTerrain)
-from game.player import Player
+from game.player import Vertex, Player
 from game.direction import LEFT, RIGHT
 from game.terrain import GRASS, MOUNTAIN
 
@@ -31,6 +31,7 @@ class FakeWorld(object):
     speed = 3
     x = 129.5
     y = -299999.5
+    z = 3.5
 
     def __init__(self):
         self.players = []
@@ -40,7 +41,8 @@ class FakeWorld(object):
         """
         Create a L{Player}, recording it in C{self.players}.
         """
-        self.players.append(Player((self.x, self.y), self.speed, lambda: 3))
+        self.players.append(
+            Player(Vertex(self.x, self.y, self.z), self.speed, lambda: 3))
         return self.players[-1]
 
 
@@ -119,7 +121,8 @@ class NetworkTests(TestCase):
                               'granularity': str(world.granularity),
                               'speed': str(world.speed),
                               'x': str(world.x),
-                              'y': str(world.y)})
+                              'y': str(world.y),
+                              'z': str(world.z)})
 
         d.addCallback(gotResult)
         return d
@@ -140,11 +143,12 @@ class NetworkTests(TestCase):
         # see #2671
         clock.advance(0)
         player = world.createPlayer()
-        x, y = player.getPosition()
+        v = player.getPosition()
         self.assertEqual(
             self.getCommands(NewPlayer),
             [(NewPlayer, {'identifier': protocol.identifierForPlayer(player),
-                          'x': x, 'y': y, 'speed': player.speed})])
+                          'x': v.x, 'y': v.y, 'z': v.z,
+                          'speed': player.speed})])
 
 
     def test_introductionDoesNotSendNewPlayer(self):
@@ -167,9 +171,9 @@ class NetworkTests(TestCase):
         clock = Clock()
         world = World()
         world.terrain.update({
-                (0, 0): GRASS,
-                (1, 1): GRASS,
-                (2, 1): MOUNTAIN,
+                (0, 0, 0): GRASS,
+                (1, 3, 1): GRASS,
+                (2, -1, 1): MOUNTAIN,
                 })
 
         protocol = Gam3Server(world, clock=clock)
@@ -185,9 +189,9 @@ class NetworkTests(TestCase):
             self.getCommands(SetTerrain),
             [(SetTerrain, {'terrain': [
                             # XXX This ordering only works by accident.
-                            {'type': 'grass', 'x': 0, 'y': 0},
-                            {'type': 'grass', 'x': 1, 'y': 1},
-                            {'type': 'mountain', 'x': 2, 'y': 1},
+                            {'type': 'grass', 'x': 1, 'y': 3, 'z': 1},
+                            {'type': 'grass', 'x': 0, 'y': 0, 'z': 0},
+                            {'type': 'mountain', 'x': 2, 'y': -1, 'z': 1},
                             ]})])
 
 
@@ -223,20 +227,23 @@ class NetworkTests(TestCase):
         for newPlayer in [(NewPlayer,
                            {"identifier": protocol.identifierForPlayer(player1),
                             "speed": player1.speed,
-                            "x": player1.getPosition()[0],
-                            "y": player1.getPosition()[1],
+                            "x": player1.getPosition().x,
+                            "y": player1.getPosition().y,
+                            "z": player1.getPosition().z,
                             }),
                           (NewPlayer,
                            {"identifier": protocol.identifierForPlayer(player2),
                             "speed": player2.speed,
-                            "x": player2.getPosition()[0],
-                            "y": player2.getPosition()[1],
+                            "x": player2.getPosition().x,
+                            "y": player2.getPosition().y,
+                            "z": player2.getPosition().z,
                             }),
                           (NewPlayer,
                            {"identifier": protocol.identifierForPlayer(player3),
                             "speed": player3.speed,
-                            "x": player3.getPosition()[0],
-                            "y": player3.getPosition()[1],
+                            "x": player3.getPosition().x,
+                            "y": player3.getPosition().y,
+                            "z": player3.getPosition().z,
                             }),
                           ]:
             self.assertTrue(newPlayer in calls)
@@ -254,13 +261,14 @@ class NetworkTests(TestCase):
         protocol.sendExistingPlayers()
         self.calls = []
         player.setDirection(LEFT)
-        x, y = player.getPosition()
+        v = player.getPosition()
         self.assertEqual(self.calls,
                          [(SetDirectionOf,
                            {"identifier": protocol.identifierForPlayer(player),
                             "direction": LEFT,
-                            "x": x,
-                            "y": y})])
+                            "x": v.x,
+                            "y": v.y,
+                            "z": v.z})])
 
 
     def test_sendOnlyOtherDirectionOfPlayers(self):
@@ -296,13 +304,14 @@ class NetworkTests(TestCase):
         player = world.createPlayer()
         self.calls = [] #ignore other calls
         player.setDirection(RIGHT)
-        x, y = player.getPosition()
+        v = player.getPosition()
         self.assertEqual(self.calls,
                          [(SetDirectionOf,
                            {"identifier": protocol.identifierForPlayer(player),
                             "direction": RIGHT,
-                            "x": x,
-                            "y": y})])
+                            "x": v.x,
+                            "y": v.y,
+                            "z": v.z})])
 
 
     def test_playerRemoved(self):
@@ -351,8 +360,8 @@ class NetworkTests(TestCase):
 
         def gotResult(box):
             self.assertEqual(protocol.player.direction, RIGHT)
-            x, y = protocol.player.getPosition()
-            self.assertEqual(box, {'x': str(x), 'y': str(y)})
+            v = protocol.player.getPosition()
+            self.assertEqual(box, {'x': str(v.x), 'y': str(v.y), 'z': str(v.z)})
 
         d.addCallback(gotResult)
         return d
