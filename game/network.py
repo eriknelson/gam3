@@ -10,7 +10,7 @@ from twisted.protocols.amp import (
     AMP, AmpList, Command, Integer, Float, String, Argument)
 
 from game.environment import Environment
-from game.player import Vertex
+from game.vector import Vector
 
 class Direction(Argument):
     """
@@ -122,13 +122,17 @@ class SetMyDirection(Command):
     @type direction: L{Direction}
     @param direction: The new direction.
 
+    @param y: The direction the player is facing.
+    @type y: L{Float}
 
     @return x: The x coordinate of the player at the time the server received
         the Command.
     @return y: Same as x, save for the y coordinate.
+    @return z: Same as x, save for the z coordinate.
     """
 
-    arguments = [('direction', Direction())]
+    arguments = [('direction', Direction()),
+                 ('y', Float())]
 
     response = [('x', Float()),
                 ('y', Float()),
@@ -149,6 +153,7 @@ class SetDirectionOf(Command):
     @param direction: The new direction of the player.
     @param x: The x coordinate at the time of change in direction.
     @param y: The y coordinate at the time of change in direction.
+    @param z: The z coordinate at the time of change in direction.
     """
 
     arguments = [('identifier', Integer()),
@@ -190,7 +195,9 @@ class NetworkController(AMP):
 
         @param modelObject: The L{Player} whose direction has changed.
         """
-        d = self.callRemote(SetMyDirection, direction=modelObject.direction)
+        d = self.callRemote(
+            SetMyDirection,
+            direction=modelObject.direction, y=modelObject.orientation.y)
         d.addCallback(self._gotNewPosition, modelObject)
         # XXX Add an errback
 
@@ -203,7 +210,7 @@ class NetworkController(AMP):
         @param position: Dict with C{x} and C{y} keys, whose values should be
         integers specifying position.
         """
-        player.setPosition(Vertex(position['x'], position['y'], position['z']))
+        player.setPosition(Vector(position['x'], position['y'], position['z']))
 
 
     def createInitialPlayer(self, environment, identifier, position,
@@ -225,7 +232,7 @@ class NetworkController(AMP):
         d = self.callRemote(Introduce)
         def cbIntroduce(box):
             granularity = box['granularity']
-            position = Vertex(box['x'], box['y'], box['z'])
+            position = Vector(box['x'], box['y'], box['z'])
             speed = box['speed']
             self.environment = Environment(granularity, self.clock)
             self.createInitialPlayer(
@@ -273,7 +280,7 @@ class NetworkController(AMP):
 
         @see: L{SetPosition}
         """
-        self.objectByIdentifier(identifier).setPosition(Vertex(x, y, z))
+        self.objectByIdentifier(identifier).setPosition(Vector(x, y, z))
         return {}
     SetPositionOf.responder(setPositionOf)
 
@@ -289,7 +296,7 @@ class NetworkController(AMP):
         """
         player = self.objectByIdentifier(identifier)
         player.setDirection(direction)
-        player.setPosition(Vertex(x, y, z))
+        player.setPosition(Vector(x, y, z))
         return {}
     SetDirectionOf.responder(setDirectionOf)
 
@@ -304,7 +311,7 @@ class NetworkController(AMP):
         @param y: The y position of the new L{Player}.
         @param z: The z position of the new L{Player}.
         """
-        player = self.environment.createPlayer(Vertex(x, y, z), speed)
+        player = self.environment.createPlayer(Vector(x, y, z), speed)
         self.modelObjects[identifier] = player
         return {}
     NewPlayer.responder(newPlayer)

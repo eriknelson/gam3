@@ -2,35 +2,37 @@
 from twisted.trial.unittest import TestCase
 from twisted.internet import reactor
 
+from game.vector import Vector
 from game.environment import Environment
 from game.view import (
-    Window, StaticLight, Sphere, Vertex, Color, TerrainView, FollowCamera,
-    loadImage)
+    Window, StaticLight, Sphere, Color, TerrainView, loadImage)
 from game.player import Player
 from game.controller import PlayerController
 
 from game.functional.util import FunctionalTestMixin
 
 
-class ThreeDeeTests(FunctionalTestMixin, TestCase):
-    """
-    Tests for 3d capabilities of L{game.view}.
-    """
+class SceneMixin(FunctionalTestMixin):
     # Keep things a bit away from the real origin, so we detect anything that
     # only accidentally works there.
     def origin(self, x, y, z):
-        return Vertex(5, 5, 5) + Vertex(x, y, z)
+        return Vector(5, 5, 5) + Vector(x, y, z)
 
 
     def setUp(self):
         self.environment = Environment(50, reactor)
         self.window = Window(self.environment)
         self.window.viewport.viewSize = (1024, 768)
-        self.window.scene.addLight(StaticLight(self.origin(0, 0, -2)))
+        self.window.scene.addLight(StaticLight(self.origin(1, 1, -2)))
         self.window.scene.camera.position = self.origin(0, 0, 0)
         FunctionalTestMixin.setUp(self)
 
 
+
+class ThreeDeeTests(SceneMixin, TestCase):
+    """
+    Tests for 3d capabilities of L{game.view}.
+    """
     def test_sphere(self):
         """
         A red sphere should appear in the center of the window.
@@ -132,7 +134,7 @@ class ThreeDeeTests(FunctionalTestMixin, TestCase):
 
 
 
-class TerrainViewTests(FunctionalTestMixin, TestCase):
+class TerrainViewTests(SceneMixin, TestCase):
     """
     Tests for rendering of stuff that makes up the ground.
     """
@@ -140,18 +142,14 @@ class TerrainViewTests(FunctionalTestMixin, TestCase):
     # Keep things a bit away from the real origin, so we detect anything that
     # only accidentally works there.
     def origin(self, x, y, z):
-        return Vertex(5, 5, 5) + Vertex(x, y, z)
+        return Vector(5, 5, 5) + Vector(x, y, z)
 
     def setUp(self):
-        self.environment = Environment(50, reactor)
-        self.window = Window(self.environment)
-        self.window.viewport.viewSize = (1024, 768)
-        self.window.scene.addLight(StaticLight(self.origin(1, 1, -2)))
+        SceneMixin.setUp(self)
         self.window.scene.camera.position = self.origin(0.5, 1, 0)
         self.terrain = {}
         self.view = TerrainView(self.terrain, loadImage)
         self.window.scene.add(self.view)
-        FunctionalTestMixin.setUp(self)
 
 
     def test_terrain(self):

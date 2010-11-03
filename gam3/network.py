@@ -123,13 +123,18 @@ class Gam3Server(AMP):
                         x=v.x, y=v.y, z=v.z)
 
     # AMP responders
-    def setMyDirection(self, direction):
+    def setMyDirection(self, direction, y):
         """
         Set the direction of the player of the client connected to this
         protocol.
 
-        @param direction: A L{game.direction} direction.
+        @param direction: The direction of movement, either forward, backward,
+            left, right, or some non-opposing combination.
+
+        @param y: The direction of forward, in degrees offset from movement
+            along the z axis.
         """
+        self.player.orientation.y = y
         self.player.setDirection(direction)
         v = self.player.getPosition()
         return {'x': v.x, 'y': v.y, 'z': v.z}

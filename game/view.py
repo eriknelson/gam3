@@ -29,7 +29,7 @@ from twisted.internet import reactor
 from epsilon.structlike import record
 
 from game import __file__ as gameFile
-from game.player import Vertex
+from game.vector import Vector
 
 
 def loadImage(path):
@@ -55,7 +55,7 @@ class Sphere(record("center radius color")):
     """
     A renderer for a sphere.
 
-    @ivar center: A L{Vertex} giving the center of this sphere.
+    @ivar center: A L{Vector} giving the center of this sphere.
 
     @ivar radius: A number giving the radius of this sphere.
 
@@ -79,10 +79,10 @@ class StaticCamera(record('position orientation')):
     """
     A fixed viewing perspective from which the scene will be observed.
 
-    @ivar position: A L{Vertex} giving the coordinates in the space of the
+    @ivar position: A L{Vector} giving the coordinates in the space of the
         perspective.
 
-    @ivar orientation: A L{Vertex} giving three rotations to orient the
+    @ivar orientation: A L{Vector} giving three rotations to orient the
         perspective.
     """
     def paint(self):
@@ -102,9 +102,10 @@ class FollowCamera(record('player')):
     """
     def paint(self):
         v = self.player.getPosition()
-        # glRotate(self.orientation.x, 1.0, 0.0, 0.0)
-        # glRotate(180, 0.0, 1.0, 0.0)
-        # glRotate(self.orientation.z, 0.0, 0.0, 1.0)
+        o = self.player.orientation
+        glRotate(o.x, 1.0, 0.0, 0.0)
+        glRotate(o.y, 0.0, 1.0, 0.0)
+        glRotate(o.z, 0.0, 0.0, 1.0)
         glTranslate(-v.x, -v.y, -v.z)
 
 
@@ -113,7 +114,7 @@ class StaticLight(record('position')):
     """
     A source of light in a scene.
 
-    @ivar position: A L{Vertex} giving the coordinates of the light source.
+    @ivar position: A L{Vector} giving the coordinates of the light source.
     """
     def paint(self):
         glEnable(GL_LIGHT0)
@@ -271,7 +272,7 @@ class Window(object):
         self.controller = None
         self.event = event
         self.scene = Scene()
-        self.scene.camera = StaticCamera(Vertex(0, 0, 0), Vertex(0, 0, 0))
+        self.scene.camera = StaticCamera(Vector(0, 0, 0), Vector(0, 0, 0))
 
 
 
@@ -289,12 +290,17 @@ class Window(object):
         Handle currently available pygame input events.
         """
         for event in self.event.get():
-            if event.type == pygame.locals.QUIT:
+            if event.type == pygame.locals.QUIT or \
+                    event.type == pygame.KEYDOWN and event.key == pygame.K_q:
                 self.stop()
-            elif self.controller and event.type == pygame.KEYDOWN:
-                self.controller.keyDown(event.key)
-            elif self.controller and event.type == pygame.KEYUP:
-                self.controller.keyUp(event.key)
+            elif self.controller is not None:
+                if event.type == pygame.KEYDOWN:
+                    self.controller.keyDown(event.key)
+                elif event.type == pygame.KEYUP:
+                    self.controller.keyUp(event.key)
+                elif event.type == pygame.MOUSEMOTION:
+                    self.controller.mouseMotion(
+                        event.pos, event.rel, event.buttons)
 
 
     def submitTo(self, controller):
@@ -314,6 +320,8 @@ class Window(object):
         @return: A Deferred that fires when this window is closed by the user.
         """
         pygame.init()
+        pygame.event.set_grab(True)
+        pygame.mouse.set_visible(False)
         self.screen = self.display.set_mode(
             self.viewport.viewSize,
             pygame.locals.DOUBLEBUF | pygame.locals.OPENGL)

@@ -9,9 +9,10 @@ from twisted.internet.interfaces import IProtocolFactory
 from twisted.internet.task import Clock
 from twisted.test.proto_helpers import StringTransport
 
+from game.vector import Vector
 from game.network import (Introduce, SetMyDirection, SetDirectionOf,
                           Direction, NewPlayer, RemovePlayer, SetTerrain)
-from game.player import Vertex, Player
+from game.player import Player
 from game.direction import LEFT, RIGHT
 from game.terrain import GRASS, MOUNTAIN
 
@@ -42,7 +43,7 @@ class FakeWorld(object):
         Create a L{Player}, recording it in C{self.players}.
         """
         self.players.append(
-            Player(Vertex(self.x, self.y, self.z), self.speed, lambda: 3))
+            Player(Vector(self.x, self.y, self.z), self.speed, lambda: 3))
         return self.players[-1]
 
 
@@ -356,12 +357,14 @@ class NetworkTests(TestCase):
         protocol = Gam3Server(world, clock=Clock())
         protocol.introduce()
         responder = protocol.lookupFunction(SetMyDirection.commandName)
-        d = responder({"direction": Direction().toString(RIGHT)})
+        d = responder({"direction": Direction().toString(RIGHT),
+                       'y': '1.5'})
 
         def gotResult(box):
-            self.assertEqual(protocol.player.direction, RIGHT)
+            self.assertEquals(protocol.player.direction, RIGHT)
+            self.assertEquals(protocol.player.orientation.y, 1.5)
             v = protocol.player.getPosition()
-            self.assertEqual(box, {'x': str(v.x), 'y': str(v.y), 'z': str(v.z)})
+            self.assertEquals(box, {'x': str(v.x), 'y': str(v.y), 'z': str(v.z)})
 
         d.addCallback(gotResult)
         return d

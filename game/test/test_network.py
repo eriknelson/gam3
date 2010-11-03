@@ -14,7 +14,7 @@ from game.network import (Direction, Introduce, SetPositionOf, SetDirectionOf,
                           RemovePlayer, SetTerrain, Terrain)
 from game.direction import FORWARD, BACKWARD, LEFT, RIGHT
 from game.terrain import GRASS, MOUNTAIN, DESERT
-from game.player import Vertex
+from game.vector import Vector
 
 
 class DirectionArgumentTests(TestCase):
@@ -222,8 +222,10 @@ class SetMyDirectionTests(CommandTestMixin, TestCase):
     """
     command = SetMyDirection
 
-    argumentObjects = {'direction': RIGHT}
-    argumentStrings = {'direction': Direction().toString(RIGHT)}
+    argumentObjects = {'direction': RIGHT, 'y': 1.5}
+    argumentStrings = {
+        'direction': Direction().toString(RIGHT),
+        'y': '1.5'}
 
     responseObjects = {'x': 32.5, 'y': 939.5, 'z': 5.5}
     responseStrings = stringifyDictValues(responseObjects)
@@ -263,7 +265,7 @@ class ControllerTests(TestCase, PlayerCreationMixin):
     def setUp(self):
         self.calls = []
         self.identifier = 123
-        self.player = self.makePlayer(Vertex(1, 2, 3))
+        self.player = self.makePlayer(Vector(1, 2, 3))
         self.clock = Clock()
         self.controller = NetworkController(self.clock)
         self.controller.callRemote = self.callRemote
@@ -347,7 +349,7 @@ class ControllerTests(TestCase, PlayerCreationMixin):
 
         def gotPositionSetting(ign):
             self.assertEqual(
-                self.player.getPosition(), Vertex(23.5, 32.5, 13.5))
+                self.player.getPosition(), Vector(23.5, 32.5, 13.5))
         d.addCallback(gotPositionSetting)
         return d
 
@@ -371,7 +373,7 @@ class ControllerTests(TestCase, PlayerCreationMixin):
 
         def gotDirectionSetting(ign):
             self.assertEqual(self.player.direction, FORWARD)
-            self.assertEqual(self.player.getPosition(), Vertex(x, y, z))
+            self.assertEqual(self.player.getPosition(), Vector(x, y, z))
         d.addCallback(gotDirectionSetting)
         return d
 
@@ -397,11 +399,11 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         environment.addObserver(observer)
 
         self.controller.createInitialPlayer(
-            environment, self.identifier, Vertex(x, y, z), speed)
+            environment, self.identifier, Vector(x, y, z), speed)
 
         self.assertEqual(len(observer.createdPlayers), 1)
         self._assertThingsAboutPlayerCreation(
-            environment, Vertex(x, y, z), speed)
+            environment, Vector(x, y, z), speed)
 
 
     def test_greetServer(self):
@@ -431,7 +433,7 @@ class ControllerTests(TestCase, PlayerCreationMixin):
                          'z': z})
 
         self._assertThingsAboutPlayerCreation(
-            self.controller.environment, Vertex(x, y, z), speed)
+            self.controller.environment, Vector(x, y, z), speed)
         self.assertTrue(isinstance(self.controller.environment, Environment))
         self.assertEqual(self.controller.environment.granularity, granularity)
         self.assertEqual(self.controller.environment.platformClock, self.clock)
@@ -440,17 +442,31 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         return introduced
 
 
-    def test_directionChanged(self):
+    def test_movementDirectionChanged(self):
         """
-        Change of direction by model objects should be translated into a
-        network call by L{NetworkController}.
+        Change of direction of movement by model objects should be translated
+        into a network call by L{NetworkController}.
         """
         self.controller.addModelObject(self.identifier, self.player)
+        self.player.orientation.y = 2.0
         self.player.setDirection(FORWARD)
         self.assertEqual(len(self.calls), 1)
         result, command, kw = self.calls.pop(0)
         self.assertIdentical(command, SetMyDirection)
-        self.assertEqual(kw, {"direction": FORWARD})
+        self.assertEqual(kw, {"direction": FORWARD, "y": 2.0})
+
+
+    def test_orientationDirectionChanged(self):
+        """
+        Change of direction of orientation by model objects should be translated
+        into a network call by L{NetworkController}.
+        """
+        self.controller.addModelObject(self.identifier, self.player)
+        self.player.turn(0.0, 1.5)
+        self.assertEqual(len(self.calls), 1)
+        result, command, kw = self.calls.pop(0)
+        self.assertIdentical(command, SetMyDirection)
+        self.assertEqual(kw, {"direction": None, "y": 1.5})
 
 
     def test_directionChangedResponse(self):
@@ -463,7 +479,7 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         self.assertEquals(len(self.calls), 1)
         x, y, z = (123, 5398, 10.5)
         self.calls[0][0].callback({"x": x, "y": y, "z": z})
-        self.assertEqual(self.player.getPosition(), Vertex(x, y, z))
+        self.assertEqual(self.player.getPosition(), Vector(x, y, z))
 
 
     def test_newPlayer(self):
@@ -484,7 +500,7 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         def gotResult(ign):
             self.assertEqual(len(observer.createdPlayers), 1)
             player = observer.createdPlayers[0]
-            self.assertEqual(player.getPosition(), Vertex(x, y, z))
+            self.assertEqual(player.getPosition(), Vector(x, y, z))
             self.assertEqual(player.speed, speed)
             obj = self.controller.objectByIdentifier(
                 self.controller.identifierByObject(player))
