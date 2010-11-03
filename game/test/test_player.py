@@ -135,10 +135,10 @@ class PlayerTests(unittest.TestCase, PlayerCreationMixin):
         L{Player.getPosition} will returns C{float} values if the player's
         coordinates don't fall exactly onto integer values.
         """
-        player = self.makePlayer(Vertex(0, 0, 0))
+        player = self.makePlayer(Vector(0, 0, 0))
         player.setDirection(FORWARD)
         self.advanceTime(0.5)
-        self.assertEquals(player.getPosition(), Vertex(0, 0, -0.5))
+        self.assertEquals(player.getPosition(), Vector(0, 0, -0.5))
 
 
     def test_stop(self):
