@@ -9,7 +9,7 @@ from twisted.internet.interfaces import IProtocolFactory
 from twisted.internet.task import Clock
 from twisted.test.proto_helpers import StringTransport
 
-from game.vec3 import vec3
+from game.vector import Vector
 from game.network import (Introduce, SetMyDirection, SetDirectionOf,
                           Direction, NewPlayer, RemovePlayer, SetTerrain)
 from game.player import Player
@@ -43,7 +43,7 @@ class FakeWorld(object):
         Create a L{Player}, recording it in C{self.players}.
         """
         self.players.append(
-            Player(vec3(self.x, self.y, self.z), self.speed, lambda: 3))
+            Player(Vector(self.x, self.y, self.z), self.speed, lambda: 3))
         return self.players[-1]
 
 

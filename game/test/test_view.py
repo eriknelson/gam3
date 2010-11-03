@@ -21,7 +21,7 @@ from game.test.util import MockSurface
 from game.controller import K_LEFT
 from game.environment import Environment
 from game.player import Player
-from game.vec3 import vec3
+from game.vector import Vector
 
 
 class MockDisplay(object):
@@ -160,7 +160,7 @@ class WindowTests(TestCase):
         around the created player.
         """
         # This calls playerCreated, since the Window adds itself as an observer.
-        player = self.environment.createPlayer(vec3(1, 0, 2), 3)
+        player = self.environment.createPlayer(Vector(1, 0, 2), 3)
         view = self.window.scene._items[-1]
         self.assertIsInstance(view, PlayerView)
         self.assertIdentical(view.player, player)
@@ -171,7 +171,7 @@ class WindowTests(TestCase):
         L{Window.playerRemoved} removes the L{PlayerView} for the L{Player}
         instanced passed to it.
         """
-        player = self.environment.createPlayer(vec3(1, 0, 2), 3)
+        player = self.environment.createPlayer(Vector(1, 0, 2), 3)
         self.environment.removePlayer(player)
         for view in self.window.scene._items:
             if isinstance(view, PlayerView) and view.player is player:
@@ -224,7 +224,7 @@ class MockController(object):
     def __init__(self, clock):
         self.downs = []
         self.ups = []
-        self.player = Player(vec3(0, 0, 0), 1, clock.seconds)
+        self.player = Player(Vector(0, 0, 0), 1, clock.seconds)
 
 
     def keyDown(self, key):

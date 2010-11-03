@@ -2,7 +2,7 @@
 from twisted.trial.unittest import TestCase
 from twisted.internet import reactor
 
-from game.vec3 import vec3
+from game.vector import Vector
 from game.environment import Environment
 from game.view import (
     Window, StaticLight, Sphere, Color, TerrainView, loadImage)
@@ -16,7 +16,7 @@ class SceneMixin(FunctionalTestMixin):
     # Keep things a bit away from the real origin, so we detect anything that
     # only accidentally works there.
     def origin(self, x, y, z):
-        return vec3(5, 5, 5) + vec3(x, y, z)
+        return Vector(5, 5, 5) + Vector(x, y, z)
 
 
     def setUp(self):
@@ -142,7 +142,7 @@ class TerrainViewTests(SceneMixin, TestCase):
     # Keep things a bit away from the real origin, so we detect anything that
     # only accidentally works there.
     def origin(self, x, y, z):
-        return vec3(5, 5, 5) + vec3(x, y, z)
+        return Vector(5, 5, 5) + Vector(x, y, z)
 
     def setUp(self):
         SceneMixin.setUp(self)

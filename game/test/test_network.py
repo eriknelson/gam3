@@ -14,7 +14,7 @@ from game.network import (Direction, Introduce, SetDirectionOf,
                           RemovePlayer, SetTerrain, Terrain)
 from game.direction import FORWARD, BACKWARD, LEFT, RIGHT
 from game.terrain import GRASS, MOUNTAIN, DESERT
-from game.vec3 import vec3
+from game.vector import Vector
 
 
 class DirectionArgumentTests(TestCase):
@@ -266,7 +266,7 @@ class ControllerTests(TestCase, PlayerCreationMixin):
     def setUp(self):
         self.calls = []
         self.identifier = 123
-        self.player = self.makePlayer(vec3(1, 2, 3))
+        self.player = self.makePlayer(Vector(1, 2, 3))
         self.clock = Clock()
         self.controller = NetworkController(self.clock)
         self.controller.callRemote = self.callRemote
@@ -356,7 +356,7 @@ class ControllerTests(TestCase, PlayerCreationMixin):
 
         def gotDirectionSetting(ign):
             self.assertEquals(self.player.direction, FORWARD)
-            self.assertEquals(self.player.getPosition(), vec3(x, y, z))
+            self.assertEquals(self.player.getPosition(), Vector(x, y, z))
             self.assertEquals(self.player.orientation.y, orientation)
         d.addCallback(gotDirectionSetting)
         return d
@@ -383,11 +383,11 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         environment.addObserver(observer)
 
         self.controller.createInitialPlayer(
-            environment, self.identifier, vec3(x, y, z), speed)
+            environment, self.identifier, Vector(x, y, z), speed)
 
         self.assertEqual(len(observer.createdPlayers), 1)
         self._assertThingsAboutPlayerCreation(
-            environment, vec3(x, y, z), speed)
+            environment, Vector(x, y, z), speed)
 
 
     def test_greetServer(self):
@@ -417,7 +417,7 @@ class ControllerTests(TestCase, PlayerCreationMixin):
                          'z': z})
 
         self._assertThingsAboutPlayerCreation(
-            self.controller.environment, vec3(x, y, z), speed)
+            self.controller.environment, Vector(x, y, z), speed)
         self.assertTrue(isinstance(self.controller.environment, Environment))
         self.assertEqual(self.controller.environment.granularity, granularity)
         self.assertEqual(self.controller.environment.platformClock, self.clock)
@@ -463,7 +463,7 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         self.assertEquals(len(self.calls), 1)
         x, y, z = (123, 5398, 10.5)
         self.calls[0][0].callback({"x": x, "y": y, "z": z})
-        self.assertEqual(self.player.getPosition(), vec3(x, y, z))
+        self.assertEqual(self.player.getPosition(), Vector(x, y, z))
 
 
     def test_newPlayer(self):
@@ -484,7 +484,7 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         def gotResult(ign):
             self.assertEqual(len(observer.createdPlayers), 1)
             player = observer.createdPlayers[0]
-            self.assertEqual(player.getPosition(), vec3(x, y, z))
+            self.assertEqual(player.getPosition(), Vector(x, y, z))
             self.assertEqual(player.speed, speed)
             obj = self.controller.objectByIdentifier(
                 self.controller.identifierByObject(player))

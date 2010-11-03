@@ -2,8 +2,7 @@
 
 from math import cos, sin, pi
 
-from vec3 import vec3
-
+from game.vector import Vector
 from game.direction import FORWARD, BACKWARD, LEFT, RIGHT
 
 class Player(object):
@@ -12,7 +11,7 @@ class Player(object):
 
     # XXX Call this class Character.
 
-    @ivar _lastPosition: A L{vec3} instance, specifying the last computed
+    @ivar _lastPosition: A L{Vector} instance, specifying the last computed
         position of player.
 
     @ivar seconds: A no-argument callable which returns the current time in
@@ -33,10 +32,10 @@ class Player(object):
     direction = None
 
     def __init__(self, position, speed, seconds):
-        assert isinstance(position, vec3)
+        assert isinstance(position, Vector)
         self._lastPosition = position
         self._lastDirectionChange = seconds()
-        self.orientation = vec3(0, 0, 0)
+        self.orientation = Vector(0, 0, 0)
         self.speed = speed
         self.seconds = seconds
         self.observers = []
@@ -46,7 +45,7 @@ class Player(object):
         """
         Absolutely reposition this player.
         """
-        assert isinstance(position, vec3)
+        assert isinstance(position, Vector)
         self._lastPosition = position
         self._lastDirectionChange = self.seconds()
 
@@ -65,7 +64,7 @@ class Player(object):
         """
         Retrieve the current position.
 
-        @return: A L{vec3} giving the current position of the player.
+        @return: A L{Vector} giving the current position of the player.
         """
         v = self._lastPosition
 
@@ -78,7 +77,7 @@ class Player(object):
         magnitude = elapsedTime * self.speed
 
         y = self.orientation.y / 180 * pi + self.offset[movement]
-        direction = vec3(sin(y), 0, -cos(y))
+        direction = Vector(sin(y), 0, -cos(y))
 
         # Multiply by the magnitude to get the distance traveled and add to the
         # current position to get the new position. XXX This may be the wrong

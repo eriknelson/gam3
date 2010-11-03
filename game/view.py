@@ -29,7 +29,7 @@ from twisted.internet import reactor
 from epsilon.structlike import record
 
 from game import __file__ as gameFile
-from game.vec3 import vec3
+from game.vector import Vector
 
 
 def loadImage(path):
@@ -55,7 +55,7 @@ class Sphere(record("center radius color")):
     """
     A renderer for a sphere.
 
-    @ivar center: A L{vec3} giving the center of this sphere.
+    @ivar center: A L{Vector} giving the center of this sphere.
 
     @ivar radius: A number giving the radius of this sphere.
 
@@ -79,10 +79,10 @@ class StaticCamera(record('position orientation')):
     """
     A fixed viewing perspective from which the scene will be observed.
 
-    @ivar position: A L{vec3} giving the coordinates in the space of the
+    @ivar position: A L{Vector} giving the coordinates in the space of the
         perspective.
 
-    @ivar orientation: A L{vec3} giving three rotations to orient the
+    @ivar orientation: A L{Vector} giving three rotations to orient the
         perspective.
     """
     def paint(self):
@@ -117,7 +117,7 @@ class StaticLight(record('position')):
     """
     A source of light in a scene.
 
-    @ivar position: A L{vec3} giving the coordinates of the light source.
+    @ivar position: A L{Vector} giving the coordinates of the light source.
     """
     def paint(self):
         glEnable(GL_LIGHT0)
@@ -279,7 +279,7 @@ class Window(object):
         self.controller = None
         self.event = event
         self.scene = Scene()
-        self.scene.camera = StaticCamera(vec3(0, 0, 0), vec3(0, 0, 0))
+        self.scene.camera = StaticCamera(Vector(0, 0, 0), Vector(0, 0, 0))
 
 
 
