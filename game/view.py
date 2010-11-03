@@ -106,7 +106,10 @@ class FollowCamera(record('player')):
         glRotate(o.x, 1.0, 0.0, 0.0)
         glRotate(o.y, 0.0, 1.0, 0.0)
         glRotate(o.z, 0.0, 0.0, 1.0)
-        glTranslate(-v.x, -v.y, -v.z)
+        # XXX Put the camera somewhere in the middle-ish of the player model.
+        # This is a wild guess for now, camera position data should be available
+        # from the model at some later point.
+        glTranslate(-v.x - 0.5, -v.y - 1, -v.z - 0.5)
 
 
 
@@ -138,6 +141,10 @@ class Scene(object):
     def __init__(self):
         self._items = []
         self._lights = []
+
+        # XXX This is a temporary hack to make things not so gloomy until the
+        # server starts telling us about light sources.
+        self.addLight(StaticLight(Vector(5, 10, 5)))
 
 
     def add(self, item):
@@ -266,7 +273,7 @@ class Window(object):
                  display=pygame.display,
                  event=pygame.event):
         environment.addObserver(self)
-        self.viewport = Viewport((0, 0), (320, 240))
+        self.viewport = Viewport((0, 0), (800, 600))
         self.clock = clock
         self.display = display
         self.controller = None
