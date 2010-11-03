@@ -12,7 +12,7 @@ from twisted.test.proto_helpers import StringTransport
 from game.network import (Introduce, SetMyDirection, SetDirectionOf,
                           Direction, NewPlayer, RemovePlayer, SetTerrain)
 from game.player import Player
-from game.direction import WEST, EAST
+from game.direction import LEFT, RIGHT
 from game.terrain import GRASS, MOUNTAIN
 
 from gam3.world import World
@@ -253,12 +253,12 @@ class NetworkTests(TestCase):
         protocol.callRemote = self.callRemote
         protocol.sendExistingPlayers()
         self.calls = []
-        player.setDirection(EAST)
+        player.setDirection(LEFT)
         x, y = player.getPosition()
         self.assertEqual(self.calls,
                          [(SetDirectionOf,
                            {"identifier": protocol.identifierForPlayer(player),
-                            "direction": EAST,
+                            "direction": LEFT,
                             "x": x,
                             "y": y})])
 
@@ -276,7 +276,7 @@ class NetworkTests(TestCase):
         # advance because observers aren't registered until later FIXME BUG XXX
         # see #2671
         clock.advance(0)
-        protocol.player.setDirection(EAST)
+        protocol.player.setDirection(LEFT)
         self.assertEqual(self.getCommands(SetDirectionOf), [])
 
 
@@ -295,12 +295,12 @@ class NetworkTests(TestCase):
         clock.advance(0)
         player = world.createPlayer()
         self.calls = [] #ignore other calls
-        player.setDirection(WEST)
+        player.setDirection(RIGHT)
         x, y = player.getPosition()
         self.assertEqual(self.calls,
                          [(SetDirectionOf,
                            {"identifier": protocol.identifierForPlayer(player),
-                            "direction": WEST,
+                            "direction": RIGHT,
                             "x": x,
                             "y": y})])
 
@@ -347,10 +347,10 @@ class NetworkTests(TestCase):
         protocol = Gam3Server(world, clock=Clock())
         protocol.introduce()
         responder = protocol.lookupFunction(SetMyDirection.commandName)
-        d = responder({"direction": Direction().toString(WEST)})
+        d = responder({"direction": Direction().toString(RIGHT)})
 
         def gotResult(box):
-            self.assertEqual(protocol.player.direction, WEST)
+            self.assertEqual(protocol.player.direction, RIGHT)
             x, y = protocol.player.getPosition()
             self.assertEqual(box, {'x': str(x), 'y': str(y)})
 

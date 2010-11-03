@@ -31,9 +31,9 @@ class World(SimulationTime):
 
     @ivar random: An object like L{random.Random}, used for entropic things.
 
-    @ivar playerCreationRectangle: A two-tuple of points giving the
-        southwestern and northeastern corners of a rectangle within
-        which new players will be created.
+    @ivar playerCreationRectangle: A two-tuple of points giving the southwestern
+        (lower bounds on x and y axis) and northeastern (upper bounds on x and y
+        axis) corners of a rectangle within which new players will be created.
 
     @ivar observers: A C{list} of objects notified about state changes of this
         object.
