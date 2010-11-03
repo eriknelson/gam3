@@ -120,7 +120,8 @@ class Gam3Server(AMP):
         self.callRemote(SetDirectionOf,
                         identifier=self.identifierForPlayer(player),
                         direction=player.direction,
-                        x=v.x, y=v.y, z=v.z)
+                        x=v.x, y=v.y, z=v.z,
+                        orientation=player.orientation.y)
 
     # AMP responders
     def setMyDirection(self, direction, y):

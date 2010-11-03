@@ -9,7 +9,7 @@ from __future__ import division
 from OpenGL.GL import (
     GL_PROJECTION, GL_MODELVIEW, GL_RGBA, GL_UNSIGNED_BYTE,
     GL_COLOR_MATERIAL, GL_LIGHTING, GL_DEPTH_TEST, GL_LIGHT0, GL_POSITION,
-    GL_FRONT_AND_BACK, GL_EMISSION, GL_REPEAT, GL_LINEAR, GL_QUADS,
+    GL_FRONT_AND_BACK, GL_EMISSION, GL_REPEAT, GL_LINEAR, GL_QUADS, GL_TRIANGLES,
     GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_TEXTURE_WRAP_T, GL_TEXTURE_MAG_FILTER,
     GL_TEXTURE_MIN_FILTER, GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT,
     glMatrixMode, glViewport,
@@ -301,6 +301,10 @@ class Window(object):
                 elif event.type == pygame.MOUSEMOTION:
                     self.controller.mouseMotion(
                         event.pos, event.rel, event.buttons)
+                elif event.type == pygame.MOUSEBUTTONUP:
+                    pygame.event.set_grab(not pygame.event.get_grab())
+                    pygame.mouse.set_visible(not pygame.mouse.set_visible(True))
+
 
 
     def submitTo(self, controller):
@@ -320,8 +324,6 @@ class Window(object):
         @return: A Deferred that fires when this window is closed by the user.
         """
         pygame.init()
-        pygame.event.set_grab(True)
-        pygame.mouse.set_visible(False)
         self.screen = self.display.set_mode(
             self.viewport.viewSize,
             pygame.locals.DOUBLEBUF | pygame.locals.OPENGL)
@@ -348,12 +350,17 @@ class Window(object):
         """
         Create a L{PlayerView}.
         """
+        self.scene.add(PlayerView(player))
 
 
     def playerRemoved(self, player):
         """
         Remove a L{PlayerView}.
         """
+        for view in self.scene._items:
+            if isinstance(view, PlayerView) and view.player is player:
+                self.scene._items.remove(view)
+                return
 
 
 
@@ -457,3 +464,37 @@ class TerrainView(object):
                     glTexCoord2d(tx, ty)
                     glVertex3f(x + dx, y + dy, z + dz)
                 glEnd()
+
+
+
+class PlayerView(record('player')):
+    def paint(self):
+        glPushMatrix()
+
+        position = self.player.getPosition()
+        glTranslate(position.x, position.y, position.z)
+
+        glColor(1.0, 1.0, 1.0)
+
+        glBegin(GL_TRIANGLES)
+        glVertex3f(0.5, 0.0, 0.5)
+        glVertex3f(0.0, 1.0, 0.0)
+        glVertex3f(1.0, 1.0, 0.0)
+
+        glVertex3f(0.5, 0.0, 0.5)
+        glVertex3f(1.0, 1.0, 0.0)
+        glVertex3f(1.0, 1.0, 1.0)
+
+        glVertex3f(0.5, 0.0, 0.5)
+        glVertex3f(1.0, 1.0, 1.0)
+        glVertex3f(0.0, 1.0, 1.0)
+
+        glVertex3f(0.5, 0.0, 0.5)
+        glVertex3f(0.0, 1.0, 1.0)
+        glVertex3f(0.0, 1.0, 0.0)
+        glEnd()
+
+        # glRotate(self.player.orientation.y, 0.0, 1.0, 0.0)
+
+        glPopMatrix()
+
