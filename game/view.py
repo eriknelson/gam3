@@ -144,7 +144,7 @@ class Scene(object):
 
         # XXX This is a temporary hack to make things not so gloomy until the
         # server starts telling us about light sources.
-        self.addLight(StaticLight(vec3(5, 10, 5)))
+        self.addLight(StaticLight(Vector(5, 10, 5)))
 
 
     def add(self, item):
