@@ -21,7 +21,7 @@ class DirectionArgumentTests(TestCase):
     """
     def test_cardinalConversion(self):
         """
-        The cardinal directions should round trip through the L{Complex}
+        The cardinal directions should round trip through the L{Direction}
         argument.
         """
         argument = Direction()
@@ -33,7 +33,7 @@ class DirectionArgumentTests(TestCase):
 
     def test_intercardinalConversion(self):
         """
-        The intercardinal directions should round trip through the L{Complex}
+        The intercardinal directions should round trip through the L{Direction}
         argument.
         """
         argument = Direction()
@@ -137,8 +137,8 @@ class IntroduceCommandTests(CommandTestMixin, TestCase):
         'identifier': 123,
         'granularity': 20,
         'speed': 12,
-        'x': -3,
-        'y': 2}
+        'x': -3.5,
+        'y': 2.5}
     responseStrings = stringifyDictValues(responseObjects)
 
     argumentObjects = argumentStrings = {}
@@ -154,8 +154,8 @@ class NewPlayerCommandTests(CommandTestMixin, TestCase):
 
     argumentObjects = {
         'identifier': 123,
-        'x': 505,
-        'y': 23489,
+        'x': 505.5,
+        'y': 23489.5,
         'speed': 3999}
 
     argumentStrings = stringifyDictValues(argumentObjects)
@@ -204,7 +204,7 @@ class RemovePlayerCommandTests(CommandTestMixin, TestCase):
     responseObjects = responseStrings = {}
 
     argumentObjects = {'identifier': 123}
-    argumentStrings = {'identifier': '123'}
+    argumentStrings = stringifyDictValues(argumentObjects)
 
 
 
@@ -217,8 +217,8 @@ class SetMyDirectionTests(CommandTestMixin, TestCase):
     argumentObjects = {'direction': RIGHT}
     argumentStrings = {'direction': Direction().toString(RIGHT)}
 
-    responseObjects = {'x': 32, 'y': 939}
-    responseStrings = {'x': '32', 'y': '939'}
+    responseObjects = {'x': 32.5, 'y': 939.5}
+    responseStrings = stringifyDictValues(responseObjects)
 
 
 
@@ -232,8 +232,8 @@ class SetDirectionOfTests(CommandTestMixin, TestCase):
     argumentObjects = {
         'identifier': 595,
         'direction': RIGHT,
-        'x': 939,
-        'y': -93999}
+        'x': 939.5,
+        'y': -93999.5}
 
     argumentStrings = stringifyDictValues(argumentObjects)
     argumentStrings['direction'] = Direction().toString(RIGHT)
@@ -329,14 +329,14 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         """
         self.controller.addModelObject(self.identifier, self.player)
 
-        x = str(23)
-        y = str(32)
+        x = str(23.5)
+        y = str(32.5)
         identifier = str(self.identifier)
         responder = self.controller.lookupFunction(SetPositionOf.commandName)
         d = responder({'identifier': identifier, 'x': x, 'y': y})
 
         def gotPositionSetting(ign):
-            self.assertEqual(self.player.getPosition(), (int(x), int(y)))
+            self.assertEqual(self.player.getPosition(), (float(x), float(y)))
         d.addCallback(gotPositionSetting)
         return d
 

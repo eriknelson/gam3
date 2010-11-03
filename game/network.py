@@ -7,7 +7,7 @@ Network support for Game.
 from struct import pack, unpack
 
 from twisted.protocols.amp import (
-    AMP, AmpList, Command, Integer, String, Argument)
+    AMP, AmpList, Command, Integer, Float, String, Argument)
 
 from game.environment import Environment
 
@@ -46,8 +46,8 @@ class Introduce(Command):
     response = [('identifier', Integer()),
                 ('granularity', Integer()),
                 ('speed', Integer()),
-                ('x', Integer()),
-                ('y', Integer())]
+                ('x', Float()),
+                ('y', Float())]
 
 
 
@@ -75,8 +75,8 @@ class SetPositionOf(Command):
     """
 
     arguments = [('identifier', Integer()),
-                 ('x', Integer()),
-                 ('y', Integer())]
+                 ('x', Float()),
+                 ('y', Float())]
 
 
 
@@ -92,8 +92,8 @@ class NewPlayer(Command):
     """
 
     arguments = [('identifier', Integer()),
-                 ('x', Integer()),
-                 ('y', Integer()),
+                 ('x', Float()),
+                 ('y', Float()),
                  ('speed', Integer())]
 
 
@@ -126,8 +126,8 @@ class SetMyDirection(Command):
 
     arguments = [('direction', Direction())]
 
-    response = [('x', Integer()),
-                ('y', Integer())]
+    response = [('x', Float()),
+                ('y', Float())]
 
 
 
@@ -148,8 +148,8 @@ class SetDirectionOf(Command):
 
     arguments = [('identifier', Integer()),
                  ('direction', Direction()),
-                 ('x', Integer()),
-                 ('y', Integer()),
+                 ('x', Float()),
+                 ('y', Float()),
                  ]
 
 

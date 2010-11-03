@@ -115,8 +115,8 @@ class WorldTests(TestCase):
         world = World()
         player = world.createPlayer()
         x, y = player.getPosition()
-        self.assertTrue(isinstance(x, int))
-        self.assertTrue(isinstance(y, int))
+        self.assertTrue(isinstance(x, float))
+        self.assertTrue(isinstance(y, float))
 
 
     def test_createPlayerEmitsEvent(self):

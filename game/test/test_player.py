@@ -64,8 +64,6 @@ class PlayerTests(unittest.TestCase, PlayerCreationMixin):
         player = self.makePlayer((0, 0))
         x, y = player.getPosition()
         self.assertEqual((x, y), (0, 0))
-        self.assertTrue(isinstance(x, (int, long)))
-        self.assertTrue(isinstance(y, (int, long)))
 
 
     def test_setDirection(self):
@@ -127,6 +125,17 @@ class PlayerTests(unittest.TestCase, PlayerCreationMixin):
         player.setDirection(FORWARD)
         self.advanceTime(1)
         self.assertEquals(player.getPosition(), (x + 1, y + 1))
+
+
+    def test_getPositionFloats(self):
+        """
+        L{Player.getPosition} will returns C{float} values if the player's
+        coordinates don't fall exactly onto integer values.
+        """
+        player = self.makePlayer((0, 0))
+        player.setDirection(FORWARD)
+        self.advanceTime(0.5)
+        self.assertEquals(player.getPosition(), (0, 0.5))
 
 
     def test_stop(self):
