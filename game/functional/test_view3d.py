@@ -186,8 +186,8 @@ class TerrainViewTests(SceneMixin, TestCase):
 
     def test_followCamera(self):
         """
-        The left, right, up, and down arrow keys should allow the camera
-        position to be moved left, right, forward, and backward.
+        The WASD (as well as up, left, right, and down arrow) keys should allow
+        the camera position to be moved left, right, forward, and backward.
         """
         player = Player(self.origin(0, 1, 0), 2.0, reactor.seconds)
         controller = PlayerController(player)
