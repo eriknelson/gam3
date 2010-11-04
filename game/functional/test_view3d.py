@@ -5,7 +5,7 @@ from twisted.internet import reactor
 from game.vector import Vector
 from game.environment import Environment
 from game.view import (
-    Window, StaticLight, Sphere, Color, TerrainView, loadImage)
+    Window, StaticLight, Sphere, Color, TerrainView, PlayerView, loadImage)
 from game.player import Player
 from game.controller import PlayerController
 
@@ -98,8 +98,8 @@ class ThreeDeeTests(SceneMixin, TestCase):
 
     def test_cameraRotationX(self):
         """
-        A red sphere above the center of the window should smoothly as if you
-        were turning your head upwards, then rotate back up to its starting
+        A red sphere above the center of the window should smoothly rotate as if
+        you were turning your head upwards, then rotate back up to its starting
         position.
         """
         return self._cameraRotationTest('x')
@@ -107,8 +107,8 @@ class ThreeDeeTests(SceneMixin, TestCase):
 
     def test_cameraRotationY(self):
         """
-        A red sphere above the center of the window should smoothly as if you
-        were turning your head to the left, then rotate back to its starting
+        A red sphere above the center of the window should smoothly rotate as if
+        you were turning your head to the left, then rotate back to its starting
         position.
         """
         return self._cameraRotationTest('y')
@@ -213,3 +213,26 @@ class TerrainViewTests(SceneMixin, TestCase):
                 (v.x + 0, v.y, v.z - 6): "grass",
                 (v.x + 1, v.y, v.z - 6): "mountain"})
         return self.window.go()
+
+
+
+class PlayerViewTests(SceneMixin, TestCase):
+    """
+    Tests for L{PlayerView}.
+    """
+    def test_rotation(self):
+        """
+        A depiction of another player (an upsidedown pyramid) should appear in
+        the center of the screen, spinning.
+        """
+        player = Player(self.origin(0, 0, -3), 2.0, reactor.seconds)
+        self.window.scene.add(PlayerView(player))
+        def turn():
+            player.turn(0, 1)
+            c[0] = reactor.callLater(0.01, turn)
+        c = [reactor.callLater(0.01, turn)]
+        d = self.window.go()
+        def finish(passthrough):
+            c[0].cancel()
+            return passthrough
+        return d

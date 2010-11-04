@@ -475,11 +475,19 @@ class TerrainView(object):
 
 
 class PlayerView(record('player')):
+    """
+    View of a player.
+    """
     def paint(self):
         glPushMatrix()
 
         position = self.player.getPosition()
         glTranslate(position.x, position.y, position.z)
+        glRotate(self.player.orientation.y, 0.0, 1.0, 0.0)
+        # Slide back because the pyramid below is centered at 0.5, 0, 0.5
+        # instead of at the origin.  Without this it rotates around its corner
+        # instead of around its center.
+        glTranslate(-0.5, 0, -0.5)
 
         glColor(1.0, 1.0, 1.0)
 
@@ -500,8 +508,6 @@ class PlayerView(record('player')):
         glVertex3f(0.0, 1.0, 1.0)
         glVertex3f(0.0, 1.0, 0.0)
         glEnd()
-
-        # glRotate(self.player.orientation.y, 0.0, 1.0, 0.0)
 
         glPopMatrix()
 
