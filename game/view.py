@@ -347,8 +347,9 @@ class Window(object):
                 elif event.type == pygame.KEYUP:
                     self.controller.keyUp(event.key)
                 elif event.type == pygame.MOUSEMOTION:
-                    self.controller.mouseMotion(
-                        event.pos, event.rel, event.buttons)
+                    if pygame.event.get_grab():
+                        self.controller.mouseMotion(
+                            event.pos, event.rel, event.buttons)
                 elif event.type == pygame.MOUSEBUTTONUP:
                     pygame.event.set_grab(not pygame.event.get_grab())
                     pygame.mouse.set_visible(not pygame.mouse.set_visible(True))
