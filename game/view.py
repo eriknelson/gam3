@@ -253,7 +253,7 @@ class Viewport(object):
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
         # Field of view, aspect ratio, near clipping, far clipping
-        gluPerspective(60.0, x / y, 0.5, 1000.0)
+        gluPerspective(45.0, x / y, 0.5, 1000.0)
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
 
