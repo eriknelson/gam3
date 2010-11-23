@@ -4,6 +4,7 @@
 Network support for Game.
 """
 
+import numpy
 from struct import pack, unpack
 
 from twisted.protocols.amp import (
@@ -52,20 +53,39 @@ class Introduce(Command):
 
 
 
-Terrain = String
+class Terrain(Argument):
+    """
+    Encode a L{numpy.array} into shape information and raw bytes which can be
+    used to reconstruct it.
+    """
+    def toBox(self, name, strings, objects, proto):
+        a = objects[name]
+        strings[name + "-dx"] = str(a.shape[0])
+        strings[name + "-dy"] = str(a.shape[1])
+        strings[name + "-dz"] = str(a.shape[2])
+        strings[name + "-type"] = str(a.dtype)
+        strings[name + "-data"] = a.tostring()
+
+
+    def fromBox(self, name, strings, objects, proto):
+        shape = (
+            int(strings[name + "-dx"]),
+            int(strings[name + "-dy"]),
+            int(strings[name + "-dz"]))
+        array = numpy.fromstring(
+            strings[name + "-data"], strings[name + "-type"]).reshape(shape)
+        objects[name] = array
+
+
 
 class SetTerrain(Command):
     """
     Specify the type of terrain at one or more positions.
     """
-    arguments = [('terrain', AmpList([
-                    ('x', Integer()),
-                    ('y', Integer()),
-                    ('z', Integer()),
-                    ('type', Terrain())]))]
-
-
-
+    arguments = [('x', Integer()),
+                 ('y', Integer()),
+                 ('z', Integer()),
+                 ('voxels', Terrain())]
 
 
 
@@ -303,15 +323,19 @@ class NetworkController(AMP):
     RemovePlayer.responder(removePlayer)
 
 
-    def setTerrain(self, terrain):
+    def setTerrain(self, x, y, z, voxels):
         """
         Add new terrain information to the environment.
 
         @param terrain: A sequence of mappings with C{"type"}, C{"x"} and C{"y"}
             keys.
         """
-        for info in terrain:
-            self.environment.terrain[
-                info["x"], info["y"], info["z"]] = info["type"]
+        dx, dy, dz = voxels.shape
+        for sx in range(dx):
+            for sy in range(dy):
+                for sz in range(dz):
+                    coordinate = x + sx, y + sy, z + sz
+                    terrain = voxels[sx, sy, sz]
+                    self.environment.terrain[coordinate] = terrain
         return {}
     SetTerrain.responder(setTerrain)
