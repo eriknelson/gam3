@@ -7,23 +7,15 @@ from numpy import array
 
 from twisted.trial.unittest import TestCase
 
+from gam3.test.util import ArrayMixin
 from gam3.terrain import loadTerrainFromString
 from game.terrain import GRASS, MOUNTAIN, DESERT, WATER
 
 
-class LoadTerrainFromStringTests(TestCase):
+class LoadTerrainFromStringTests(TestCase, ArrayMixin):
     """
     Tests for L{loadTerrainFromString}.
     """
-    def assertArraysEqual(self, a, b):
-        """
-        Verify that the shape, type, and contents of a and b are the same.
-        """
-        self.assertEquals(a.shape, b.shape)
-        self.assertEquals(a.dtype, b.dtype)
-        self.assertTrue((a == b).all())
-
-
     def test_loadGrass(self):
         """
         L{loadTerrainFromString} interprets C{"G"} to mean grassy terrain.

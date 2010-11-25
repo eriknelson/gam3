@@ -51,8 +51,8 @@ class _Gam3Plugin(object):
 
         world = World(granularity=100, platformClock=reactor)
         if options['terrain']:
-            world.terrain.update(
-                loadTerrainFromString(FilePath(options['terrain']).getContent()))
+            raw = FilePath(options['terrain']).getContent()
+            world.terrain = loadTerrainFromString(raw)
 
         service = MultiService()
 

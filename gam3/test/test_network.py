@@ -14,8 +14,8 @@ from game.network import (Introduce, SetMyDirection, SetDirectionOf,
                           Direction, NewPlayer, RemovePlayer, SetTerrain)
 from game.player import Player
 from game.direction import LEFT, RIGHT
-from game.terrain import GRASS, MOUNTAIN
 
+from gam3.terrain import loadTerrainFromString
 from gam3.world import World
 from gam3.network import Gam3Factory, Gam3Server
 
@@ -164,6 +164,26 @@ class NetworkTests(TestCase):
         self.assertEqual(self.calls, [])
 
 
+    def test_noTerrain(self):
+        """
+        If the world is void and without form, no L{SetTerrain} command is sent
+        after the introduction.
+        """
+        clock = Clock()
+        world = World()
+
+        protocol = Gam3Server(world, clock=clock)
+        protocol.callRemote = self.callRemote
+
+        protocol.introduce()
+
+        # Advance because SetTerrain isn't sent until later FIXME BUG XXX see
+        # #2671.
+        clock.advance(0)
+
+        self.assertEquals(self.getCommands(SetTerrain), [])
+
+
     def test_sendTerrain(self):
         """
         When a player connects and introduces himself, he should shortly
@@ -171,11 +191,7 @@ class NetworkTests(TestCase):
         """
         clock = Clock()
         world = World()
-        world.terrain.update({
-                (0, 0, 0): GRASS,
-                (1, 3, 1): GRASS,
-                (2, -1, 1): MOUNTAIN,
-                })
+        world.terrain = loadTerrainFromString("GGM\nMMD")
 
         protocol = Gam3Server(world, clock=clock)
         protocol.callRemote = self.callRemote
@@ -188,12 +204,10 @@ class NetworkTests(TestCase):
 
         self.assertEqual(
             self.getCommands(SetTerrain),
-            [(SetTerrain, {'terrain': [
-                            # XXX This ordering only works by accident.
-                            {'type': 'grass', 'x': 1, 'y': 3, 'z': 1},
-                            {'type': 'grass', 'x': 0, 'y': 0, 'z': 0},
-                            {'type': 'mountain', 'x': 2, 'y': -1, 'z': 1},
-                            ]})])
+            # This comparison is allowed only because world.terrain is the same
+            # object passed to SetTerrain.  Because they are identical, the
+            # equality check is skipped.
+            [(SetTerrain, {'x': 0, 'y': 0, 'z': 0, 'voxels': world.terrain})])
 
 
     def test_oldPlayerNewPlayer(self):
