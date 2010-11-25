@@ -30,6 +30,7 @@ from epsilon.structlike import record
 
 from game import __file__ as gameFile
 from game.vector import Vector
+from game.terrain import GRASS, MOUNTAIN, DESERT, WATER
 
 
 def loadImage(path):
@@ -404,6 +405,13 @@ class TerrainView(object):
         ((1, 0, 0), [(1, -1, 0), (1, 0, 0), (1, 0, 1), (1, -1, 1)]),
         ]
 
+    _files = {
+        GRASS: 'grass.png',
+        MOUNTAIN: 'mountain.png',
+        DESERT: 'desert.png',
+        WATER: 'water.png',
+        }
+
     def __init__(self, terrain, loader):
         self.terrain = terrain
         self.loader = loader
@@ -420,7 +428,7 @@ class TerrainView(object):
         """
         if terrainType not in self._images:
             image = self.loader(
-                FilePath(gameFile).sibling('data').child(terrainType + '.png'))
+                FilePath(gameFile).sibling('data').child(self._files[terrainType]))
             self._images[terrainType] = image
         return self._images[terrainType]
 

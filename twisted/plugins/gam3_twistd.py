@@ -13,16 +13,6 @@ from twisted.application.internet import TCPServer
 from twisted.plugin import IPlugin
 from twisted.python.usage import Options, portCoerce
 
-def _parseTerrain(map):
-    from game.terrain import GRASS, MOUNTAIN, DESERT
-    types = {'G': GRASS, 'M': MOUNTAIN, 'D': DESERT}
-    result = {}
-    for z, line in enumerate(map.strip().splitlines()[::-1]):
-        for x, ch in enumerate(line):
-            result[x, 0, z] = types[ch]
-    return result
-
-
 class _Gam3Plugin(object):
     """
     Trivial glue class to expose a twistd service.
@@ -53,6 +43,7 @@ class _Gam3Plugin(object):
         from gam3.network import Gam3Factory
         from gam3.world import (
             TCP_SERVICE_NAME, GAM3_SERVICE_NAME, Gam3Service, World)
+        from gam3.terrain import loadTerrainFromString
         from twisted.python.filepath import FilePath
         from twisted.internet import reactor
         from twisted.application.service import MultiService
@@ -61,7 +52,7 @@ class _Gam3Plugin(object):
         world = World(granularity=100, platformClock=reactor)
         if options['terrain']:
             world.terrain.update(
-                _parseTerrain(FilePath(options['terrain']).getContent()))
+                loadTerrainFromString(FilePath(options['terrain']).getContent()))
 
         service = MultiService()
 

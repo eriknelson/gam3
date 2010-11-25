@@ -1,4 +1,4 @@
 
-GRASS = 'grass'
-MOUNTAIN = 'mountain'
-DESERT = 'desert'
+
+GRASS, MOUNTAIN, DESERT, WATER = range(4)
+
