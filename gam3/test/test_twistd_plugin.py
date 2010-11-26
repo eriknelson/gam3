@@ -15,10 +15,10 @@ from twisted.protocols.policies import TrafficLoggingFactory
 from twisted.plugin import IPlugin
 
 from twisted.plugins.gam3_twistd import gam3plugin
-from gam3.test.util import ArrayMixin
 from gam3.network import Gam3Factory
 from gam3.world import TCP_SERVICE_NAME, GAM3_SERVICE_NAME, Gam3Service, World
-from gam3.terrain import loadTerrainFromString
+from game.test.util import ArrayMixin
+from game.terrain import loadTerrainFromString
 
 
 class TwistdPluginTests(TestCase, ArrayMixin):

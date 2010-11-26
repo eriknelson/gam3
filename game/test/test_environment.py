@@ -157,17 +157,6 @@ class EnvironmentTests(TestCase):
         self.assertEqual(self.environment.terrain, {})
 
 
-    def test_setTerrain(self):
-        """
-        L{Environment.setTerrain} should replace the existing terrain
-        dictionary with the specified new terrain dictionary.
-        """
-        replacementTerrain = {(1, 1): object()}
-        self.environment.terrain[(0, 0)] = object()
-        self.environment.setTerrain(replacementTerrain)
-        self.assertEqual(self.environment.terrain, replacementTerrain)
-
-
     def test_createPlayer(self):
         """
         L{Environment.createPlayer} should instantiate a L{Player} and

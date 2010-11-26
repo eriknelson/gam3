@@ -9,13 +9,14 @@ from twisted.internet.defer import Deferred
 from twisted.internet.task import Clock
 from twisted.protocols.amp import AmpList, Integer
 
-from game.test.util import PlayerCreationMixin, PlayerVisibilityObserver
+from game.test.util import (
+    ArrayMixin, PlayerCreationMixin, PlayerVisibilityObserver)
 from game.environment import Environment
 from game.network import (Direction, Introduce, SetDirectionOf,
                           NetworkController, NewPlayer, SetMyDirection,
                           RemovePlayer, SetTerrain, Terrain)
 from game.direction import FORWARD, BACKWARD, LEFT, RIGHT
-from game.terrain import GRASS, DESERT
+from game.terrain import GRASS, DESERT, loadTerrainFromString
 from game.vector import Vector
 
 
@@ -319,7 +320,7 @@ class SetDirectionOfTests(CommandTestMixin, TestCase):
 
 
 
-class ControllerTests(TestCase, PlayerCreationMixin):
+class ControllerTests(TestCase, PlayerCreationMixin, ArrayMixin):
     """
     L{NetworkController} takes network input and makes local changes to model
     objects.
@@ -600,32 +601,37 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         return d
 
 
-    def test_setTerrain(self):
+    def test_setTerrainAtOrigin(self):
         """
         L{NetworkController} should respond to the L{SetTerrain}
         command by updating its terrain model with the received data.
         """
         environment = self.controller.environment = Environment(10, self.clock)
         responder = self.controller.lookupFunction(SetTerrain.commandName)
-        terrainData = numpy.array(
-            [[[1, 2],
-              [3, 4]],
-             [[5, 6],
-              [7, 8]]])
-        terrainObjects = dict(x=1, y=2, z=3, voxels=terrainData)
+        terrainData = loadTerrainFromString('G')
+        terrainObjects = dict(x=0, y=0, z=0, voxels=terrainData)
         terrainStrings = SetTerrain.makeArguments(terrainObjects, None)
         d = responder(terrainStrings)
         def gotResult(ignored):
-            self.assertEqual(
-                environment.terrain,
-                {(1, 2, 3): 1,
-                 (1, 2, 4): 2,
-                 (1, 3, 3): 3,
-                 (1, 3, 4): 4,
-                 (2, 2, 3): 5,
-                 (2, 2, 4): 6,
-                 (2, 3, 3): 7,
-                 (2, 3, 4): 8})
+            self.assertArraysEqual(
+                environment.terrain, terrainData)
         d.addCallback(gotResult)
         return d
 
+
+    def test_overwriteTerrain(self):
+        """
+        When L{NetworkController} receives a L{SetTerrain} which overlaps with
+        existing terrain data, the existing data is overwritten.
+        """
+        environment = self.controller.environment = Environment(10, self.clock)
+        environment.terrain = loadTerrainFromString('G')
+        responder = self.controller.lookupFunction(SetTerrain.commandName)
+        terrainObjects = dict(x=0, y=0, z=0, voxels=loadTerrainFromString('M'))
+        terrainStrings = SetTerrain.makeArguments(terrainObjects, None)
+        d = responder(terrainStrings)
+        def gotResult(ignored):
+            self.assertArraysEqual(
+                environment.terrain, loadTerrainFromString('M'))
+        d.addCallback(gotResult)
+        return d

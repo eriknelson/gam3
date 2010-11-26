@@ -43,7 +43,7 @@ class _Gam3Plugin(object):
         from gam3.network import Gam3Factory
         from gam3.world import (
             TCP_SERVICE_NAME, GAM3_SERVICE_NAME, Gam3Service, World)
-        from gam3.terrain import loadTerrainFromString
+        from game.terrain import loadTerrainFromString
         from twisted.python.filepath import FilePath
         from twisted.internet import reactor
         from twisted.application.service import MultiService

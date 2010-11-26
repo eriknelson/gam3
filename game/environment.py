@@ -43,13 +43,6 @@ class SimulationTime(Clock):
         self.terrain = {}
 
 
-    def setTerrain(self, terrain):
-        """
-        Replace the existing terrain with the given new terrain.
-        """
-        self.terrain = terrain
-
-
     def _update(self, frames):
         """
         Advance the simulation time by one "tick", or one over granularity.
