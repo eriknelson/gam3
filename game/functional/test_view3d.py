@@ -4,6 +4,7 @@ from twisted.internet import reactor
 
 from game.vector import Vector
 from game.environment import Environment
+from game.terrain import loadTerrainFromString
 from game.view import (
     Window, StaticLight, Sphere, Color, TerrainView, PlayerView, loadImage)
 from game.player import Player
@@ -139,17 +140,19 @@ class TerrainViewTests(SceneMixin, TestCase):
     Tests for rendering of stuff that makes up the ground.
     """
 
-    # Keep things a bit away from the real origin, so we detect anything that
-    # only accidentally works there.
-    def origin(self, x, y, z):
-        return Vector(5, 5, 5) + Vector(x, y, z)
-
     def setUp(self):
         SceneMixin.setUp(self)
-        self.window.scene.camera.position = self.origin(0.5, 1, 0)
-        self.terrain = {}
-        self.view = TerrainView(self.terrain, loadImage)
+        self.window.scene.camera.position = Vector(-0.5, 1, 5)
+        self.view = TerrainView(loadTerrainFromString("_"), loadImage)
         self.window.scene.add(self.view)
+
+
+    def test_alone(self):
+        """
+        A single piece of green terrain should appear.
+        """
+        self.view.terrain = loadTerrainFromString("G")
+        return self.window.go()
 
 
     def test_terrain(self):
@@ -165,29 +168,10 @@ class TerrainViewTests(SceneMixin, TestCase):
         The terrain should appear to extend downwards rather than appearing two
         dimensional.
         """
-        v = self.origin(0, 0, 0)
-        self.terrain.update({
-                (v.x - 1, v.y, v.z - 4): "grass",
-                (v.x + 0, v.y, v.z - 4): "mountain",
-                (v.x + 1, v.y, v.z - 4): "desert",
-
-                (v.x - 1, v.y, v.z - 5): "mountain",
-                (v.x + 0, v.y, v.z - 5): "desert",
-                (v.x + 1, v.y, v.z - 5): "grass",
-
-                (v.x - 1, v.y, v.z - 6): "desert",
-                (v.x + 0, v.y, v.z - 6): "grass",
-                (v.x + 1, v.y, v.z - 6): "mountain"})
-
-        return self.window.go()
-
-
-    def test_alone(self):
-        """
-        A single piece of green terrain should appear.
-        """
-        v = self.origin(0, 0, 0)
-        self.terrain.update({(v.x, v.y, v.z - 5): "grass"})
+        self.view.terrain = loadTerrainFromString(
+            "GMD\n"
+            "MDG\n"
+            "DGM\n")
         return self.window.go()
 
 
@@ -199,19 +183,10 @@ class TerrainViewTests(SceneMixin, TestCase):
         player = Player(self.origin(0, 1, 0), 2.0, reactor.seconds)
         controller = PlayerController(player)
         self.window.submitTo(controller)
-        v = self.origin(0, 0, 0)
-        self.terrain.update({
-                (v.x - 1, v.y, v.z - 4): "grass",
-                (v.x + 0, v.y, v.z - 4): "mountain",
-                (v.x + 1, v.y, v.z - 4): "desert",
-
-                (v.x - 1, v.y, v.z - 5): "mountain",
-                (v.x + 0, v.y, v.z - 5): "desert",
-                (v.x + 1, v.y, v.z - 5): "grass",
-
-                (v.x - 1, v.y, v.z - 6): "desert",
-                (v.x + 0, v.y, v.z - 6): "grass",
-                (v.x + 1, v.y, v.z - 6): "mountain"})
+        self.view.terrain = loadTerrainFromString(
+            "GMD\n"
+            "MDG\n"
+            "DGM\n")
         return self.window.go()
 
 

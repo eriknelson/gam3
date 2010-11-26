@@ -466,19 +466,19 @@ class TerrainView(object):
         """
         For all of the known terrain, render whatever faces are exposed.
         """
-        for (x, y, z), terrainType in self.terrain.iteritems():
-            for (dx, dy, dz), coordinates in self.directions:
-                if (x + dx, y + dy, z + dz) in self.terrain:
-                    continue
+        for x in range(self.terrain.shape[0]):
+            for y in range(self.terrain.shape[1]):
+                for z in range(self.terrain.shape[2]):
+                    for (dx, dy, dz), coordinates in self.directions:
+                        terrainType = self.terrain[x, y, z]
 
-                # It is exposed, render a face.
-                glBindTexture(
-                    GL_TEXTURE_2D, self._getTextureForTerrain(terrainType))
-                glBegin(GL_QUADS)
-                for (tx, ty), (dx, dy, dz) in zip(self.square, coordinates):
-                    glTexCoord2d(tx, ty)
-                    glVertex3f(x + dx, y + dy, z + dz)
-                glEnd()
+                        glBindTexture(
+                            GL_TEXTURE_2D, self._getTextureForTerrain(terrainType))
+                        glBegin(GL_QUADS)
+                        for (tx, ty), (dx, dy, dz) in zip(self.square, coordinates):
+                            glTexCoord2d(tx, ty)
+                            glVertex3f(x + dx, y + dy, z + dz)
+                        glEnd()
 
 
 
