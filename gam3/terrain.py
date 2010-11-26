@@ -5,7 +5,7 @@ Functionality related to the shape of the world.
 
 from numpy import zeros
 
-from game.terrain import GRASS, MOUNTAIN, DESERT, WATER
+from game.terrain import EMPTY, GRASS, MOUNTAIN, DESERT, WATER
 
 
 def loadTerrainFromString(map):
@@ -15,13 +15,15 @@ def loadTerrainFromString(map):
 
     @return: A matrix of the terrain data.
     """
-    types = {'G': GRASS, 'M': MOUNTAIN, 'D': DESERT, 'W': WATER}
+    types = {'_': EMPTY, 'G': GRASS, 'M': MOUNTAIN, 'D': DESERT, 'W': WATER}
     map = map.strip()
-    data = map.splitlines()
-    voxels = zeros((len(map) / len(data), 1, len(data)), 'b')
-    for z, line in enumerate(map.strip().splitlines()):
-        for x, ch in enumerate(line):
-            voxels[x, 0, z] = types[ch]
+    data = list(plane.splitlines() for plane in map.split('\n\n'))
+    shape = (len(data[0][0]), len(data), len(data[0]))
+    voxels = zeros(shape, 'b')
+    for y, plane in enumerate(data):
+        for z, line in enumerate(plane):
+            for x, ch in enumerate(line):
+                voxels[x, shape[1] - y - 1, z] = types[ch]
     return voxels
 
 

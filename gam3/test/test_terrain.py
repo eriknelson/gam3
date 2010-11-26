@@ -9,13 +9,22 @@ from twisted.trial.unittest import TestCase
 
 from gam3.test.util import ArrayMixin
 from gam3.terrain import loadTerrainFromString
-from game.terrain import GRASS, MOUNTAIN, DESERT, WATER
+from game.terrain import EMPTY, GRASS, MOUNTAIN, DESERT, WATER
 
 
 class LoadTerrainFromStringTests(TestCase, ArrayMixin):
     """
     Tests for L{loadTerrainFromString}.
     """
+    def test_loadEmpty(self):
+        """
+        L{loadTerrainFromString} interprets C{"_"} to mean empty space.
+        """
+        self.assertArraysEqual(
+            loadTerrainFromString("_"),
+            array([[[EMPTY]]], 'b'))
+
+
     def test_loadGrass(self):
         """
         L{loadTerrainFromString} interprets C{"G"} to mean grassy terrain.
@@ -60,6 +69,17 @@ class LoadTerrainFromStringTests(TestCase, ArrayMixin):
         self.assertArraysEqual(
             loadTerrainFromString("GM"),
             array([[[GRASS]], [[MOUNTAIN]]], 'b'))
+
+
+    def test_varyingY(self):
+        """
+        Groups of terrain lines separated by two consecutive newlines indicate
+        data on different Y coordinates.  Consecutive groups are assigned
+        consecutive decreasing integer Y coordinates.
+        """
+        self.assertArraysEqual(
+            loadTerrainFromString("_G\n\nM_\n"),
+            array([[[MOUNTAIN], [EMPTY]], [[EMPTY], [GRASS]]], 'b'))
 
 
     def test_varyingZ(self):
