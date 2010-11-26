@@ -658,3 +658,69 @@ class ControllerTests(TestCase, PlayerCreationMixin, ArrayMixin):
                              [[WATER]]], 'b'))
         d.addCallback(gotResult)
         return d
+
+
+    def test_extendY(self):
+        """
+        When L{NetworkController} receives terrain in a L{SetTerrain} command
+        which extends beyond the current maximum Y coordinate, the terrain array
+        is extended in the Y direction to contain it.
+        """
+        environment = self.controller.environment = Environment(10, self.clock)
+        environment.terrain = loadTerrainFromString('D\n\nG')
+        responder = self.controller.lookupFunction(SetTerrain.commandName)
+        terrainObjects = dict(x=0, y=3, z=0, voxels=loadTerrainFromString('W'))
+        terrainStrings = SetTerrain.makeArguments(terrainObjects, None)
+        d = responder(terrainStrings)
+        def gotResult(ignored):
+            self.assertArraysEqual(
+                environment.terrain,
+                numpy.array([[[GRASS],
+                              [DESERT],
+                              [EMPTY],
+                              [WATER]]], 'b'))
+        d.addCallback(gotResult)
+        return d
+
+
+    def test_extendY(self):
+        """
+        When L{NetworkController} receives terrain in a L{SetTerrain} command
+        which extends beyond the current maximum Y coordinate, the terrain array
+        is extended in the Y direction to contain it.
+        """
+        environment = self.controller.environment = Environment(10, self.clock)
+        environment.terrain = loadTerrainFromString('D\n\nG')
+        responder = self.controller.lookupFunction(SetTerrain.commandName)
+        terrainObjects = dict(x=0, y=3, z=0, voxels=loadTerrainFromString('W'))
+        terrainStrings = SetTerrain.makeArguments(terrainObjects, None)
+        d = responder(terrainStrings)
+        def gotResult(ignored):
+            self.assertArraysEqual(
+                environment.terrain,
+                numpy.array([[[GRASS],
+                              [DESERT],
+                              [EMPTY],
+                              [WATER]]], 'b'))
+        d.addCallback(gotResult)
+        return d
+
+
+    def test_extendZ(self):
+        """
+        When L{NetworkController} receives terrain in a L{SetTerrain} command
+        which extends beyond the current maximum Z coordinate, the terrain array
+        is extended in the Z direction to contain it.
+        """
+        environment = self.controller.environment = Environment(10, self.clock)
+        environment.terrain = loadTerrainFromString('D\nG')
+        responder = self.controller.lookupFunction(SetTerrain.commandName)
+        terrainObjects = dict(x=0, y=0, z=3, voxels=loadTerrainFromString('W'))
+        terrainStrings = SetTerrain.makeArguments(terrainObjects, None)
+        d = responder(terrainStrings)
+        def gotResult(ignored):
+            self.assertArraysEqual(
+                environment.terrain,
+                numpy.array([[[DESERT, GRASS, EMPTY, WATER]]], 'b'))
+        d.addCallback(gotResult)
+        return d

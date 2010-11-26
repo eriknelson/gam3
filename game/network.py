@@ -341,9 +341,9 @@ class NetworkController(AMP):
         new[1] += y
         new[2] += z
 
-        if new[0] > existing[0]:
+        if new[0] > existing[0] or new[1] > existing[1] or new[2] > existing[2]:
             terrain = numpy.array([[[]]], 'b', ndmin=3)
-            terrain.resize((new[0], existing[1], existing[2]))
+            terrain.resize((new[0], new[1], new[2]))
             terrain[:existing[0],:existing[1],:existing[2]] = self.environment.terrain
             self.environment.terrain = terrain
 
