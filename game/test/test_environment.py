@@ -3,11 +3,13 @@
 Tests for L{game.environment}.
 """
 
+from numpy import array
+
 from twisted.trial.unittest import TestCase
 from twisted.internet.task import Clock
 
 from game.environment import Environment, SimulationTime
-from game.test.util import PlayerVisibilityObserver
+from game.test.util import ArrayMixin, PlayerVisibilityObserver
 from game.vector import Vector
 
 
@@ -135,7 +137,7 @@ class EnvironmentTimeTests(SimulationTimeTestsMixin, TestCase):
 
 
 
-class EnvironmentTests(TestCase):
+class EnvironmentTests(TestCase, ArrayMixin):
     """
     Tests for L{game.environment.Environment}.
     """
@@ -154,7 +156,8 @@ class EnvironmentTests(TestCase):
         """
         An L{Environment} should start with an empty terrain dictionary.
         """
-        self.assertEqual(self.environment.terrain, {})
+        self.assertArraysEqual(
+            self.environment.terrain, array([], 'b', ndmin=3))
 
 
     def test_createPlayer(self):

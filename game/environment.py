@@ -4,9 +4,12 @@
 Model code for the substrate the game world inhabits.
 """
 
+from numpy import array
+
 from twisted.internet.task import LoopingCall, Clock
 
 from game.player import Player
+from game.terrain import EMPTY
 
 
 class SimulationTime(Clock):
@@ -40,7 +43,7 @@ class SimulationTime(Clock):
         Clock.__init__(self)
         self.granularity = granularity
         self.platformClock = platformClock
-        self.terrain = {}
+        self.terrain = array([EMPTY], 'b', ndmin=3)
 
 
     def _update(self, frames):

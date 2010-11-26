@@ -16,7 +16,7 @@ from game.network import (Direction, Introduce, SetDirectionOf,
                           NetworkController, NewPlayer, SetMyDirection,
                           RemovePlayer, SetTerrain, Terrain)
 from game.direction import FORWARD, BACKWARD, LEFT, RIGHT
-from game.terrain import GRASS, DESERT, loadTerrainFromString
+from game.terrain import EMPTY, WATER, GRASS, DESERT, loadTerrainFromString
 from game.vector import Vector
 
 
@@ -633,5 +633,28 @@ class ControllerTests(TestCase, PlayerCreationMixin, ArrayMixin):
         def gotResult(ignored):
             self.assertArraysEqual(
                 environment.terrain, loadTerrainFromString('M'))
+        d.addCallback(gotResult)
+        return d
+
+
+    def test_extendX(self):
+        """
+        When L{NetworkController} receives terrain in a L{SetTerrain} command
+        which extends beyond the current maximum X coordinate, the terrain array
+        is extended in the X direction to contain it.
+        """
+        environment = self.controller.environment = Environment(10, self.clock)
+        environment.terrain = loadTerrainFromString('DG')
+        responder = self.controller.lookupFunction(SetTerrain.commandName)
+        terrainObjects = dict(x=3, y=0, z=0, voxels=loadTerrainFromString('W'))
+        terrainStrings = SetTerrain.makeArguments(terrainObjects, None)
+        d = responder(terrainStrings)
+        def gotResult(ignored):
+            self.assertArraysEqual(
+                environment.terrain,
+                numpy.array([[[DESERT]],
+                             [[GRASS]],
+                             [[EMPTY]],
+                             [[WATER]]], 'b'))
         d.addCallback(gotResult)
         return d

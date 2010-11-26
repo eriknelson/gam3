@@ -17,7 +17,8 @@ class ArrayMixin:
         """
         self.assertEquals(a.shape, b.shape)
         self.assertEquals(a.dtype, b.dtype)
-        self.assertTrue((a == b).all())
+        if (a != b).any():
+            self.fail("a != b\na = %r\nb = %r" % (a, b))
 
 
 

@@ -327,15 +327,26 @@ class NetworkController(AMP):
         """
         Add new terrain information to the environment.
 
-        @param terrain: A sequence of mappings with C{"type"}, C{"x"} and C{"y"}
-            keys.
+        @param x: The x coordinate where the given voxels begin.
+        @param y: The y coordinate where the given voxels begin.
+        @param z: The z coordinate where the given voxels begin.
+
+        @param voxels: An L{numpy.array} specifying terrain information starting
+            at the specified location and proceeding in the positive direction
+            along all axes
         """
-        dx, dy, dz = voxels.shape
-        for sx in range(dx):
-            for sy in range(dy):
-                for sz in range(dz):
-                    coordinate = x + sx, y + sy, z + sz
-                    terrain = voxels[sx, sy, sz]
-                    self.environment.terrain[coordinate] = terrain
+        existing = numpy.array(self.environment.terrain.shape)
+        new = numpy.array(voxels.shape)
+        new[0] += x
+        new[1] += y
+        new[2] += z
+
+        if new[0] > existing[0]:
+            terrain = numpy.array([[[]]], 'b', ndmin=3)
+            terrain.resize((new[0], existing[1], existing[2]))
+            terrain[:existing[0],:existing[1],:existing[2]] = self.environment.terrain
+            self.environment.terrain = terrain
+
+        self.environment.terrain[x:,y:,z:] = voxels
         return {}
     SetTerrain.responder(setTerrain)
