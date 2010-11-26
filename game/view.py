@@ -30,7 +30,7 @@ from epsilon.structlike import record
 
 from game import __file__ as gameFile
 from game.vector import Vector
-from game.terrain import GRASS, MOUNTAIN, DESERT, WATER
+from game.terrain import EMPTY, GRASS, MOUNTAIN, DESERT, WATER
 
 
 def loadImage(path):
@@ -376,8 +376,8 @@ class TerrainView(object):
     """
     A view for terrain over a tract of land.
 
-    @type terrain: L{dict}
-    @ivar terrain: The terrain data, mapping positions to terrain types.
+    @type environment: L{Environment}
+    @ivar environment: The game environment from which terrain will be rendered.
 
     @ivar loader: A callable like L{loadImage}.
 
@@ -412,8 +412,8 @@ class TerrainView(object):
         WATER: 'water.png',
         }
 
-    def __init__(self, terrain, loader):
-        self.terrain = terrain
+    def __init__(self, environment, loader):
+        self.environment = environment
         self.loader = loader
         self._images = {}
         self._textures = {}
@@ -466,12 +466,15 @@ class TerrainView(object):
         """
         For all of the known terrain, render whatever faces are exposed.
         """
-        for x in range(self.terrain.shape[0]):
-            for y in range(self.terrain.shape[1]):
-                for z in range(self.terrain.shape[2]):
-                    for (dx, dy, dz), coordinates in self.directions:
-                        terrainType = self.terrain[x, y, z]
+        terrain = self.environment.terrain
+        for x in range(terrain.shape[0]):
+            for y in range(terrain.shape[1]):
+                for z in range(terrain.shape[2]):
+                    terrainType = terrain[x, y, z]
+                    if terrainType == EMPTY:
+                        continue
 
+                    for (dx, dy, dz), coordinates in self.directions:
                         glBindTexture(
                             GL_TEXTURE_2D, self._getTextureForTerrain(terrainType))
                         glBegin(GL_QUADS)

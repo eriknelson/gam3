@@ -3,7 +3,7 @@
 Tests for L{game.environment}.
 """
 
-from numpy import array
+from numpy import array, ndarray
 
 from twisted.trial.unittest import TestCase
 from twisted.internet.task import Clock
@@ -154,10 +154,10 @@ class EnvironmentTests(TestCase, ArrayMixin):
 
     def test_terrain(self):
         """
-        An L{Environment} should start with an empty terrain dictionary.
+        An L{Environment} should start with an empty terrain array.
         """
-        self.assertArraysEqual(
-            self.environment.terrain, array([], 'b', ndmin=3))
+        self.assertIsInstance(self.environment.terrain, ndarray)
+        self.assertEquals(self.environment.terrain.ndim, 3)
 
 
     def test_createPlayer(self):

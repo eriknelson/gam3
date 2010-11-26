@@ -268,7 +268,7 @@ class TerrainViewTests(TestCase):
         def loadImage(path):
             paths.append(path)
             return MockSurface(path.basename(), (64, 64))
-        view = TerrainView({}, loader=loadImage)
+        view = TerrainView(None, loader=loadImage)
         image = view._getImageForTerrain(type)
         self.assertEquals(image.label, result)
         self.assertEqual(

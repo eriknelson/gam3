@@ -85,12 +85,12 @@ class UI(object):
         self.window.submitTo(PlayerController(player))
 
 
-    def gotTerrain(self, terrain):
+    def gotTerrain(self, environment):
         """
-        Create a L{TerrainView} for the given terrain and add it to my
-        L{Window}.
+        Create a L{TerrainView} for the terrain in the given environment and add
+        it to my L{Window}.
         """
-        self.window.scene.add(TerrainView(terrain, loadImage))
+        self.window.scene.add(TerrainView(environment, loadImage))
 
 
     def gotIntroduced(self, environment):
@@ -106,7 +106,7 @@ class UI(object):
         # handled on this object.
         """
         self.window = self.windowFactory(environment, self.reactor)
-        self.gotTerrain(environment.terrain)
+        self.gotTerrain(environment)
         player = environment.initialPlayer
         if player is not None:
             self.gotInitialPlayer(player)

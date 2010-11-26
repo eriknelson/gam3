@@ -175,6 +175,15 @@ class TerrainViewTests(SceneMixin, TestCase):
         return self.window.go()
 
 
+    def test_empty(self):
+        """
+        A grass voxel and a mountain voxel should be rendered separated by an
+        empty voxel.
+        """
+        self.view.terrain = loadTerrainFromString("G_M")
+        return self.window.go()
+
+
     def test_followCamera(self):
         """
         The left, right, up, and down arrow keys should allow the camera
