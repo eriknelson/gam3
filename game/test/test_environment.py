@@ -156,8 +156,7 @@ class EnvironmentTests(TestCase, ArrayMixin):
         """
         An L{Environment} should start with an empty terrain array.
         """
-        self.assertIsInstance(self.environment.terrain, ndarray)
-        self.assertEquals(self.environment.terrain.ndim, 3)
+        self.assertEquals(self.environment.terrain.dict(), {})
 
 
     def test_createPlayer(self):

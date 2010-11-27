@@ -614,8 +614,8 @@ class ControllerTests(TestCase, PlayerCreationMixin, ArrayMixin):
         terrainStrings = SetTerrain.makeArguments(terrainObjects, None)
         d = responder(terrainStrings)
         def gotResult(ignored):
-            self.assertArraysEqual(
-                environment.terrain, terrainData)
+            self.assertEquals(
+                environment.terrain.dict(), {(0, 0, 0): GRASS})
         d.addCallback(gotResult)
         return d
 
@@ -626,14 +626,14 @@ class ControllerTests(TestCase, PlayerCreationMixin, ArrayMixin):
         existing terrain data, the existing data is overwritten.
         """
         environment = self.controller.environment = Environment(10, self.clock)
-        environment.terrain = loadTerrainFromString('G')
+        environment.terrain.set(0, 0, 0, loadTerrainFromString('G'))
         responder = self.controller.lookupFunction(SetTerrain.commandName)
         terrainObjects = dict(x=0, y=0, z=0, voxels=loadTerrainFromString('M'))
         terrainStrings = SetTerrain.makeArguments(terrainObjects, None)
         d = responder(terrainStrings)
         def gotResult(ignored):
-            self.assertArraysEqual(
-                environment.terrain, loadTerrainFromString('M'))
+            self.assertEquals(
+                environment.terrain.dict(), {(0, 0, 0): MOUNTAIN})
         d.addCallback(gotResult)
         return d
 
@@ -645,15 +645,15 @@ class ControllerTests(TestCase, PlayerCreationMixin, ArrayMixin):
         is extended in the X direction to contain it.
         """
         environment = self.controller.environment = Environment(10, self.clock)
-        environment.terrain = loadTerrainFromString('DG')
+        environment.terrain.set(0, 0, 0, loadTerrainFromString('DG'))
         responder = self.controller.lookupFunction(SetTerrain.commandName)
         terrainObjects = dict(x=3, y=0, z=0, voxels=loadTerrainFromString('W'))
         terrainStrings = SetTerrain.makeArguments(terrainObjects, None)
         d = responder(terrainStrings)
         def gotResult(ignored):
-            self.assertArraysEqual(
-                environment.terrain,
-                loadTerrainFromString('DG_W'))
+            self.assertEquals(
+                environment.terrain.dict(),
+                {(0, 0, 0): DESERT, (1, 0, 0): GRASS, (3, 0, 0): WATER})
         d.addCallback(gotResult)
         return d
 
@@ -665,15 +665,15 @@ class ControllerTests(TestCase, PlayerCreationMixin, ArrayMixin):
         is extended in the Y direction to contain it.
         """
         environment = self.controller.environment = Environment(10, self.clock)
-        environment.terrain = loadTerrainFromString('D\n\nG')
+        environment.terrain.set(0, 0, 0, loadTerrainFromString('D\n\nG'))
         responder = self.controller.lookupFunction(SetTerrain.commandName)
         terrainObjects = dict(x=0, y=3, z=0, voxels=loadTerrainFromString('W'))
         terrainStrings = SetTerrain.makeArguments(terrainObjects, None)
         d = responder(terrainStrings)
         def gotResult(ignored):
-            self.assertArraysEqual(
-                environment.terrain,
-                loadTerrainFromString('W\n\n_\n\nD\n\nG'))
+            self.assertEquals(
+                environment.terrain.dict(),
+                {(0, 0, 0): GRASS, (0, 1, 0): DESERT, (0, 3, 0): WATER})
         d.addCallback(gotResult)
         return d
 
@@ -685,15 +685,15 @@ class ControllerTests(TestCase, PlayerCreationMixin, ArrayMixin):
         is extended in the Z direction to contain it.
         """
         environment = self.controller.environment = Environment(10, self.clock)
-        environment.terrain = loadTerrainFromString('D\nG')
+        environment.terrain.set(0, 0, 0, loadTerrainFromString('D\nG'))
         responder = self.controller.lookupFunction(SetTerrain.commandName)
         terrainObjects = dict(x=0, y=0, z=3, voxels=loadTerrainFromString('W'))
         terrainStrings = SetTerrain.makeArguments(terrainObjects, None)
         d = responder(terrainStrings)
         def gotResult(ignored):
-            self.assertArraysEqual(
-                environment.terrain,
-                loadTerrainFromString('D\nG\n_\nW'))
+            self.assertEquals(
+                environment.terrain.dict(),
+                {(0, 0, 0): DESERT, (0, 0, 1): GRASS, (0, 0, 3): WATER})
         d.addCallback(gotResult)
         return d
 
@@ -706,15 +706,16 @@ class ControllerTests(TestCase, PlayerCreationMixin, ArrayMixin):
         direction is preserved.
         """
         environment = self.controller.environment = Environment(10, self.clock)
-        environment.terrain = loadTerrainFromString('DG\n\nMW')
+        environment.terrain.set(0, 0, 0, loadTerrainFromString('DG\n\nMW'))
         responder = self.controller.lookupFunction(SetTerrain.commandName)
         terrainObjects = dict(x=0, y=2, z=0, voxels=loadTerrainFromString('_'))
         terrainStrings = SetTerrain.makeArguments(terrainObjects, None)
         d = responder(terrainStrings)
         def gotResult(ignored):
-            self.assertArraysEqual(
-                environment.terrain,
-                loadTerrainFromString('__\n\nDG\n\nMW'))
+            self.assertEquals(
+                environment.terrain.dict(),
+                {(0, 0, 0): MOUNTAIN, (1, 0, 0): WATER,
+                 (0, 1, 0): DESERT, (1, 1, 0): GRASS})
         d.addCallback(gotResult)
         return d
 
@@ -727,15 +728,16 @@ class ControllerTests(TestCase, PlayerCreationMixin, ArrayMixin):
         direction is preserved.
         """
         environment = self.controller.environment = Environment(10, self.clock)
-        environment.terrain = loadTerrainFromString('DG\n\nMW')
+        environment.terrain.set(0, 0, 0, loadTerrainFromString('DG\n\nMW'))
         responder = self.controller.lookupFunction(SetTerrain.commandName)
         terrainObjects = dict(x=3, y=0, z=0, voxels=loadTerrainFromString('_'))
         terrainStrings = SetTerrain.makeArguments(terrainObjects, None)
         d = responder(terrainStrings)
         def gotResult(ignored):
-            self.assertArraysEqual(
-                environment.terrain,
-                loadTerrainFromString('DG__\n\nMW__'))
+            self.assertEquals(
+                environment.terrain.dict(),
+                {(0, 0, 0): MOUNTAIN, (1, 0, 0): WATER,
+                 (0, 1, 0): DESERT, (1, 1, 0): GRASS})
         d.addCallback(gotResult)
         return d
 
@@ -748,14 +750,15 @@ class ControllerTests(TestCase, PlayerCreationMixin, ArrayMixin):
         direction is preserved.
         """
         environment = self.controller.environment = Environment(10, self.clock)
-        environment.terrain = loadTerrainFromString('DG\nMW')
+        environment.terrain.set(0, 0, 0, loadTerrainFromString('DG\nMW'))
         responder = self.controller.lookupFunction(SetTerrain.commandName)
         terrainObjects = dict(x=3, y=0, z=0, voxels=loadTerrainFromString('_'))
         terrainStrings = SetTerrain.makeArguments(terrainObjects, None)
         d = responder(terrainStrings)
         def gotResult(ignored):
-            self.assertArraysEqual(
-                environment.terrain,
-                loadTerrainFromString('DG__\nMW__'))
+            self.assertEquals(
+                environment.terrain.dict(),
+                {(0, 0, 0): DESERT, (1, 0, 0): GRASS,
+                 (0, 0, 1): MOUNTAIN, (1, 0, 1): WATER})
         d.addCallback(gotResult)
         return d

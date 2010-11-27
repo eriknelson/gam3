@@ -335,21 +335,6 @@ class NetworkController(AMP):
             at the specified location and proceeding in the positive direction
             along all axes
         """
-        existing = numpy.array(self.environment.terrain.shape)
-        new = numpy.array(voxels.shape)
-        new[0] += x
-        new[1] += y
-        new[2] += z
-
-        if new[0] > existing[0] or new[1] > existing[1] or new[2] > existing[2]:
-            terrain = numpy.array([[[]]], 'b', ndmin=3)
-            terrain.resize((
-                    max(existing[0], new[0]),
-                    max(existing[1], new[1]),
-                    max(existing[2], new[2])))
-            terrain[:existing[0],:existing[1],:existing[2]] = self.environment.terrain
-            self.environment.terrain = terrain
-
-        self.environment.terrain[x:,y:,z:] = voxels
+        self.environment.terrain.set(x, y, z, voxels)
         return {}
     SetTerrain.responder(setTerrain)
