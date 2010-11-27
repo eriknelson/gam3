@@ -342,7 +342,7 @@ class Window(object):
         self.viewport.initialize()
 
         self._renderCall = LoopingCall(self.paint)
-        self._renderCall.start(1. / 60., now=False)
+        self._renderCall.start(1 / 60, now=False)
         self._inputCall = LoopingCall(self.handleInput)
         finishedDeferred = self._inputCall.start(0.04, now=False)
         finishedDeferred.addCallback(lambda ign: self._renderCall.stop())
@@ -490,10 +490,10 @@ class TerrainView(object):
 
                 image = self._getImageForTerrain(terrainType)
                 surface.blit(image, (x * 64, y * 64))
-                coordinates[terrainType] = (x / float(dimensions), y / float(dimensions))
+                coordinates[terrainType] = (x / dimensions, y / dimensions)
 
         self._textureImage = surface
-        return coordinates, 1.0 / dimensions
+        return coordinates, 1 / dimensions
 
 
     def paint(self):
