@@ -22,6 +22,7 @@ class SceneMixin(FunctionalTestMixin):
 
     def setUp(self):
         self.environment = Environment(50, reactor)
+        self.terrain = self.environment.terrain
         self.window = Window(self.environment)
         self.window.viewport.viewSize = (1024, 768)
         self.window.scene.addLight(StaticLight(self.origin(1, 1, -2)))
@@ -143,7 +144,7 @@ class TerrainViewTests(SceneMixin, TestCase):
     def setUp(self):
         SceneMixin.setUp(self)
         self.window.scene.camera.position = Vector(-0.5, 1, 5)
-        self.view = TerrainView(loadTerrainFromString("_"), loadImage)
+        self.view = TerrainView(self.environment, loadImage)
         self.window.scene.add(self.view)
 
 
@@ -151,7 +152,7 @@ class TerrainViewTests(SceneMixin, TestCase):
         """
         A single piece of green terrain should appear.
         """
-        self.view.terrain = loadTerrainFromString("G")
+        self.terrain.set(0, 0, 0, loadTerrainFromString("G"))
         return self.window.go()
 
 
@@ -168,10 +169,10 @@ class TerrainViewTests(SceneMixin, TestCase):
         The terrain should appear to extend downwards rather than appearing two
         dimensional.
         """
-        self.view.terrain = loadTerrainFromString(
-            "GMD\n"
-            "MDG\n"
-            "DGM\n")
+        self.terrain.set(0, 0, 0, loadTerrainFromString(
+                "GMD\n"
+                "MDG\n"
+                "DGM\n"))
         return self.window.go()
 
 
@@ -180,7 +181,7 @@ class TerrainViewTests(SceneMixin, TestCase):
         A grass voxel and a mountain voxel should be rendered separated by an
         empty voxel.
         """
-        self.view.terrain = loadTerrainFromString("G_M")
+        self.terrain.set(0, 0, 0, loadTerrainFromString("G_M"))
         return self.window.go()
 
 
@@ -192,10 +193,10 @@ class TerrainViewTests(SceneMixin, TestCase):
         player = Player(self.origin(0, 1, 0), 2.0, reactor.seconds)
         controller = PlayerController(player)
         self.window.submitTo(controller)
-        self.view.terrain = loadTerrainFromString(
-            "GMD\n"
-            "MDG\n"
-            "DGM\n")
+        self.terrain.set(0, 0, 0, loadTerrainFromString(
+                "GMD\n"
+                "MDG\n"
+                "DGM\n"))
         return self.window.go()
 
 

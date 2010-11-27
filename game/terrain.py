@@ -108,12 +108,21 @@ class SurfaceMesh(object):
     @ivar _voxelToSurface: A dictionary mapping the world position of a voxel to
         a pair indicating a slice of C{surface} which is displaying a face of
         that voxel.
+
+    @ivar _textureOffsets: A dictionary mapping terrain types to arrays of
+        texture coordinate (x, y) pairs.  These coordinates are the top-left
+        position of the texture for that terrain type.
+
+    @ivar _textureExtent: A float indicating the distance between the sides of
+        the textures.
     """
-    def __init__(self, terrain):
+    def __init__(self, terrain, textureOffsets=None, textureExtent=None):
         self._terrain = terrain
         self.surface = zeros((100, 3), dtype='f')
         self.important = 0
         self._voxelToSurface = {}
+        self._textureOffsets = textureOffsets
+        self._textureExtent = textureExtent
         self.changed(Vector(0, 0, 0), Vector(*self._terrain.voxels.shape))
 
 

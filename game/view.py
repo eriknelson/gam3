@@ -16,9 +16,12 @@ from OpenGL.GL import (
     glGenTextures, glBindTexture, glTexParameteri, glTexImage2D, glTexCoord2d,
     glLoadIdentity, glPushMatrix, glPopMatrix,
     glEnable, glClear, glColor, glColorMaterial, glLight,
-    glTranslate, glRotate, glBegin, glEnd, glVertex3f)
+    glTranslate, glRotate, glBegin, glEnd, glVertex3f,
+    glEnableClientState, glDisableClientState, glVertexPointer, glDrawArrays,
+    GL_FLOAT, GL_VERTEX_ARRAY)
 from OpenGL.GLU import (
     gluPerspective, gluNewQuadric, gluSphere)
+from OpenGL.arrays.vbo import VBO
 
 import pygame.display, pygame.locals
 
@@ -30,7 +33,7 @@ from epsilon.structlike import record
 
 from game import __file__ as gameFile
 from game.vector import Vector
-from game.terrain import EMPTY, GRASS, MOUNTAIN, DESERT, WATER
+from game.terrain import EMPTY, GRASS, MOUNTAIN, DESERT, WATER, SurfaceMesh
 
 
 def loadImage(path):
@@ -413,7 +416,11 @@ class TerrainView(object):
         }
 
     def __init__(self, environment, loader):
-        self.environment = environment
+        if environment is not None:
+            self.environment = environment
+            self._surface = SurfaceMesh(environment.terrain)
+            self.environment.terrain.addObserver(self._surface.changed)
+            self._vbo = VBO(self._surface.surface)
         self.loader = loader
         self._images = {}
         self._textures = {}
@@ -466,22 +473,20 @@ class TerrainView(object):
         """
         For all of the known terrain, render whatever faces are exposed.
         """
-        terrain = self.environment.terrain
-        for x in range(terrain.shape[0]):
-            for y in range(terrain.shape[1]):
-                for z in range(terrain.shape[2]):
-                    terrainType = terrain[x, y, z]
-                    if terrainType == EMPTY:
-                        continue
-
-                    for (dx, dy, dz), coordinates in self.directions:
-                        glBindTexture(
-                            GL_TEXTURE_2D, self._getTextureForTerrain(terrainType))
-                        glBegin(GL_QUADS)
-                        for (tx, ty), (dx, dy, dz) in zip(self.square, coordinates):
-                            glTexCoord2d(tx, ty)
-                            glVertex3f(x + dx, y + dy, z + dz)
-                        glEnd()
+        glEnableClientState(GL_VERTEX_ARRAY)
+#         glEnableClientState(GL_TEXTURE_COORD_ARRAY)
+        self._vbo.bind()
+        glVertexPointer(3, GL_FLOAT, 4 * 3, self._vbo)
+#         glTexCoordPointer(
+#             2, data.VERTEX_TYPE, data.VERTEX_SIZE * 5,
+#             vbo + (data.VERTEX_SIZE * 3))
+#         glPushMatrix()
+#         glTranslate(x, y, z)
+        glDrawArrays(GL_TRIANGLES, 0, self._surface.important)
+#         glPopMatrix()
+        self._vbo.unbind()
+        glDisableClientState(GL_VERTEX_ARRAY)
+#         glDisableClientState(GL_TEXTURE_COORD_ARRAY)
 
 
 
