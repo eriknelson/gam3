@@ -4,6 +4,8 @@ Functionality related to the shape of the world.
 
 from numpy import array, zeros
 
+from game.vector import Vector
+
 EMPTY, GRASS, MOUNTAIN, DESERT, WATER = range(5)
 
 def loadTerrainFromString(map):
@@ -26,8 +28,17 @@ def loadTerrainFromString(map):
 
 
 class Terrain(object):
+    """
+    @ivar voxels:
+    @type voxels: L{numpy.array}
+
+    @ivar _observers:
+    @type _observers: C{list}
+    """
     def __init__(self):
         self.voxels = array([EMPTY], 'b', ndmin=3)
+        # XXX Seriously why do I implement this eleven times a day?
+        self._observers = []
 
 
     def dict(self):
@@ -61,3 +72,23 @@ class Terrain(object):
             self.voxels = terrain
 
         self.voxels[x:,y:,z:] = voxels
+        self._notify(Vector(x, y, z), Vector(*voxels.shape))
+
+
+    def _notify(self, position, shape):
+        """
+        Call all observers with the change information.
+        """
+        for obs in self._observers:
+            obs(position, shape)
+
+
+    def addObserver(self, observer):
+        """
+        Whenever this terrain changes, notify C{observer}.
+
+        @param observer: A callable which will be invoked with a position
+            L{Vector} and a shape L{Vector}.
+        """
+        self._observers.append(observer)
+

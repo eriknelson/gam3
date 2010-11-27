@@ -8,8 +8,9 @@ from numpy import array
 from twisted.trial.unittest import TestCase
 
 from game.test.util import ArrayMixin
+from game.vector import Vector
 from game.terrain import (
-    EMPTY, GRASS, MOUNTAIN, DESERT, WATER, loadTerrainFromString)
+    EMPTY, GRASS, MOUNTAIN, DESERT, WATER, Terrain, loadTerrainFromString)
 
 
 class LoadTerrainFromStringTests(TestCase, ArrayMixin):
@@ -100,3 +101,22 @@ class LoadTerrainFromStringTests(TestCase, ArrayMixin):
         self.assertArraysEqual(
             loadTerrainFromString("GM\nMD\n\n"),
             array([[[GRASS, MOUNTAIN]], [[MOUNTAIN, DESERT]]], 'b'))
+
+
+
+class TerrainTests(TestCase):
+    """
+    Tests for L{terrain.Terrain}.
+    """
+    def test_observeChanges(self):
+        """
+        L{Terrain.observeChanges} takes a callable and causes later calls to
+        L{Terrain.set} to call it with the position and extent of the changed
+        terrain.
+        """
+        events = []
+        terrain = Terrain()
+        terrain.addObserver(
+            lambda position, shape: events.append((position, shape)))
+        terrain.set(4, 5, 6, loadTerrainFromString("GGG\nGGG"))
+        self.assertEquals(events, [(Vector(4, 5, 6), Vector(3, 1, 2))])
