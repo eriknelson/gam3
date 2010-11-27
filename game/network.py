@@ -8,7 +8,7 @@ import numpy
 from struct import pack, unpack
 
 from twisted.protocols.amp import (
-    AMP, AmpList, Command, Integer, Float, String, Argument)
+    AMP, Command, Integer, Float, Argument)
 
 from game.environment import Environment
 from game.vector import Vector

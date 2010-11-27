@@ -3,8 +3,6 @@
 Tests for L{game.environment}.
 """
 
-from numpy import array, ndarray
-
 from twisted.trial.unittest import TestCase
 from twisted.internet.task import Clock
 

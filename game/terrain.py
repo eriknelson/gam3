@@ -151,8 +151,12 @@ class SurfaceMesh(object):
         # Find the voxel that owns the vertices at the end of the surface mesh
         # array.
         mx, my, mz = self.surface[self.important - 6][:3]
+
+        # Use knowledge about the location of the first vertex of the first
+        # triangle of the top face to find the voxel.
         mx -= 1
         my -= 1
+
         # If this fails we are screwed.
         assert self._voxelToSurface[mx, my, mz] == (self.important - 6, 6)
         self._voxelToSurface[mx, my, mz] = (start, length)

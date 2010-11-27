@@ -7,7 +7,6 @@ import numpy
 from twisted.trial.unittest import TestCase
 from twisted.internet.defer import Deferred
 from twisted.internet.task import Clock
-from twisted.protocols.amp import AmpList, Integer
 
 from game.test.util import (
     ArrayMixin, PlayerCreationMixin, PlayerVisibilityObserver)
@@ -17,7 +16,7 @@ from game.network import (Direction, Introduce, SetDirectionOf,
                           RemovePlayer, SetTerrain, Terrain)
 from game.direction import FORWARD, BACKWARD, LEFT, RIGHT
 from game.terrain import (
-    EMPTY, WATER, GRASS, DESERT, MOUNTAIN, loadTerrainFromString)
+    WATER, GRASS, DESERT, MOUNTAIN, loadTerrainFromString)
 from game.vector import Vector
 
 

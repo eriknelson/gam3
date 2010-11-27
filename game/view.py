@@ -9,14 +9,14 @@ from __future__ import division
 from OpenGL.GL import (
     GL_PROJECTION, GL_MODELVIEW, GL_RGBA, GL_UNSIGNED_BYTE,
     GL_COLOR_MATERIAL, GL_LIGHTING, GL_DEPTH_TEST, GL_LIGHT0, GL_POSITION,
-    GL_FRONT_AND_BACK, GL_EMISSION, GL_REPEAT, GL_LINEAR, GL_QUADS, GL_TRIANGLES,
+    GL_REPEAT, GL_TRIANGLES,
     GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_TEXTURE_WRAP_T, GL_TEXTURE_MAG_FILTER,
     GL_TEXTURE_MIN_FILTER, GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT, GL_NEAREST,
     GL_TEXTURE_COORD_ARRAY,
     glMatrixMode, glViewport,
-    glGenTextures, glBindTexture, glTexParameteri, glTexImage2D, glTexCoord2d,
+    glGenTextures, glBindTexture, glTexParameteri, glTexImage2D,
     glLoadIdentity, glPushMatrix, glPopMatrix,
-    glEnable, glClear, glColor, glColorMaterial, glLight,
+    glEnable, glClear, glColor, glLight,
     glTranslate, glRotate, glBegin, glEnd, glVertex3f,
     glEnableClientState, glDisableClientState, glVertexPointer, glDrawArrays,
     GL_FLOAT, GL_VERTEX_ARRAY, glTexCoordPointer)
@@ -34,7 +34,7 @@ from epsilon.structlike import record
 
 from game import __file__ as gameFile
 from game.vector import Vector
-from game.terrain import EMPTY, GRASS, MOUNTAIN, DESERT, WATER, SurfaceMesh
+from game.terrain import GRASS, MOUNTAIN, DESERT, WATER, SurfaceMesh
 
 
 def loadImage(path):
