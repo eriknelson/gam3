@@ -92,3 +92,88 @@ class Terrain(object):
         """
         self._observers.append(observer)
 
+
+
+class SurfaceMesh(object):
+    """
+    A terrain change observer which constructs a surface mesh of the terrain
+    from prism updates.
+
+    @ivar _surface: A triangle mesh of the exposed terrain which should be
+        rendered.  Each element of the array contains position and texture
+        information about one vertex of one triangle, as (x, y, z, tx, ty, tz).
+
+    @ivar _important: An index into C{_surface} indicating the end of the useful
+        elements.  Elements beyond this are garbage to be ignored.
+
+    @ivar _voxelToSurface: A dictionary mapping the world position of a voxel to
+        a pair indicating a slice of C{_surface} which is displaying a face of
+        that voxel.
+    """
+    def __init__(self, terrain):
+        self._terrain = terrain
+        self._surface = zeros((100, 3), dtype='f')
+        self._important = 0
+        self._voxelToSurface = {}
+
+
+    def _top(self, x, y, z):
+        return [
+            [x + 1, y + 1, z    ],
+            [x,     y + 1, z    ],
+            [x,     y + 1, z + 1],
+
+            [x + 1, y + 1, z    ],
+            [x + 1, y + 1, z + 1],
+            [x,     y + 1, z + 1],
+            ]
+
+
+    def _append(self, x, y, z, vertices):
+        pos = self._important
+        self._surface[pos:pos + len(vertices)] = vertices
+        self._voxelToSurface[(x, y, z)] = (pos, len(vertices))
+        self._important += len(vertices)
+
+
+    def _compact(self, x, y, z, start, length):
+        # Find the voxel that owns the vertices at the end of the surface mesh
+        # array.
+        mx, my, mz = self._surface[self._important - 6]
+        mx -= 1
+        my -= 1
+        # If this fails we are screwed.
+        assert self._voxelToSurface[mx, my, mz] == (self._important - 6, 6)
+        self._voxelToSurface[mx, my, mz] = (start, length)
+        self._surface[start:length] = self._surface[self._important - 6:self._important]
+        self._important -= 6
+
+
+    def changed(self, position, shape):
+        """
+        Examine the terrain type at every changed voxel and determine if there
+        are any exposed faces.  If so, update the surface mesh array.
+        """
+        voxels = self._terrain.voxels
+
+        # Visit each voxel in the changed region plus one in each direction and
+        # re-determine if it should now be part of the surface mesh.
+        for x in range(int(position.x), int(position.x + shape.x)):
+            for y in range(int(position.y), int(position.y + shape.y)):
+                for z in range(int(position.z), int(position.z + shape.z)):
+
+                    if voxels[x, y, z] == EMPTY:
+                        if (x, y, z) in self._voxelToSurface:
+                            begin, length = self._voxelToSurface.pop((x, y, z))
+                            if begin + length == self._important:
+                                # If these voxels are at the end, just reduce
+                                # the top marker.
+                                self._important -= length
+                            else:
+                                # Otherwise move some vertices from the end to
+                                # overwrite these.
+                                self._compact(x, y, z, begin, length)
+                    else:
+                        if (x, y, z) not in self._voxelToSurface:
+                            # If there's nothing there already, add it.
+                            self._append(x, y, z, self._top(x, y, z))

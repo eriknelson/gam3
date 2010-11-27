@@ -10,7 +10,8 @@ from twisted.trial.unittest import TestCase
 from game.test.util import ArrayMixin
 from game.vector import Vector
 from game.terrain import (
-    EMPTY, GRASS, MOUNTAIN, DESERT, WATER, Terrain, loadTerrainFromString)
+    EMPTY, GRASS, MOUNTAIN, DESERT, WATER, Terrain, SurfaceMesh,
+    loadTerrainFromString)
 
 
 class LoadTerrainFromStringTests(TestCase, ArrayMixin):
@@ -120,3 +121,131 @@ class TerrainTests(TestCase):
             lambda position, shape: events.append((position, shape)))
         terrain.set(4, 5, 6, loadTerrainFromString("GGG\nGGG"))
         self.assertEquals(events, [(Vector(4, 5, 6), Vector(3, 1, 2))])
+
+
+
+class SurfaceMeshTests(TestCase, ArrayMixin):
+    """
+    Tests for L{terrain.SurfaceMesh}.
+    """
+    def setUp(self):
+        self.terrain = Terrain()
+        self.surface = SurfaceMesh(self.terrain)
+        self.terrain.addObserver(self.surface.changed)
+
+
+    def test_oneVoxel(self):
+        """
+        When there is no other terrain and one non-empty voxel is set, all six
+        faces of it become visible.
+        """
+        self.x = x = 1
+        self.y = y = 2
+        self.z = z = 3
+        self.terrain.set(x, y, z, loadTerrainFromString("M"))
+
+        # XXX This only covers the top face.
+        self.assertArraysEqual(
+            self.surface._surface[:self.surface._important,:3],
+            array([
+                    # Top face, triangle 1
+                    [x + 1, y + 1, z + 0],
+                    [x + 0, y + 1, z + 0],
+                    [x + 0, y + 1, z + 1],
+
+                    # Top face, triangle 2
+                    [x + 1, y + 1, z + 0],
+                    [x + 1, y + 1, z + 1],
+                    [x + 0, y + 1, z + 1],
+
+                    ], 'f'))
+
+        self.assertEquals(self.surface._important, 6)
+
+
+    def test_unchangedVoxel(self):
+        """
+        When a previously non-empty voxel is part of a changed prism but remains
+        non-empty, no new vertices are added to the surface mesh array for it.
+        """
+        self.test_oneVoxel()
+        self.test_oneVoxel()
+
+
+    def test_removeSingleVoxel(self):
+        """
+        When a previously non-empty voxel becomes empty, its vertexes are
+        removed from the surface mesh array.
+        """
+        self.test_oneVoxel()
+        self.terrain.set(self.x, self.y, self.z, loadTerrainFromString("_"))
+
+        self.assertEquals(self.surface._important, 0)
+
+
+    def test_twoVoxels(self):
+        """
+        When there is no other terrain and two non-empty adjacent voxels are
+        set, all faces except the touching faces become visible.
+        """
+        self.x = x = 10
+        self.y = y = 11
+        self.z = z = 12
+        self.terrain.set(x, y, z, loadTerrainFromString("MG"))
+        # XXX This only covers the top face.
+        self.assertArraysEqual(
+            self.surface._surface[:self.surface._important,:3],
+            array([
+                    # Top face, mountain, triangle 1
+                    [x + 1, y + 1, z + 0],
+                    [x + 0, y + 1, z + 0],
+                    [x + 0, y + 1, z + 1],
+
+                    # Top face, mountain, triangle 2
+                    [x + 1, y + 1, z + 0],
+                    [x + 1, y + 1, z + 1],
+                    [x + 0, y + 1, z + 1],
+
+                    # Top face, grass, triangle 1
+                    [x + 2, y + 1, z + 0],
+                    [x + 1, y + 1, z + 0],
+                    [x + 1, y + 1, z + 1],
+
+                    # Top face, grass, triangle 2
+                    [x + 2, y + 1, z + 0],
+                    [x + 2, y + 1, z + 1],
+                    [x + 1, y + 1, z + 1],
+
+                    ], 'f'))
+
+        self.assertEquals(self.surface._important, 12)
+
+
+    def test_removeSecondVoxel(self):
+        """
+        When a voxel changes from non-empty to empty and its vertices are not at
+        the end of the surface mesh array, vertices from the end of the surface
+        mesh array are used to overwrite the changed voxels vertices.
+        """
+        self.test_twoVoxels()
+        x = self.x
+        y = self.y
+        z = self.z
+        self.terrain.set(x, y, z, loadTerrainFromString("_"))
+
+        # XXX This only covers the top face.
+        self.assertArraysEqual(
+            self.surface._surface[:self.surface._important,:3],
+            array([
+                    # Top face, grass, triangle 1
+                    [x + 2, y + 1, z + 0],
+                    [x + 1, y + 1, z + 0],
+                    [x + 1, y + 1, z + 1],
+
+                    # Top face, grass, triangle 2
+                    [x + 2, y + 1, z + 0],
+                    [x + 2, y + 1, z + 1],
+                    [x + 1, y + 1, z + 1],
+                    ], 'f'))
+
+        self.assertEquals(self.surface._important, 6)
