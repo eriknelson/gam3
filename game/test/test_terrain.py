@@ -259,21 +259,21 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
         x, y, z = 3, 2, 1
         terrain = Terrain()
         terrain.set(x, y, z, loadTerrainFromString("M"))
-        surface = SurfaceMesh(self.terrain)
+        surface = SurfaceMesh(terrain)
 
         # XXX This only covers the top face.
         self.assertArraysEqual(
-            self.surface.surface[:self.surface.important,:3],
+            surface.surface[:surface.important,:3],
             array([
                     # Top face, grass, triangle 1
-                    [x + 2, y + 1, z + 0],
                     [x + 1, y + 1, z + 0],
-                    [x + 1, y + 1, z + 1],
+                    [x + 0, y + 1, z + 0],
+                    [x + 0, y + 1, z + 1],
 
                     # Top face, grass, triangle 2
-                    [x + 2, y + 1, z + 0],
-                    [x + 2, y + 1, z + 1],
+                    [x + 1, y + 1, z + 0],
                     [x + 1, y + 1, z + 1],
+                    [x + 0, y + 1, z + 1],
                     ], 'f'))
 
-        self.assertEquals(self.surface.important, 6)
+        self.assertEquals(surface.important, 6)

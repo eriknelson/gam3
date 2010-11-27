@@ -36,7 +36,7 @@ class Terrain(object):
     @type _observers: C{list}
     """
     def __init__(self):
-        self.voxels = array([EMPTY], 'b', ndmin=3)
+        self.voxels = zeros((1, 1, 1), 'b')
         # XXX Seriously why do I implement this eleven times a day?
         self._observers = []
 
@@ -63,13 +63,12 @@ class Terrain(object):
         new[2] += z
 
         if new[0] > existing[0] or new[1] > existing[1] or new[2] > existing[2]:
-            terrain = array([[[]]], 'b', ndmin=3)
-            terrain.resize((
+            data = self.voxels.copy()
+            self.voxels.resize((
                     max(existing[0], new[0]),
                     max(existing[1], new[1]),
                     max(existing[2], new[2])))
-            terrain[:existing[0],:existing[1],:existing[2]] = self.voxels
-            self.voxels = terrain
+            self.voxels[:existing[0],:existing[1],:existing[2]] = data
 
         self.voxels[x:,y:,z:] = voxels
         self._notify(Vector(x, y, z), Vector(*voxels.shape))
@@ -99,22 +98,23 @@ class SurfaceMesh(object):
     A terrain change observer which constructs a surface mesh of the terrain
     from prism updates.
 
-    @ivar _surface: A triangle mesh of the exposed terrain which should be
+    @ivar surface: A triangle mesh of the exposed terrain which should be
         rendered.  Each element of the array contains position and texture
         information about one vertex of one triangle, as (x, y, z, tx, ty, tz).
 
-    @ivar _important: An index into C{_surface} indicating the end of the useful
+    @ivar important: An index into C{surface} indicating the end of the useful
         elements.  Elements beyond this are garbage to be ignored.
 
     @ivar _voxelToSurface: A dictionary mapping the world position of a voxel to
-        a pair indicating a slice of C{_surface} which is displaying a face of
+        a pair indicating a slice of C{surface} which is displaying a face of
         that voxel.
     """
     def __init__(self, terrain):
         self._terrain = terrain
-        self._surface = zeros((100, 3), dtype='f')
-        self._important = 0
+        self.surface = zeros((100, 3), dtype='f')
+        self.important = 0
         self._voxelToSurface = {}
+        self.changed(Vector(0, 0, 0), Vector(*self._terrain.voxels.shape))
 
 
     def _top(self, x, y, z):
@@ -130,23 +130,23 @@ class SurfaceMesh(object):
 
 
     def _append(self, x, y, z, vertices):
-        pos = self._important
-        self._surface[pos:pos + len(vertices)] = vertices
+        pos = self.important
+        self.surface[pos:pos + len(vertices)] = vertices
         self._voxelToSurface[(x, y, z)] = (pos, len(vertices))
-        self._important += len(vertices)
+        self.important += len(vertices)
 
 
     def _compact(self, x, y, z, start, length):
         # Find the voxel that owns the vertices at the end of the surface mesh
         # array.
-        mx, my, mz = self._surface[self._important - 6]
+        mx, my, mz = self.surface[self.important - 6]
         mx -= 1
         my -= 1
         # If this fails we are screwed.
-        assert self._voxelToSurface[mx, my, mz] == (self._important - 6, 6)
+        assert self._voxelToSurface[mx, my, mz] == (self.important - 6, 6)
         self._voxelToSurface[mx, my, mz] = (start, length)
-        self._surface[start:length] = self._surface[self._important - 6:self._important]
-        self._important -= 6
+        self.surface[start:length] = self.surface[self.important - 6:self.important]
+        self.important -= 6
 
 
     def changed(self, position, shape):
@@ -165,10 +165,10 @@ class SurfaceMesh(object):
                     if voxels[x, y, z] == EMPTY:
                         if (x, y, z) in self._voxelToSurface:
                             begin, length = self._voxelToSurface.pop((x, y, z))
-                            if begin + length == self._important:
+                            if begin + length == self.important:
                                 # If these voxels are at the end, just reduce
                                 # the top marker.
-                                self._important -= length
+                                self.important -= length
                             else:
                                 # Otherwise move some vertices from the end to
                                 # overwrite these.
