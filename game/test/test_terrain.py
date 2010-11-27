@@ -129,8 +129,13 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
     Tests for L{terrain.SurfaceMesh}.
     """
     def setUp(self):
+        self.e = 0.125
+        self.texCoords = {
+            MOUNTAIN: (0.5, 0.75),
+            GRASS: (0.25, 0.5),
+            }
         self.terrain = Terrain()
-        self.surface = SurfaceMesh(self.terrain)
+        self.surface = SurfaceMesh(self.terrain, self.texCoords, self.e)
         self.terrain.addObserver(self.surface.changed)
 
 
@@ -139,6 +144,8 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
         When there is no other terrain and one non-empty voxel is set, all six
         faces of it become visible.
         """
+        e = self.e
+        s, t = self.texCoords[MOUNTAIN]
         self.x = x = 1
         self.y = y = 2
         self.z = z = 3
@@ -146,17 +153,17 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
 
         # XXX This only covers the top face.
         self.assertArraysEqual(
-            self.surface.surface[:self.surface.important,:3],
+            self.surface.surface[:self.surface.important,:5],
             array([
                     # Top face, triangle 1
-                    [x + 1, y + 1, z + 0],
-                    [x + 0, y + 1, z + 0],
-                    [x + 0, y + 1, z + 1],
+                    [x + 1, y + 1, z + 0,   s + e, t + 0],
+                    [x + 0, y + 1, z + 0,   s + 0, t + 0],
+                    [x + 0, y + 1, z + 1,   s + 0, t + e],
 
                     # Top face, triangle 2
-                    [x + 1, y + 1, z + 0],
-                    [x + 1, y + 1, z + 1],
-                    [x + 0, y + 1, z + 1],
+                    [x + 1, y + 1, z + 0,   s + e, t + 0],
+                    [x + 1, y + 1, z + 1,   s + e, t + e],
+                    [x + 0, y + 1, z + 1,   s + 0, t + e],
 
                     ], 'f'))
 
@@ -188,33 +195,37 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
         When there is no other terrain and two non-empty adjacent voxels are
         set, all faces except the touching faces become visible.
         """
+        e = self.e
+        ms, mt = self.texCoords[MOUNTAIN]
+        gs, gt = self.texCoords[GRASS]
+
         self.x = x = 10
         self.y = y = 11
         self.z = z = 12
         self.terrain.set(x, y, z, loadTerrainFromString("MG"))
         # XXX This only covers the top face.
         self.assertArraysEqual(
-            self.surface.surface[:self.surface.important,:3],
+            self.surface.surface[:self.surface.important,:5],
             array([
                     # Top face, mountain, triangle 1
-                    [x + 1, y + 1, z + 0],
-                    [x + 0, y + 1, z + 0],
-                    [x + 0, y + 1, z + 1],
+                    [x + 1, y + 1, z + 0, ms + e, mt],
+                    [x + 0, y + 1, z + 0, ms + 0, mt],
+                    [x + 0, y + 1, z + 1, ms + 0, mt + e],
 
                     # Top face, mountain, triangle 2
-                    [x + 1, y + 1, z + 0],
-                    [x + 1, y + 1, z + 1],
-                    [x + 0, y + 1, z + 1],
+                    [x + 1, y + 1, z + 0, ms + e, mt],
+                    [x + 1, y + 1, z + 1, ms + e, mt + e],
+                    [x + 0, y + 1, z + 1, ms + 0, mt + e],
 
                     # Top face, grass, triangle 1
-                    [x + 2, y + 1, z + 0],
-                    [x + 1, y + 1, z + 0],
-                    [x + 1, y + 1, z + 1],
+                    [x + 2, y + 1, z + 0, gs + e, gt],
+                    [x + 1, y + 1, z + 0, gs + 0, gt],
+                    [x + 1, y + 1, z + 1, gs + 0, gt + e],
 
                     # Top face, grass, triangle 2
-                    [x + 2, y + 1, z + 0],
-                    [x + 2, y + 1, z + 1],
-                    [x + 1, y + 1, z + 1],
+                    [x + 2, y + 1, z + 0, gs + e, gt],
+                    [x + 2, y + 1, z + 1, gs + e, gt + e],
+                    [x + 1, y + 1, z + 1, gs + 0, gt + e],
 
                     ], 'f'))
 
@@ -232,20 +243,22 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
         y = self.y
         z = self.z
         self.terrain.set(x, y, z, loadTerrainFromString("_"))
+        s, t = self.texCoords[GRASS]
+        e = self.e
 
         # XXX This only covers the top face.
         self.assertArraysEqual(
-            self.surface.surface[:self.surface.important,:3],
+            self.surface.surface[:self.surface.important,:5],
             array([
                     # Top face, grass, triangle 1
-                    [x + 2, y + 1, z + 0],
-                    [x + 1, y + 1, z + 0],
-                    [x + 1, y + 1, z + 1],
+                    [x + 2, y + 1, z + 0, s + e, t],
+                    [x + 1, y + 1, z + 0, s + 0, t],
+                    [x + 1, y + 1, z + 1, s + 0, t + e],
 
                     # Top face, grass, triangle 2
-                    [x + 2, y + 1, z + 0],
-                    [x + 2, y + 1, z + 1],
-                    [x + 1, y + 1, z + 1],
+                    [x + 2, y + 1, z + 0, s + e, t],
+                    [x + 2, y + 1, z + 1, s + e, t + e],
+                    [x + 1, y + 1, z + 1, s + 0, t + e],
                     ], 'f'))
 
         self.assertEquals(self.surface.important, 6)
@@ -259,21 +272,23 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
         x, y, z = 3, 2, 1
         terrain = Terrain()
         terrain.set(x, y, z, loadTerrainFromString("M"))
-        surface = SurfaceMesh(terrain)
+        surface = SurfaceMesh(terrain, self.texCoords, self.e)
+        s, t = self.texCoords[MOUNTAIN]
+        e = self.e
 
         # XXX This only covers the top face.
         self.assertArraysEqual(
-            surface.surface[:surface.important,:3],
+            surface.surface[:surface.important,:5],
             array([
                     # Top face, grass, triangle 1
-                    [x + 1, y + 1, z + 0],
-                    [x + 0, y + 1, z + 0],
-                    [x + 0, y + 1, z + 1],
+                    [x + 1, y + 1, z + 0, s + e, t],
+                    [x + 0, y + 1, z + 0, s + 0, t],
+                    [x + 0, y + 1, z + 1, s + 0, t + e],
 
                     # Top face, grass, triangle 2
-                    [x + 1, y + 1, z + 0],
-                    [x + 1, y + 1, z + 1],
-                    [x + 0, y + 1, z + 1],
+                    [x + 1, y + 1, z + 0, s + e, t],
+                    [x + 1, y + 1, z + 1, s + e, t + e],
+                    [x + 0, y + 1, z + 1, s + 0, t + e],
                     ], 'f'))
 
         self.assertEquals(surface.important, 6)

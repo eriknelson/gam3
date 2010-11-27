@@ -11,14 +11,15 @@ from OpenGL.GL import (
     GL_COLOR_MATERIAL, GL_LIGHTING, GL_DEPTH_TEST, GL_LIGHT0, GL_POSITION,
     GL_FRONT_AND_BACK, GL_EMISSION, GL_REPEAT, GL_LINEAR, GL_QUADS, GL_TRIANGLES,
     GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_TEXTURE_WRAP_T, GL_TEXTURE_MAG_FILTER,
-    GL_TEXTURE_MIN_FILTER, GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT,
+    GL_TEXTURE_MIN_FILTER, GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT, GL_NEAREST,
+    GL_TEXTURE_COORD_ARRAY,
     glMatrixMode, glViewport,
     glGenTextures, glBindTexture, glTexParameteri, glTexImage2D, glTexCoord2d,
     glLoadIdentity, glPushMatrix, glPopMatrix,
     glEnable, glClear, glColor, glColorMaterial, glLight,
     glTranslate, glRotate, glBegin, glEnd, glVertex3f,
     glEnableClientState, glDisableClientState, glVertexPointer, glDrawArrays,
-    GL_FLOAT, GL_VERTEX_ARRAY)
+    GL_FLOAT, GL_VERTEX_ARRAY, glTexCoordPointer)
 from OpenGL.GLU import (
     gluPerspective, gluNewQuadric, gluSphere)
 from OpenGL.arrays.vbo import VBO
@@ -341,7 +342,7 @@ class Window(object):
         self.viewport.initialize()
 
         self._renderCall = LoopingCall(self.paint)
-        self._renderCall.start(0.01, now=False)
+        self._renderCall.start(1. / 60., now=False)
         self._inputCall = LoopingCall(self.handleInput)
         finishedDeferred = self._inputCall.start(0.04, now=False)
         finishedDeferred.addCallback(lambda ign: self._renderCall.stop())
@@ -387,9 +388,6 @@ class TerrainView(object):
     @ivar _images: A cache of L{pygame.Surface} instances, keyed on terrain
         types.  These images are the source for texture data for each type of
         terrain.
-
-    @ivar _textures: A cache of texture identifiers, keyed on terrain types.
-        The values are suitable for use with L{glBindTexture}.
     """
     square = [(0, 0), (1, 0), (1, 1), (0, 1)]
 
@@ -415,15 +413,18 @@ class TerrainView(object):
         WATER: 'water.png',
         }
 
+    _texture = None
+
     def __init__(self, environment, loader):
+        self._images = {}
+        self.loader = loader
         if environment is not None:
+            self._coord, self._ext = self._getTextureForTerrain()
             self.environment = environment
-            self._surface = SurfaceMesh(environment.terrain)
+            self._surface = SurfaceMesh(
+                environment.terrain, self._coord, self._ext)
             self.environment.terrain.addObserver(self._surface.changed)
             self._vbo = VBO(self._surface.surface)
-        self.loader = loader
-        self._images = {}
-        self._textures = {}
 
 
     def _getImageForTerrain(self, terrainType):
@@ -440,53 +441,82 @@ class TerrainView(object):
         return self._images[terrainType]
 
 
-    def _getTextureForTerrain(self, terrainType):
-        """
-        Return the texture which should be used to render a face of the given
-        type of terrain.
+    def _createTexture(self):
+        surface = self._textureImage
+        width = surface.get_width()
+        height = surface.get_height()
+        raw = pygame.image.tostring(surface, "RGBA", 0)
 
-        @param terrainType: A terrain identifier which can be passed to
-            L{_getImageForTerrain}.
+        texture = glGenTextures(1)
+        # glGenTextures fails by returning 0, particularly if there's no GL
+        # context yet.
+        assert texture != 0
+        glBindTexture(GL_TEXTURE_2D, texture)
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+
+        glTexImage2D(
+            GL_TEXTURE_2D, 0,
+            GL_RGBA, width, height, 0,
+            GL_RGBA,
+            GL_UNSIGNED_BYTE,
+            raw)
+
+        return texture
+
+
+    def _getTextureForTerrain(self):
         """
-        if terrainType not in self._textures:
-            texture = glGenTextures(1)
-            glBindTexture(GL_TEXTURE_2D, texture)
-            image = self._getImageForTerrain(terrainType)
-            raw = pygame.image.tostring(image, "RGBA", 0)
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-            width = image.get_width()
-            height = image.get_height()
-            glTexImage2D(
-                GL_TEXTURE_2D, 0,
-                GL_RGBA, width, height, 0,
-                GL_RGBA,
-                GL_UNSIGNED_BYTE,
-                raw)
-            self._textures[terrainType] = texture
-        return self._textures[terrainType]
+        Return a single texture containing image data for every terrain type, as
+        well as a dictionary mapping each terrain type to the corresponding
+        texture coordinates, and a float indicating the size of each terrain's
+        area of the overall texture.
+        """
+        dimensions = int(len(self._files) ** 0.5) + 2
+        surface = pygame.surface.Surface((64 * dimensions, 64 * dimensions))
+        coordinates = {}
+
+        types = self._files.iterkeys()
+
+        for y in range(dimensions):
+            for x in range(dimensions):
+                try:
+                    terrainType = types.next()
+                except StopIteration:
+                    break
+
+                image = self._getImageForTerrain(terrainType)
+                surface.blit(image, (x * 64, y * 64))
+                coordinates[terrainType] = (x / float(dimensions), y / float(dimensions))
+
+        self._textureImage = surface
+        return coordinates, 1.0 / dimensions
 
 
     def paint(self):
         """
         For all of the known terrain, render whatever faces are exposed.
         """
+        if self._texture is None:
+            self._texture = self._createTexture()
+
+        glBindTexture(GL_TEXTURE_2D, self._texture)
         glEnableClientState(GL_VERTEX_ARRAY)
-#         glEnableClientState(GL_TEXTURE_COORD_ARRAY)
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY)
         self._vbo.bind()
-        glVertexPointer(3, GL_FLOAT, 4 * 3, self._vbo)
-#         glTexCoordPointer(
-#             2, data.VERTEX_TYPE, data.VERTEX_SIZE * 5,
-#             vbo + (data.VERTEX_SIZE * 3))
+        glVertexPointer(3, GL_FLOAT, 4 * 5, self._vbo)
+        glTexCoordPointer(2, GL_FLOAT, 4 * 5, self._vbo + (4 * 3))
 #         glPushMatrix()
 #         glTranslate(x, y, z)
         glDrawArrays(GL_TRIANGLES, 0, self._surface.important)
 #         glPopMatrix()
         self._vbo.unbind()
         glDisableClientState(GL_VERTEX_ARRAY)
-#         glDisableClientState(GL_TEXTURE_COORD_ARRAY)
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY)
+        glBindTexture(GL_TEXTURE_2D, 0)
 
 
 

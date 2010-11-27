@@ -118,7 +118,7 @@ class SurfaceMesh(object):
     """
     def __init__(self, terrain, textureOffsets=None, textureExtent=None):
         self._terrain = terrain
-        self.surface = zeros((100, 3), dtype='f')
+        self.surface = zeros((100000, 5), dtype='f')
         self.important = 0
         self._voxelToSurface = {}
         self._textureOffsets = textureOffsets
@@ -126,15 +126,17 @@ class SurfaceMesh(object):
         self.changed(Vector(0, 0, 0), Vector(*self._terrain.voxels.shape))
 
 
-    def _top(self, x, y, z):
+    def _top(self, textureType, x, y, z):
+        e = self._textureExtent
+        s, t = self._textureOffsets[textureType]
         return [
-            [x + 1, y + 1, z    ],
-            [x,     y + 1, z    ],
-            [x,     y + 1, z + 1],
+            [x + 1, y + 1, z    , s + e, t],
+            [x,     y + 1, z    , s    , t],
+            [x,     y + 1, z + 1, s    , t + e],
 
-            [x + 1, y + 1, z    ],
-            [x + 1, y + 1, z + 1],
-            [x,     y + 1, z + 1],
+            [x + 1, y + 1, z    , s + e, t],
+            [x + 1, y + 1, z + 1, s + e, t + e],
+            [x,     y + 1, z + 1, s    , t + e],
             ]
 
 
@@ -148,7 +150,7 @@ class SurfaceMesh(object):
     def _compact(self, x, y, z, start, length):
         # Find the voxel that owns the vertices at the end of the surface mesh
         # array.
-        mx, my, mz = self.surface[self.important - 6]
+        mx, my, mz = self.surface[self.important - 6][:3]
         mx -= 1
         my -= 1
         # If this fails we are screwed.
@@ -185,4 +187,8 @@ class SurfaceMesh(object):
                     else:
                         if (x, y, z) not in self._voxelToSurface:
                             # If there's nothing there already, add it.
-                            self._append(x, y, z, self._top(x, y, z))
+                            self._append(
+                                x, y, z,
+                                self._top(voxels[x, y, z], x, y, z))
+
+        print 'important now', self.important
