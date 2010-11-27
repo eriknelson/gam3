@@ -146,7 +146,7 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
 
         # XXX This only covers the top face.
         self.assertArraysEqual(
-            self.surface._surface[:self.surface._important,:3],
+            self.surface.surface[:self.surface.important,:3],
             array([
                     # Top face, triangle 1
                     [x + 1, y + 1, z + 0],
@@ -160,7 +160,7 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
 
                     ], 'f'))
 
-        self.assertEquals(self.surface._important, 6)
+        self.assertEquals(self.surface.important, 6)
 
 
     def test_unchangedVoxel(self):
@@ -180,7 +180,7 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
         self.test_oneVoxel()
         self.terrain.set(self.x, self.y, self.z, loadTerrainFromString("_"))
 
-        self.assertEquals(self.surface._important, 0)
+        self.assertEquals(self.surface.important, 0)
 
 
     def test_twoVoxels(self):
@@ -194,7 +194,7 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
         self.terrain.set(x, y, z, loadTerrainFromString("MG"))
         # XXX This only covers the top face.
         self.assertArraysEqual(
-            self.surface._surface[:self.surface._important,:3],
+            self.surface.surface[:self.surface.important,:3],
             array([
                     # Top face, mountain, triangle 1
                     [x + 1, y + 1, z + 0],
@@ -218,7 +218,7 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
 
                     ], 'f'))
 
-        self.assertEquals(self.surface._important, 12)
+        self.assertEquals(self.surface.important, 12)
 
 
     def test_removeSecondVoxel(self):
@@ -235,7 +235,7 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
 
         # XXX This only covers the top face.
         self.assertArraysEqual(
-            self.surface._surface[:self.surface._important,:3],
+            self.surface.surface[:self.surface.important,:3],
             array([
                     # Top face, grass, triangle 1
                     [x + 2, y + 1, z + 0],
@@ -248,4 +248,32 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
                     [x + 1, y + 1, z + 1],
                     ], 'f'))
 
-        self.assertEquals(self.surface._important, 6)
+        self.assertEquals(self.surface.important, 6)
+
+
+    def test_existingTerrain(self):
+        """
+        When terrain already exists when L{SurfaceMesh} is constructed, the
+        surface mesh for that terrain is computed immediately.
+        """
+        x, y, z = 3, 2, 1
+        terrain = Terrain()
+        terrain.set(x, y, z, loadTerrainFromString("M"))
+        surface = SurfaceMesh(self.terrain)
+
+        # XXX This only covers the top face.
+        self.assertArraysEqual(
+            self.surface.surface[:self.surface.important,:3],
+            array([
+                    # Top face, grass, triangle 1
+                    [x + 2, y + 1, z + 0],
+                    [x + 1, y + 1, z + 0],
+                    [x + 1, y + 1, z + 1],
+
+                    # Top face, grass, triangle 2
+                    [x + 2, y + 1, z + 0],
+                    [x + 2, y + 1, z + 1],
+                    [x + 1, y + 1, z + 1],
+                    ], 'f'))
+
+        self.assertEquals(self.surface.important, 6)
