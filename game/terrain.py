@@ -8,6 +8,9 @@ from game.vector import Vector
 
 EMPTY, GRASS, MOUNTAIN, DESERT, WATER = range(5)
 
+TOP, FRONT, BOTTOM, BACK, LEFT, RIGHT = range(6)
+FACES = (TOP, FRONT, BOTTOM, BACK, LEFT, RIGHT)
+
 def loadTerrainFromString(map):
     """
     Load terrain from the given map string.  The string represents two
@@ -118,36 +121,105 @@ class SurfaceMesh(object):
     """
     def __init__(self, terrain, textureOffsets=None, textureExtent=None):
         self._terrain = terrain
-        self.surface = zeros((100000, 5), dtype='f')
+        self.surface = zeros((1000000, 5), dtype='f')
         self.important = 0
         self._voxelToSurface = {}
         self._textureOffsets = textureOffsets
         self._textureExtent = textureExtent
+
+        self.cube = {
+            3: (0, 0, 0),  # Front
+            4: (1, 0, 0),
+            8: (0, 1, 0),
+            7: (1, 1, 0),
+
+            1: (0, 0, 1),  # Back
+            2: (1, 0, 1),
+            5: (0, 1, 1),
+            6: (1, 1, 1),
+            }
+
+        def s(n):
+            return self.cube[n] + (0, 0)
+
+        top = array([
+                s(7), s(8), s(5),
+                s(7), s(6), s(5),
+                ])
+
+        toptex = array([
+                [0, 0, 0, textureExtent, 0],
+                [0, 0, 0, 0, 0],
+                [0, 0, 0, 0, textureExtent],
+                [0, 0, 0, textureExtent, 0],
+                [0, 0, 0, textureExtent, textureExtent],
+                [0, 0, 0, 0, textureExtent]
+                ])
+
+        front = array([
+                s(5), s(1), s(2),
+                s(5), s(6), s(2),
+                ])
+        fronttex = toptex
+
+        bottom = array([
+                s(1), s(3), s(4),
+                s(1), s(2), s(4),
+                ])
+        bottomtex = toptex
+
+        back = array([
+                s(3), s(8), s(7),
+                s(3), s(4), s(7),
+                ])
+        backtex = toptex
+
+        left = array([
+                s(3), s(1), s(5),
+                s(3), s(8), s(5),
+                ])
+        lefttex = toptex
+
+        right = array([
+                s(2), s(4), s(7),
+                s(2), s(6), s(7),
+                ])
+        righttex = toptex
+
+        self._faces = {
+            TOP: (top, toptex),
+            FRONT: (front, fronttex),
+            BOTTOM: (bottom, bottomtex),
+            BACK: (back, backtex),
+            LEFT: (left, lefttex),
+            RIGHT: (right, righttex),
+            }
+
+        # Do this last
         self.changed(Vector(0, 0, 0), Vector(*self._terrain.voxels.shape))
 
 
-    def _top(self, textureType, x, y, z):
-        e = self._textureExtent
+    def _makeFace(self, face, textureType, x, y, z):
         s, t = self._textureOffsets[textureType]
-        return [
-            [x + 1, y + 1, z    , s + e, t],
-            [x,     y + 1, z    , s    , t],
-            [x,     y + 1, z + 1, s    , t + e],
-
-            [x + 1, y + 1, z    , s + e, t],
-            [x + 1, y + 1, z + 1, s + e, t + e],
-            [x,     y + 1, z + 1, s    , t + e],
-            ]
+        offset = [x, y, z, s, t]
+        pos, tex = self._faces[face]
+        return pos + tex + offset
 
 
-    def _append(self, x, y, z, vertices):
+    def _append(self, key, vertices):
         pos = self.important
-        self.surface[pos:pos + len(vertices)] = vertices
-        self._voxelToSurface[(x, y, z)] = (pos, len(vertices))
+        try:
+            self.surface[pos:pos + len(vertices)] = vertices
+        except:
+            print pos
+            print self.surface.shape
+            print vertices
+            raise
+        self._voxelToSurface[key] = (pos, len(vertices))
         self.important += len(vertices)
 
 
-    def _compact(self, x, y, z, start, length):
+    def _compact(self, x, y, z, face, start, length):
         # Find the voxel that owns the vertices at the end of the surface mesh
         # array.
         mx, my, mz = self.surface[self.important - 6][:3]
@@ -164,6 +236,33 @@ class SurfaceMesh(object):
         self.important -= 6
 
 
+    def _removeVoxel(self, x, y, z):
+        for face in FACES:
+            key = (x, y, z, face)
+            if key in self._voxelToSurface:
+                begin, length = self._voxelToSurface.pop(key)
+                if begin + length == self.important:
+                    # If these voxels are at the end, just reduce
+                    # the top marker.
+                    self.important -= length
+                else:
+                    # Otherwise move some vertices from the end to
+                    # overwrite these.
+                    self._compact(x, y, z, face, begin, length)
+
+
+    def _addVoxel(self, x, y, z):
+        for face in FACES:
+            key = (x, y, z, face)
+            if key not in self._voxelToSurface:
+                # If there's nothing there already, add it.
+                self._append(
+                    key,
+                    self._makeFace(
+                        face,
+                        self._terrain.voxels[x, y, z], x, y, z))
+
+
     def changed(self, position, shape):
         """
         Examine the terrain type at every changed voxel and determine if there
@@ -178,21 +277,6 @@ class SurfaceMesh(object):
                 for z in range(int(position.z), int(position.z + shape.z)):
 
                     if voxels[x, y, z] == EMPTY:
-                        if (x, y, z) in self._voxelToSurface:
-                            begin, length = self._voxelToSurface.pop((x, y, z))
-                            if begin + length == self.important:
-                                # If these voxels are at the end, just reduce
-                                # the top marker.
-                                self.important -= length
-                            else:
-                                # Otherwise move some vertices from the end to
-                                # overwrite these.
-                                self._compact(x, y, z, begin, length)
+                        self._removeVoxel(x, y, z)
                     else:
-                        if (x, y, z) not in self._voxelToSurface:
-                            # If there's nothing there already, add it.
-                            self._append(
-                                x, y, z,
-                                self._top(voxels[x, y, z], x, y, z))
-
-        print 'important now', self.important
+                        self._addVoxel(x, y, z)
