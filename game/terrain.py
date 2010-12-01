@@ -10,13 +10,13 @@ EMPTY, GRASS, MOUNTAIN, DESERT, WATER = range(5)
 
 TOP, FRONT, BOTTOM, BACK, LEFT, RIGHT = range(6)
 FACES = (TOP, FRONT, BOTTOM, BACK, LEFT, RIGHT)
-NEIGHBORS = (
-    (TOP, (0, 1, 0)),
-    (FRONT, (0, 0, -1)),
-    (BOTTOM, (0, -1, 0)),
-    (BACK, (0, 0, 1)),
-    (LEFT, (-1, 0, 0)),
-    (RIGHT, (1, 0, 0)))
+NEIGHBORS = {
+    TOP: (0, 1, 0),
+    FRONT: (0, 0, 1),
+    BOTTOM: (0, -1, 0),
+    BACK: (0, 0, -1),
+    LEFT: (-1, 0, 0),
+    RIGHT: (1, 0, 0)}
 
 
 def loadTerrainFromString(map):
@@ -259,9 +259,14 @@ class SurfaceMesh(object):
                     self._compact(x, y, z, face, begin, length)
 
 
-    def _exposed(self, x, y, z):
+    def _exposed(self, x, y, z, face):
         voxels = self._terrain.voxels
         mx, my, mz = voxels.shape
+
+        dx, dy, dz = NEIGHBORS[face]
+        x += dx
+        y += dy
+        z += dz
 
         return (
             x < 0 or y < 0 or z < 0 or
@@ -270,15 +275,12 @@ class SurfaceMesh(object):
 
 
     def _addVoxel(self, x, y, z):
-        for face, delta in NEIGHBORS:
+        for face in FACES:
             key = (x, y, z, face)
             if key not in self._voxelToSurface:
                 # If there's nothing there already, check to see if it is
                 # exposed.
-                nx = x + delta[0]
-                ny = y + delta[1]
-                nz = z + delta[2]
-                if self._exposed(nx, ny, nz):
+                if self._exposed(x, y, z, face):
                     # If the neighbor is empty, it is exposed, add it.
                     self._append(
                         key,

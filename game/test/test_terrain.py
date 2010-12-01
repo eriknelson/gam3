@@ -10,8 +10,9 @@ from twisted.trial.unittest import TestCase
 from game.test.util import ArrayMixin
 from game.vector import Vector
 from game.terrain import (
-    EMPTY, GRASS, MOUNTAIN, DESERT, WATER, Terrain, SurfaceMesh,
-    loadTerrainFromString)
+    LEFT, RIGHT, TOP, BOTTOM, FRONT, BACK,
+    EMPTY, GRASS, MOUNTAIN, DESERT, WATER,
+    Terrain, SurfaceMesh, loadTerrainFromString)
 
 
 class LoadTerrainFromStringTests(TestCase, ArrayMixin):
@@ -137,6 +138,66 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
         self.terrain = Terrain()
         self.surface = SurfaceMesh(self.terrain, self.texCoords, self.e)
         self.terrain.addObserver(self.surface.changed)
+
+
+    def test_exposedLeft(self):
+        """
+        L{SurfaceMesh._exposed} checks the voxel in the negative direction along
+        the X axis to determine if a left face is exposed or not.
+        """
+        self.terrain.set(0, 0, 0, loadTerrainFromString("_MMM"))
+        self.assertTrue(self.surface._exposed(1, 0, 0, LEFT))
+        self.assertFalse(self.surface._exposed(2, 0, 0, LEFT))
+
+
+    def test_exposedRight(self):
+        """
+        L{SurfaceMesh._exposed} checks the voxel in the positive direction along
+        the X axis to determine if a right face is exposed or not.
+        """
+        self.terrain.set(0, 0, 0, loadTerrainFromString("MMM_"))
+        self.assertTrue(self.surface._exposed(2, 0, 0, RIGHT))
+        self.assertFalse(self.surface._exposed(1, 0, 0, RIGHT))
+
+
+    def test_exposedTop(self):
+        """
+        L{SurfaceMesh._exposed} checks the voxel in the positive direction along
+        the Y axis to determine if a top face is exposed or not.
+        """
+        self.terrain.set(0, 0, 0, loadTerrainFromString("_\n\nM\n\nM\n\nM"))
+        self.assertTrue(self.surface._exposed(0, 2, 0, TOP))
+        self.assertFalse(self.surface._exposed(0, 1, 0, TOP))
+
+
+    def test_exposedBottom(self):
+        """
+        L{SurfaceMesh._exposed} checks the voxel in the negative direction along
+        the Y axis to determine if a bottom face is exposed or not.
+        """
+        self.terrain.set(0, 0, 0, loadTerrainFromString("M\n\nM\n\nM\n\n_"))
+        self.assertTrue(self.surface._exposed(0, 1, 0, BOTTOM))
+        self.assertFalse(self.surface._exposed(0, 2, 0, BOTTOM))
+
+
+    def test_exposedFront(self):
+        """
+        L{SurfaceMesh._exposed} checks the voxel in the positive direction along
+        the Z axis to determine if a front face is exposed or not.
+        """
+        self.terrain.set(0, 0, 0, loadTerrainFromString("M\nM\nM\n_"))
+        self.assertTrue(self.surface._exposed(0, 0, 2, FRONT))
+        self.assertFalse(self.surface._exposed(0, 0, 1, FRONT))
+
+
+    def test_exposedBack(self):
+        """
+        L{SurfaceMesh._exposed} checks the voxel in the negative direction along
+        the Z axis to determine if a back face is exposed or not.
+        """
+        self.terrain.set(0, 0, 0, loadTerrainFromString("_\nM\nM\nM"))
+        self.assertTrue(self.surface._exposed(0, 0, 1, BACK))
+        self.assertFalse(self.surface._exposed(0, 0, 2, BACK))
 
 
     def test_oneVoxel(self):
