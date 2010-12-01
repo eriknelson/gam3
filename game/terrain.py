@@ -10,6 +10,14 @@ EMPTY, GRASS, MOUNTAIN, DESERT, WATER = range(5)
 
 TOP, FRONT, BOTTOM, BACK, LEFT, RIGHT = range(6)
 FACES = (TOP, FRONT, BOTTOM, BACK, LEFT, RIGHT)
+NEIGHBORS = (
+    (TOP, (0, 1, 0)),
+    (FRONT, (0, 0, -1)),
+    (BOTTOM, (0, -1, 0)),
+    (BACK, (0, 0, 1)),
+    (LEFT, (-1, 0, 0)),
+    (RIGHT, (1, 0, 0)))
+
 
 def loadTerrainFromString(map):
     """
@@ -127,7 +135,7 @@ class SurfaceMesh(object):
         self._textureOffsets = textureOffsets
         self._textureExtent = textureExtent
 
-        self.cube = {
+        cube = {
             3: (0, 0, 0),  # Front
             4: (1, 0, 0),
             8: (0, 1, 0),
@@ -140,7 +148,7 @@ class SurfaceMesh(object):
             }
 
         def s(n):
-            return self.cube[n] + (0, 0)
+            return cube[n] + (0, 0)
 
         top = array([
                 s(7), s(8), s(5),
@@ -251,16 +259,32 @@ class SurfaceMesh(object):
                     self._compact(x, y, z, face, begin, length)
 
 
+    def _exposed(self, x, y, z):
+        voxels = self._terrain.voxels
+        mx, my, mz = voxels.shape
+
+        return (
+            x < 0 or y < 0 or z < 0 or
+            x >= mx or y >= my or z >= mz or
+            voxels[x, y, z] == EMPTY)
+
+
     def _addVoxel(self, x, y, z):
-        for face in FACES:
+        for face, delta in NEIGHBORS:
             key = (x, y, z, face)
             if key not in self._voxelToSurface:
-                # If there's nothing there already, add it.
-                self._append(
-                    key,
-                    self._makeFace(
-                        face,
-                        self._terrain.voxels[x, y, z], x, y, z))
+                # If there's nothing there already, check to see if it is
+                # exposed.
+                nx = x + delta[0]
+                ny = y + delta[1]
+                nz = z + delta[2]
+                if self._exposed(nx, ny, nz):
+                    # If the neighbor is empty, it is exposed, add it.
+                    self._append(
+                        key,
+                        self._makeFace(
+                            face,
+                            self._terrain.voxels[x, y, z], x, y, z))
 
 
     def changed(self, position, shape):

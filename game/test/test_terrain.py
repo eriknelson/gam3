@@ -3,7 +3,7 @@
 Tests for L{game.terrain}.
 """
 
-from numpy import array
+from numpy import array, concatenate
 
 from twisted.trial.unittest import TestCase
 
@@ -253,33 +253,113 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
         self.y = y = 11
         self.z = z = 12
         self.terrain.set(x, y, z, loadTerrainFromString("MG"))
-        # XXX This only covers the top face.
+
         self.assertArraysEqual(
             self.surface.surface[:self.surface.important,:5],
-            array([
-                    # Top face, mountain, triangle 1
-                    [x + 1, y + 1, z + 0, ms + e, mt],
-                    [x + 0, y + 1, z + 0, ms + 0, mt],
-                    [x + 0, y + 1, z + 1, ms + 0, mt + e],
+            concatenate((
+                    # mountain
+                    array([x, y, z, ms, mt], 'f') + array([
+                            # Top face, triangle 1
+                            [1, 1, 0, e, 0],
+                            [0, 1, 0, 0, 0],
+                            [0, 1, 1, 0, e],
 
-                    # Top face, mountain, triangle 2
-                    [x + 1, y + 1, z + 0, ms + e, mt],
-                    [x + 1, y + 1, z + 1, ms + e, mt + e],
-                    [x + 0, y + 1, z + 1, ms + 0, mt + e],
+                            # Top face, triangle 2
+                            [1, 1, 0, e, 0],
+                            [1, 1, 1, e, e],
+                            [0, 1, 1, 0, e],
 
-                    # Top face, grass, triangle 1
-                    [x + 2, y + 1, z + 0, gs + e, gt],
-                    [x + 1, y + 1, z + 0, gs + 0, gt],
-                    [x + 1, y + 1, z + 1, gs + 0, gt + e],
+                            # Front face, triangle 1
+                            [0, 1, 1, e, 0],
+                            [0, 0, 1, 0, 0],
+                            [1, 0, 1, 0, e],
 
-                    # Top face, grass, triangle 2
-                    [x + 2, y + 1, z + 0, gs + e, gt],
-                    [x + 2, y + 1, z + 1, gs + e, gt + e],
-                    [x + 1, y + 1, z + 1, gs + 0, gt + e],
+                            # Front face, triangle 2
+                            [0, 1, 1, e, 0],
+                            [1, 1, 1, e, e],
+                            [1, 0, 1, 0, e],
 
-                    ], 'f'))
+                            # Bottom face, triangle 1
+                            [0, 0, 1, e, 0],
+                            [0, 0, 0, 0, 0],
+                            [1, 0, 0, 0, e],
 
-        self.assertEquals(self.surface.important, 12)
+                            # Bottom face, triangle 2
+                            [0, 0, 1, e, 0],
+                            [1, 0, 1, e, e],
+                            [1, 0, 0, 0, e],
+
+                            # Back face, triangle 1
+                            [0, 0, 0, e, 0],
+                            [0, 1, 0, 0, 0],
+                            [1, 1, 0, 0, e],
+
+                            [0, 0, 0, e, 0],
+                            [1, 0, 0, e, e],
+                            [1, 1, 0, 0, e],
+
+                            # Left face, triangle 1
+                            [0, 0, 0, e, 0],
+                            [0, 0, 1, 0, 0],
+                            [0, 1, 1, 0, e],
+
+                            [0, 0, 0, e, 0],
+                            [0, 1, 0, e, e],
+                            [0, 1, 1, 0, e],
+                            ], 'f'),
+                    # grass
+                    array([x + 1, y, z, gs, gt], 'f') + array([
+                            # Top face, triangle 1
+                            [1, 1, 0, e, 0],
+                            [0, 1, 0, 0, 0],
+                            [0, 1, 1, 0, e],
+
+                            # Top face, triangle 2
+                            [1, 1, 0, e, 0],
+                            [1, 1, 1, e, e],
+                            [0, 1, 1, 0, e],
+
+                            # Front face, triangle 1
+                            [0, 1, 1, e, 0],
+                            [0, 0, 1, 0, 0],
+                            [1, 0, 1, 0, e],
+
+                            # Front face, triangle 2
+                            [0, 1, 1, e, 0],
+                            [1, 1, 1, e, e],
+                            [1, 0, 1, 0, e],
+
+                            # Bottom face, triangle 1
+                            [0, 0, 1, e, 0],
+                            [0, 0, 0, 0, 0],
+                            [1, 0, 0, 0, e],
+
+                            # Bottom face, triangle 2
+                            [0, 0, 1, e, 0],
+                            [1, 0, 1, e, e],
+                            [1, 0, 0, 0, e],
+
+                            # Back face, triangle 1
+                            [0, 0, 0, e, 0],
+                            [0, 1, 0, 0, 0],
+                            [1, 1, 0, 0, e],
+
+                            [0, 0, 0, e, 0],
+                            [1, 0, 0, e, e],
+                            [1, 1, 0, 0, e],
+
+                            # Right face, triangle 1
+                            [1, 0, 1, e, 0],
+                            [1, 0, 0, 0, 0],
+                            [1, 1, 0, 0, e],
+
+                            [1, 0, 1, e, 0],
+                            [1, 1, 1, e, e],
+                            [1, 1, 0, 0, e],
+                            ], 'f'))))
+
+        # Six vertices per face, ten faces
+        self.assertEquals(self.surface.important, 60)
 
 
     def test_removeSecondVoxel(self):
