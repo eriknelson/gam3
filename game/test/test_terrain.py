@@ -151,23 +151,73 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
         self.z = z = 3
         self.terrain.set(x, y, z, loadTerrainFromString("M"))
 
-        # XXX This only covers the top face.
+        # XXX Asserting one static pile of data equals another static pile of
+        # data makes for a lousy unit test.  Assert something about results
+        # instead. :/
         self.assertArraysEqual(
             self.surface.surface[:self.surface.important,:5],
-            array([
+            array([x, y, z, s, t], 'f') + array([
                     # Top face, triangle 1
-                    [x + 1, y + 1, z + 0,   s + e, t + 0],
-                    [x + 0, y + 1, z + 0,   s + 0, t + 0],
-                    [x + 0, y + 1, z + 1,   s + 0, t + e],
+                    [1, 1, 0, e, 0],
+                    [0, 1, 0, 0, 0],
+                    [0, 1, 1, 0, e],
 
                     # Top face, triangle 2
-                    [x + 1, y + 1, z + 0,   s + e, t + 0],
-                    [x + 1, y + 1, z + 1,   s + e, t + e],
-                    [x + 0, y + 1, z + 1,   s + 0, t + e],
+                    [1, 1, 0, e, 0],
+                    [1, 1, 1, e, e],
+                    [0, 1, 1, 0, e],
+
+                    # Front face, triangle 1
+                    [0, 1, 1, e, 0],
+                    [0, 0, 1, 0, 0],
+                    [1, 0, 1, 0, e],
+
+                    # Front face, triangle 2
+                    [0, 1, 1, e, 0],
+                    [1, 1, 1, e, e],
+                    [1, 0, 1, 0, e],
+
+                    # Bottom face, triangle 1
+                    [0, 0, 1, e, 0],
+                    [0, 0, 0, 0, 0],
+                    [1, 0, 0, 0, e],
+
+                    # Bottom face, triangle 2
+                    [0, 0, 1, e, 0],
+                    [1, 0, 1, e, e],
+                    [1, 0, 0, 0, e],
+
+                    # Back face, triangle 1
+                    [0, 0, 0, e, 0],
+                    [0, 1, 0, 0, 0],
+                    [1, 1, 0, 0, e],
+
+                    [0, 0, 0, e, 0],
+                    [1, 0, 0, e, e],
+                    [1, 1, 0, 0, e],
+
+                    # Left face, triangle 1
+                    [0, 0, 0, e, 0],
+                    [0, 0, 1, 0, 0],
+                    [0, 1, 1, 0, e],
+
+                    [0, 0, 0, e, 0],
+                    [0, 1, 0, e, e],
+                    [0, 1, 1, 0, e],
+
+                    # Right face, triangle 1
+                    [1, 0, 1, e, 0],
+                    [1, 0, 0, 0, 0],
+                    [1, 1, 0, 0, e],
+
+                    [1, 0, 1, e, 0],
+                    [1, 1, 1, e, e],
+                    [1, 1, 0, 0, e],
 
                     ], 'f'))
 
-        self.assertEquals(self.surface.important, 6)
+        # Six vertices per face, six faces
+        self.assertEquals(self.surface.important, 36)
 
 
     def test_unchangedVoxel(self):
