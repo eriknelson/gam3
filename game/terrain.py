@@ -216,8 +216,8 @@ class SurfaceMesh(object):
             (mx,     my,     mz,     LEFT),
             (mx - 1, my,     mz - 1, RIGHT),
             ]
-        # Use knowledge about the location of the first vertex of the first
-        # triangle of the top face to find the voxel.
+        # Use knowledge about the location of the first vertex of the first to
+        # find the voxel which owns these vertices.
         for key in possibilities:
             if self._voxelToSurface.get(key) == (end, 6):
                 break
