@@ -12,7 +12,8 @@ from game.vector import Vector
 from game.terrain import (
     LEFT, RIGHT, TOP, BOTTOM, FRONT, BACK,
     EMPTY, GRASS, MOUNTAIN, DESERT, WATER,
-    Terrain, SurfaceMesh, loadTerrainFromString)
+    Terrain, SurfaceMesh, loadTerrainFromString,
+    _top, _front, _bottom, _back, _left, _right)
 
 
 class LoadTerrainFromStringTests(TestCase, ArrayMixin):
@@ -212,70 +213,24 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
         self.z = z = 3
         self.terrain.set(x, y, z, loadTerrainFromString("M"))
 
-        # XXX Asserting one static pile of data equals another static pile of
-        # data makes for a lousy unit test.  Assert something about results
-        # instead. :/
+        # XXX This is currently the only texture arrangement, but it may come to
+        # pass that something else is desired.  Each face may need its own
+        # texture coordinates.
+        texture = array([
+                [0, 0, 0, e, 0],
+                [0, 0, 0, 0, 0],
+                [0, 0, 0, 0, e],
+                [0, 0, 0, e, 0],
+                [0, 0, 0, e, e],
+                [0, 0, 0, 0, e]],
+                        'f')
         self.assertArraysEqual(
             self.surface.surface[:self.surface.important],
-            array([x, y, z, s, t], 'f') + array([
-                    # Top face, triangle 1
-                    [1, 1, 0, e, 0],
-                    [0, 1, 0, 0, 0],
-                    [0, 1, 1, 0, e],
-
-                    # Top face, triangle 2
-                    [1, 1, 0, e, 0],
-                    [1, 1, 1, e, e],
-                    [0, 1, 1, 0, e],
-
-                    # Front face, triangle 1
-                    [0, 1, 1, e, 0],
-                    [0, 0, 1, 0, 0],
-                    [1, 0, 1, 0, e],
-
-                    # Front face, triangle 2
-                    [0, 1, 1, e, 0],
-                    [1, 1, 1, e, e],
-                    [1, 0, 1, 0, e],
-
-                    # Bottom face, triangle 1
-                    [0, 0, 1, e, 0],
-                    [0, 0, 0, 0, 0],
-                    [1, 0, 0, 0, e],
-
-                    # Bottom face, triangle 2
-                    [0, 0, 1, e, 0],
-                    [1, 0, 1, e, e],
-                    [1, 0, 0, 0, e],
-
-                    # Back face, triangle 1
-                    [0, 0, 0, e, 0],
-                    [0, 1, 0, 0, 0],
-                    [1, 1, 0, 0, e],
-
-                    [0, 0, 0, e, 0],
-                    [1, 0, 0, e, e],
-                    [1, 1, 0, 0, e],
-
-                    # Left face, triangle 1
-                    [0, 0, 0, e, 0],
-                    [0, 0, 1, 0, 0],
-                    [0, 1, 1, 0, e],
-
-                    [0, 0, 0, e, 0],
-                    [0, 1, 0, e, e],
-                    [0, 1, 1, 0, e],
-
-                    # Right face, triangle 1
-                    [1, 0, 1, e, 0],
-                    [1, 0, 0, 0, 0],
-                    [1, 1, 0, 0, e],
-
-                    [1, 0, 1, e, 0],
-                    [1, 1, 1, e, e],
-                    [1, 1, 0, 0, e],
-
-                    ], 'f'))
+            array([x, y, z, s, t], 'f') + array(
+                list(_top + texture) + list(_front + texture) +
+                list(_bottom + texture) +list(_back + texture) +
+                list(_left + texture) + list(_right + texture),
+                'f'))
 
         # Six vertices per face, six faces
         self.assertEquals(self.surface.important, 36)
