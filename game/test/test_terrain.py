@@ -131,7 +131,18 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
     Tests for L{terrain.SurfaceMesh}.
     """
     def setUp(self):
-        self.e = 0.125
+        e = self.e = 0.125
+
+        # XXX This is currently the only texture arrangement, but it may come to
+        # pass that something else is desired.  Each face may need its own
+        # texture coordinates.
+        self.textureBase = array([
+                [0, 0, 0, e, 0],
+                [0, 0, 0, 0, 0],
+                [0, 0, 0, 0, e],
+                [0, 0, 0, e, 0],
+                [0, 0, 0, e, e],
+                [0, 0, 0, 0, e]], 'f')
         self.texCoords = {
             MOUNTAIN: (0.5, 0.75),
             GRASS: (0.25, 0.5),
@@ -206,24 +217,13 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
         When there is no other terrain and one non-empty voxel is set, all six
         faces of it become visible.
         """
-        e = self.e
         s, t = self.texCoords[MOUNTAIN]
         self.x = x = 1
         self.y = y = 2
         self.z = z = 3
         self.terrain.set(x, y, z, loadTerrainFromString("M"))
 
-        # XXX This is currently the only texture arrangement, but it may come to
-        # pass that something else is desired.  Each face may need its own
-        # texture coordinates.
-        texture = array([
-                [0, 0, 0, e, 0],
-                [0, 0, 0, 0, 0],
-                [0, 0, 0, 0, e],
-                [0, 0, 0, e, 0],
-                [0, 0, 0, e, e],
-                [0, 0, 0, 0, e]],
-                        'f')
+        texture = self.textureBase
         self.assertArraysEqual(
             self.surface.surface[:self.surface.important],
             array([x, y, z, s, t], 'f') + array(
@@ -261,7 +261,6 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
         When there is no other terrain and two non-empty adjacent voxels are
         set, all faces except the touching faces become visible.
         """
-        e = self.e
         ms, mt = self.texCoords[MOUNTAIN]
         gs, gt = self.texCoords[GRASS]
 
@@ -270,14 +269,7 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
         self.z = z = 12
         self.terrain.set(x, y, z, loadTerrainFromString("MG"))
 
-        texture = array([
-                [0, 0, 0, e, 0],
-                [0, 0, 0, 0, 0],
-                [0, 0, 0, 0, e],
-                [0, 0, 0, e, 0],
-                [0, 0, 0, e, e],
-                [0, 0, 0, 0, e]],
-                        'f')
+        texture = self.textureBase
         self.assertArraysEqual(
             self.surface.surface[:self.surface.important],
             concatenate((
@@ -307,22 +299,19 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
         z = self.z
         self.terrain.set(x, y, z, loadTerrainFromString("_"))
         s, t = self.texCoords[GRASS]
-        e = self.e
 
-        # XXX This only covers the top face.
+        texture = self.textureBase
         self.assertArraysEqual(
             self.surface.surface[:self.surface.important],
-            array([
-                    # Top face, grass, triangle 1
-                    [x + 2, y + 1, z + 0, s + e, t],
-                    [x + 1, y + 1, z + 0, s + 0, t],
-                    [x + 1, y + 1, z + 1, s + 0, t + e],
-
-                    # Top face, grass, triangle 2
-                    [x + 2, y + 1, z + 0, s + e, t],
-                    [x + 2, y + 1, z + 1, s + e, t + e],
-                    [x + 1, y + 1, z + 1, s + 0, t + e],
-                    ], 'f'))
+            array([x, y, z, s, t], 'f') + array(
+                list(_top + texture) + list(_front + texture) +
+                list(_bottom + texture) + list(_back + texture) +
+                # Note the reversal of left and right here.  It had a right face
+                # already, but its left face was buried by the adjacent mountain
+                # and so had no vertices in the surface mesh.  Revealing the
+                # left face causes vertices for the left face to be appended -
+                # after the vertices for the right face, in this case.
+                list(_right + texture) + list(_left + texture), 'f'))
 
         self.assertEquals(self.surface.important, 6)
 
