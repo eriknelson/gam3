@@ -216,7 +216,7 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
         # data makes for a lousy unit test.  Assert something about results
         # instead. :/
         self.assertArraysEqual(
-            self.surface.surface[:self.surface.important,:5],
+            self.surface.surface[:self.surface.important],
             array([x, y, z, s, t], 'f') + array([
                     # Top face, triangle 1
                     [1, 1, 0, e, 0],
@@ -316,7 +316,7 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
         self.terrain.set(x, y, z, loadTerrainFromString("MG"))
 
         self.assertArraysEqual(
-            self.surface.surface[:self.surface.important,:5],
+            self.surface.surface[:self.surface.important],
             concatenate((
                     # mountain
                     array([x, y, z, ms, mt], 'f') + array([
@@ -439,7 +439,7 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
 
         # XXX This only covers the top face.
         self.assertArraysEqual(
-            self.surface.surface[:self.surface.important,:5],
+            self.surface.surface[:self.surface.important],
             array([
                     # Top face, grass, triangle 1
                     [x + 2, y + 1, z + 0, s + e, t],
@@ -468,7 +468,7 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
         e = self.e
 
         self.assertArraysEqual(
-            surface.surface[:surface.important,:5],
+            surface.surface[:surface.important],
             array([x, y, z, s, t], 'f') + array([
                     # Top face, triangle 1
                     [1, 1, 0, e, 0],
