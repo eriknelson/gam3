@@ -270,110 +270,27 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
         self.z = z = 12
         self.terrain.set(x, y, z, loadTerrainFromString("MG"))
 
+        texture = array([
+                [0, 0, 0, e, 0],
+                [0, 0, 0, 0, 0],
+                [0, 0, 0, 0, e],
+                [0, 0, 0, e, 0],
+                [0, 0, 0, e, e],
+                [0, 0, 0, 0, e]],
+                        'f')
         self.assertArraysEqual(
             self.surface.surface[:self.surface.important],
             concatenate((
                     # mountain
-                    array([x, y, z, ms, mt], 'f') + array([
-                            # Top face, triangle 1
-                            [1, 1, 0, e, 0],
-                            [0, 1, 0, 0, 0],
-                            [0, 1, 1, 0, e],
-
-                            # Top face, triangle 2
-                            [1, 1, 0, e, 0],
-                            [1, 1, 1, e, e],
-                            [0, 1, 1, 0, e],
-
-                            # Front face, triangle 1
-                            [0, 1, 1, e, 0],
-                            [0, 0, 1, 0, 0],
-                            [1, 0, 1, 0, e],
-
-                            # Front face, triangle 2
-                            [0, 1, 1, e, 0],
-                            [1, 1, 1, e, e],
-                            [1, 0, 1, 0, e],
-
-                            # Bottom face, triangle 1
-                            [0, 0, 1, e, 0],
-                            [0, 0, 0, 0, 0],
-                            [1, 0, 0, 0, e],
-
-                            # Bottom face, triangle 2
-                            [0, 0, 1, e, 0],
-                            [1, 0, 1, e, e],
-                            [1, 0, 0, 0, e],
-
-                            # Back face, triangle 1
-                            [0, 0, 0, e, 0],
-                            [0, 1, 0, 0, 0],
-                            [1, 1, 0, 0, e],
-
-                            [0, 0, 0, e, 0],
-                            [1, 0, 0, e, e],
-                            [1, 1, 0, 0, e],
-
-                            # Left face, triangle 1
-                            [0, 0, 0, e, 0],
-                            [0, 0, 1, 0, 0],
-                            [0, 1, 1, 0, e],
-
-                            [0, 0, 0, e, 0],
-                            [0, 1, 0, e, e],
-                            [0, 1, 1, 0, e],
-                            ], 'f'),
+                    array([x, y, z, ms, mt], 'f') + array(
+                        list(_top + texture) + list(_front + texture) +
+                        list(_bottom + texture) + list(_back + texture) +
+                        list(_left + texture), 'f'),
                     # grass
-                    array([x + 1, y, z, gs, gt], 'f') + array([
-                            # Top face, triangle 1
-                            [1, 1, 0, e, 0],
-                            [0, 1, 0, 0, 0],
-                            [0, 1, 1, 0, e],
-
-                            # Top face, triangle 2
-                            [1, 1, 0, e, 0],
-                            [1, 1, 1, e, e],
-                            [0, 1, 1, 0, e],
-
-                            # Front face, triangle 1
-                            [0, 1, 1, e, 0],
-                            [0, 0, 1, 0, 0],
-                            [1, 0, 1, 0, e],
-
-                            # Front face, triangle 2
-                            [0, 1, 1, e, 0],
-                            [1, 1, 1, e, e],
-                            [1, 0, 1, 0, e],
-
-                            # Bottom face, triangle 1
-                            [0, 0, 1, e, 0],
-                            [0, 0, 0, 0, 0],
-                            [1, 0, 0, 0, e],
-
-                            # Bottom face, triangle 2
-                            [0, 0, 1, e, 0],
-                            [1, 0, 1, e, e],
-                            [1, 0, 0, 0, e],
-
-                            # Back face, triangle 1
-                            [0, 0, 0, e, 0],
-                            [0, 1, 0, 0, 0],
-                            [1, 1, 0, 0, e],
-
-                            [0, 0, 0, e, 0],
-                            [1, 0, 0, e, e],
-                            [1, 1, 0, 0, e],
-
-                            # Right face, triangle 1
-                            [1, 0, 1, e, 0],
-                            [1, 0, 0, 0, 0],
-                            [1, 1, 0, 0, e],
-
-                            [1, 0, 1, e, 0],
-                            [1, 1, 1, e, e],
-                            [1, 1, 0, 0, e],
-                            ], 'f'))))
-
+                    array([x + 1, y, z, gs, gt], 'f') + array(
+                        list(_top + texture) + list(_front + texture) +
+                        list(_bottom + texture) + list(_back + texture) +
+                        list(_right + texture), 'f'))))
         # Six vertices per face, ten faces
         self.assertEquals(self.surface.important, 60)
 
