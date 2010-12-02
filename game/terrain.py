@@ -216,13 +216,8 @@ class SurfaceMesh(object):
 
     def _append(self, key, vertices):
         pos = self.important
-        try:
-            self.surface[pos:pos + len(vertices)] = vertices
-        except:
-            print pos
-            print self.surface.shape
-            print vertices
-            raise
+        # XXX Bounds checking needed here.
+        self.surface[pos:pos + len(vertices)] = vertices
         self._voxelToSurface[key] = (pos, len(vertices))
         self.important += len(vertices)
 
