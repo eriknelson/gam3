@@ -11,12 +11,12 @@ EMPTY, GRASS, MOUNTAIN, DESERT, WATER = range(5)
 TOP, FRONT, BOTTOM, BACK, LEFT, RIGHT = range(6)
 FACES = (TOP, FRONT, BOTTOM, BACK, LEFT, RIGHT)
 NEIGHBORS = {
-    TOP: (0, 1, 0),
-    FRONT: (0, 0, 1),
-    BOTTOM: (0, -1, 0),
-    BACK: (0, 0, -1),
-    LEFT: (-1, 0, 0),
-    RIGHT: (1, 0, 0)}
+    TOP: (0, 1, 0, BOTTOM),
+    FRONT: (0, 0, 1, BACK),
+    BOTTOM: (0, -1, 0, TOP),
+    BACK: (0, 0, -1, FRONT),
+    LEFT: (-1, 0, 0, RIGHT),
+    RIGHT: (1, 0, 0, LEFT)}
 
 
 def loadTerrainFromString(map):
@@ -247,13 +247,45 @@ class SurfaceMesh(object):
                     # Otherwise move some vertices from the end to
                     # overwrite these.
                     self._compact(x, y, z, face, begin, length)
+            else:
+                # If the voxel is missing a face, that's because it has a
+                # neighbor!  Append vertices for that neighbor's revealed face.
+                # deltas to get to the neighbor of this face
+                dx, dy, dz, rface = NEIGHBORS[face]
+
+                # coordinates of the neighbor
+                nx, ny, nz = x + dx, y + dy, z + dz
+
+                # maximum coordinates of the voxel data
+                mx, my, mz = self._terrain.voxels.shape
+
+                # if the neighbor coordinates are out of bounds, we can't create
+                # a face
+                if (nx < 0 or ny < 0 or nz < 0 or
+                    nx >= mx or ny >= my or nz >= mz):
+                    continue
+
+                # Their may actually be no neighbor at all, if _removeVoxel is
+                # only being called because we observed an EMPTY voxel for the
+                # first time ever.
+                terrainType = self._terrain.voxels[nx, ny, nz]
+                if terrainType == EMPTY:
+                    continue
+
+                # Otherwise we can!
+                key = (nx, ny, nz, rface)
+                self._append(
+                    key,
+                    self._makeFace(
+                        rface,
+                        self._terrain.voxels[nx, ny, nz], nx, ny, nz))
 
 
     def _exposed(self, x, y, z, face):
         voxels = self._terrain.voxels
         mx, my, mz = voxels.shape
 
-        dx, dy, dz = NEIGHBORS[face]
+        dx, dy, dz, _ = NEIGHBORS[face]
         x += dx
         y += dy
         z += dz

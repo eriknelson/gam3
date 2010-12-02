@@ -426,3 +426,28 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
 
         # Six vertices per face, six faces
         self.assertEquals(surface.important, 36)
+
+
+    def test_revealedFace(self):
+        """
+        When a voxel becomes empty and was adjacent to another voxel, the
+        vertices for the revealed face of the remaining voxel is added to the
+        surface mesh array.
+        """
+        x, y, z = 1, 3, 5
+        self.terrain.set(x, y, z, loadTerrainFromString("GM"))
+        self.terrain.set(x, y, z, loadTerrainFromString("_"))
+
+        s, t = self.texCoords[MOUNTAIN]
+        texture = self.textureBase
+        self.assertArraysEqual(
+            self.surface.surface[:self.surface.important],
+            array([x, y, z, s, t], 'f') + array(
+                list(_top + texture) + list(_front + texture) +
+                list(_bottom + texture) + list(_back + texture) +
+                # Note the reversal of left and right here.  It had a right face
+                # already, but its left face was buried by the adjacent grass
+                # and so had no vertices in the surface mesh.  Revealing the
+                # left face causes vertices for the left face to be appended -
+                # after the vertices for the right face, in this case.
+                list(_right + texture) + list(_left + texture), 'f'))
