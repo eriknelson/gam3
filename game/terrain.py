@@ -201,20 +201,37 @@ class SurfaceMesh(object):
 
 
     def _compact(self, x, y, z, face, start, length):
+        # The surface mesh array will now end at this index.
+        end = self.important - 6
+
         # Find the voxel that owns the vertices at the end of the surface mesh
         # array.
-        mx, my, mz = self.surface[self.important - 6][:3]
+        mx, my, mz = self.surface[end][:3]
 
+        possibilities = [
+            (mx - 1, my - 1, mz,     TOP),
+            (mx,     my - 1, mz - 1, FRONT),
+            (mx,     my,     mz - 1, BOTTOM),
+            (mx,     my,     mz,     BACK),
+            (mx,     my,     mz,     LEFT),
+            (mx - 1, my,     mz - 1, RIGHT),
+            ]
         # Use knowledge about the location of the first vertex of the first
         # triangle of the top face to find the voxel.
-        mx -= 1
-        my -= 1
+        for key in possibilities:
+            if self._voxelToSurface.get(key) == (end, 6):
+                break
+        else:
+            # If we get here, we are screwed.
+            assert False, "Oh no... Lost geometry :("
 
-        # If this fails we are screwed.
-        assert self._voxelToSurface[mx, my, mz] == (self.important - 6, 6)
-        self._voxelToSurface[mx, my, mz] = (start, length)
-        self.surface[start:length] = self.surface[self.important - 6:self.important]
-        self.important -= 6
+        # Change the tracking data for the voxel which used to be stored at the
+        # end of the surface mesh.  Now it's stored wherever we're overwriting.
+        self._voxelToSurface[key] = (start, length)
+        # Actually overwrite.
+        self.surface[start:start + length] = self.surface[end:self.important]
+        # Note that the surface mesh is shorter now.
+        self.important = end
 
 
     def _removeVoxel(self, x, y, z):

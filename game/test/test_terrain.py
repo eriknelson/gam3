@@ -212,6 +212,99 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
         self.assertFalse(self.surface._exposed(0, 0, 2, BACK))
 
 
+    def _compactTest(self, face, vertices):
+
+        if face == BACK:
+            other = FRONT
+        else:
+            other = BACK
+
+        x, y, z = 3, 5, 7
+        # Make something to overwrite.
+        self.surface._append(
+            (x, y, z, other), self.surface._makeFace(other, GRASS, x, y, z))
+
+        # Put some front-face vertices at the end of the array.
+        self.surface._append(
+            (x, y, z, face), self.surface._makeFace(face, GRASS, x, y, z))
+
+        # Overwrite that something from above.
+        start, length = self.surface._voxelToSurface[x, y, z, other]
+        self.surface._compact(x, y, z, other, start, length)
+
+        # There should just be the front vertices left, in the place we told it
+        # to overwrite.
+        texture = self.textureBase
+        s, t = self.texCoords[GRASS]
+        self.assertArraysEqual(
+            self.surface.surface[:self.surface.important],
+            array([x, y, z, s, t], 'f') + array(vertices + texture, 'f'))
+
+        # And it should know where they are.
+        self.assertEquals(
+            self.surface._voxelToSurface[x, y, z, face], (start, length))
+
+
+    def test_compactTop(self):
+        """
+        If the vertices at the end of the surface mesh array represent the top
+        face of a voxel, they are identified as such by L{SurfaceMesh._compact},
+        relocated, and the tracking dictionary updated to refer to their new
+        location.
+        """
+        self._compactTest(TOP, _top)
+
+
+    def test_compactFront(self):
+        """
+        If the vertices at the end of the surface mesh array represent the front
+        face of a voxel, they are identified as such by L{SurfaceMesh._compact},
+        relocated, and the tracking dictionary updated to refer to their new
+        location.
+        """
+        self._compactTest(FRONT, _front)
+
+
+    def test_compactBottom(self):
+        """
+        If the vertices at the end of the surface mesh array represent the
+        bottom face of a voxel, they are identified as such by
+        L{SurfaceMesh._compact}, relocated, and the tracking dictionary updated
+        to refer to their new location.
+        """
+        self._compactTest(BOTTOM, _bottom)
+
+
+    def test_compactBack(self):
+        """
+        If the vertices at the end of the surface mesh array represent the back
+        face of a voxel, they are identified as such by L{SurfaceMesh._compact},
+        relocated, and the tracking dictionary updated to refer to their new
+        location.
+        """
+        self._compactTest(BACK, _back)
+
+
+    def test_compactLeft(self):
+        """
+        If the vertices at the end of the surface mesh array represent the left
+        face of a voxel, they are identified as such by L{SurfaceMesh._compact},
+        relocated, and the tracking dictionary updated to refer to their new
+        location.
+        """
+        self._compactTest(LEFT, _left)
+
+
+    def test_compactRight(self):
+        """
+        If the vertices at the end of the surface mesh array represent the right
+        face of a voxel, they are identified as such by L{SurfaceMesh._compact},
+        relocated, and the tracking dictionary updated to refer to their new
+        location.
+        """
+        self._compactTest(RIGHT, _right)
+
+
     def test_oneVoxel(self):
         """
         When there is no other terrain and one non-empty voxel is set, all six
@@ -293,27 +386,23 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
         the end of the surface mesh array, vertices from the end of the surface
         mesh array are used to overwrite the changed voxels vertices.
         """
-        self.test_twoVoxels()
-        x = self.x
-        y = self.y
-        z = self.z
+        x, y, z = 2, 4, 6
+
+        self.terrain.set(x, y, z, loadTerrainFromString("M_G"))
+
         self.terrain.set(x, y, z, loadTerrainFromString("_"))
         s, t = self.texCoords[GRASS]
 
         texture = self.textureBase
         self.assertArraysEqual(
             self.surface.surface[:self.surface.important],
-            array([x, y, z, s, t], 'f') + array(
-                list(_top + texture) + list(_front + texture) +
-                list(_bottom + texture) + list(_back + texture) +
-                # Note the reversal of left and right here.  It had a right face
-                # already, but its left face was buried by the adjacent mountain
-                # and so had no vertices in the surface mesh.  Revealing the
-                # left face causes vertices for the left face to be appended -
-                # after the vertices for the right face, in this case.
-                list(_right + texture) + list(_left + texture), 'f'))
+            array([x + 2, y, z, s, t], 'f') + array(
+                list(_right + texture) + list(_left + texture) +
+                list(_back + texture) + list(_bottom + texture) +
+                list(_front + texture) + list(_top + texture), 'f'))
 
-        self.assertEquals(self.surface.important, 6)
+        # Six vertices per face, six faces
+        self.assertEquals(self.surface.important, 36)
 
 
     def test_existingTerrain(self):
