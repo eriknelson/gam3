@@ -103,6 +103,28 @@ class Terrain(object):
         self._observers.append(observer)
 
 
+_cube = {
+    3: (0, 0, 0),  # Front
+    4: (1, 0, 0),
+    8: (0, 1, 0),
+    7: (1, 1, 0),
+
+    1: (0, 0, 1),  # Back
+    2: (1, 0, 1),
+    5: (0, 1, 1),
+    6: (1, 1, 1),
+    }
+
+def _s(n):
+    return _cube[n] + (0, 0)
+
+top = array(map(_s, [7, 8, 5, 7, 6, 5]))
+front = array(map(_s, [5, 1, 2, 5, 6, 2]))
+bottom = array(map(_s, [1, 3, 4, 1, 2, 4]))
+back = array(map(_s, [3, 8, 7, 3, 4, 7]))
+left = array(map(_s, [3, 1, 5, 3, 8, 5]))
+right = array(map(_s, [2, 4, 7, 2, 6, 7]))
+
 
 class SurfaceMesh(object):
     """
@@ -135,26 +157,6 @@ class SurfaceMesh(object):
         self._textureOffsets = textureOffsets
         self._textureExtent = textureExtent
 
-        cube = {
-            3: (0, 0, 0),  # Front
-            4: (1, 0, 0),
-            8: (0, 1, 0),
-            7: (1, 1, 0),
-
-            1: (0, 0, 1),  # Back
-            2: (1, 0, 1),
-            5: (0, 1, 1),
-            6: (1, 1, 1),
-            }
-
-        def s(n):
-            return cube[n] + (0, 0)
-
-        top = array([
-                s(7), s(8), s(5),
-                s(7), s(6), s(5),
-                ])
-
         toptex = array([
                 [0, 0, 0, textureExtent, 0],
                 [0, 0, 0, 0, 0],
@@ -164,34 +166,10 @@ class SurfaceMesh(object):
                 [0, 0, 0, 0, textureExtent]
                 ])
 
-        front = array([
-                s(5), s(1), s(2),
-                s(5), s(6), s(2),
-                ])
         fronttex = toptex
-
-        bottom = array([
-                s(1), s(3), s(4),
-                s(1), s(2), s(4),
-                ])
         bottomtex = toptex
-
-        back = array([
-                s(3), s(8), s(7),
-                s(3), s(4), s(7),
-                ])
         backtex = toptex
-
-        left = array([
-                s(3), s(1), s(5),
-                s(3), s(8), s(5),
-                ])
         lefttex = toptex
-
-        right = array([
-                s(2), s(4), s(7),
-                s(2), s(6), s(7),
-                ])
         righttex = toptex
 
         self._faces = {
@@ -291,8 +269,8 @@ class SurfaceMesh(object):
         """
         voxels = self._terrain.voxels
 
-        # Visit each voxel in the changed region plus one in each direction and
-        # re-determine if it should now be part of the surface mesh.
+        # Visit each voxel in the changed region plus one in each direction
+        # (XXX) and re-determine if it should now be part of the surface mesh.
         for x in range(int(position.x), int(position.x + shape.x)):
             for y in range(int(position.y), int(position.y + shape.y)):
                 for z in range(int(position.z), int(position.z + shape.z)):
