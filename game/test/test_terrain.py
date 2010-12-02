@@ -328,67 +328,13 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
         s, t = self.texCoords[MOUNTAIN]
         e = self.e
 
+        texture = self.textureBase
         self.assertArraysEqual(
             surface.surface[:surface.important],
-            array([x, y, z, s, t], 'f') + array([
-                    # Top face, triangle 1
-                    [1, 1, 0, e, 0],
-                    [0, 1, 0, 0, 0],
-                    [0, 1, 1, 0, e],
-
-                    # Top face, triangle 2
-                    [1, 1, 0, e, 0],
-                    [1, 1, 1, e, e],
-                    [0, 1, 1, 0, e],
-
-                    # Front face, triangle 1
-                    [0, 1, 1, e, 0],
-                    [0, 0, 1, 0, 0],
-                    [1, 0, 1, 0, e],
-
-                    # Front face, triangle 2
-                    [0, 1, 1, e, 0],
-                    [1, 1, 1, e, e],
-                    [1, 0, 1, 0, e],
-
-                    # Bottom face, triangle 1
-                    [0, 0, 1, e, 0],
-                    [0, 0, 0, 0, 0],
-                    [1, 0, 0, 0, e],
-
-                    # Bottom face, triangle 2
-                    [0, 0, 1, e, 0],
-                    [1, 0, 1, e, e],
-                    [1, 0, 0, 0, e],
-
-                    # Back face, triangle 1
-                    [0, 0, 0, e, 0],
-                    [0, 1, 0, 0, 0],
-                    [1, 1, 0, 0, e],
-
-                    [0, 0, 0, e, 0],
-                    [1, 0, 0, e, e],
-                    [1, 1, 0, 0, e],
-
-                    # Left face, triangle 1
-                    [0, 0, 0, e, 0],
-                    [0, 0, 1, 0, 0],
-                    [0, 1, 1, 0, e],
-
-                    [0, 0, 0, e, 0],
-                    [0, 1, 0, e, e],
-                    [0, 1, 1, 0, e],
-
-                    # Right face, triangle 1
-                    [1, 0, 1, e, 0],
-                    [1, 0, 0, 0, 0],
-                    [1, 1, 0, 0, e],
-
-                    [1, 0, 1, e, 0],
-                    [1, 1, 1, e, e],
-                    [1, 1, 0, 0, e],
-
-                    ], 'f'))
+            array([x, y, z, s, t], 'f') + array(
+                list(_top + texture) + list(_front + texture) +
+                list(_bottom + texture) + list(_back + texture) +
+                list(_left + texture) + list(_right + texture), 'f'))
 
         # Six vertices per face, six faces
         self.assertEquals(surface.important, 36)
