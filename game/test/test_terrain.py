@@ -326,7 +326,6 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
         terrain.set(x, y, z, loadTerrainFromString("M"))
         surface = SurfaceMesh(terrain, self.texCoords, self.e)
         s, t = self.texCoords[MOUNTAIN]
-        e = self.e
 
         texture = self.textureBase
         self.assertArraysEqual(
