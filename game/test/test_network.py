@@ -707,14 +707,18 @@ class ControllerTests(TestCase, PlayerCreationMixin, ArrayMixin):
         environment = self.controller.environment = Environment(10, self.clock)
         environment.terrain.set(0, 0, 0, loadTerrainFromString('DG\n\nMW'))
         responder = self.controller.lookupFunction(SetTerrain.commandName)
-        terrainObjects = dict(x=0, y=2, z=0, voxels=loadTerrainFromString('_'))
+        # XXX Would be better if this terrain type were unique to ensure the
+        # right data ends up in the right place.  But we're out of terrain types
+        # for now.
+        terrainObjects = dict(x=0, y=2, z=0, voxels=loadTerrainFromString('D'))
         terrainStrings = SetTerrain.makeArguments(terrainObjects, None)
         d = responder(terrainStrings)
         def gotResult(ignored):
             self.assertEquals(
                 environment.terrain.dict(),
                 {(0, 0, 0): MOUNTAIN, (1, 0, 0): WATER,
-                 (0, 1, 0): DESERT, (1, 1, 0): GRASS})
+                 (0, 1, 0): DESERT, (1, 1, 0): GRASS,
+                 (0, 2, 0): DESERT})
         d.addCallback(gotResult)
         return d
 
@@ -729,14 +733,16 @@ class ControllerTests(TestCase, PlayerCreationMixin, ArrayMixin):
         environment = self.controller.environment = Environment(10, self.clock)
         environment.terrain.set(0, 0, 0, loadTerrainFromString('DG\n\nMW'))
         responder = self.controller.lookupFunction(SetTerrain.commandName)
-        terrainObjects = dict(x=3, y=0, z=0, voxels=loadTerrainFromString('_'))
+        # XXX Unique terrain type
+        terrainObjects = dict(x=2, y=0, z=0, voxels=loadTerrainFromString('M'))
         terrainStrings = SetTerrain.makeArguments(terrainObjects, None)
         d = responder(terrainStrings)
         def gotResult(ignored):
             self.assertEquals(
                 environment.terrain.dict(),
                 {(0, 0, 0): MOUNTAIN, (1, 0, 0): WATER,
-                 (0, 1, 0): DESERT, (1, 1, 0): GRASS})
+                 (0, 1, 0): DESERT, (1, 1, 0): GRASS,
+                 (2, 0, 0): MOUNTAIN})
         d.addCallback(gotResult)
         return d
 
@@ -751,13 +757,15 @@ class ControllerTests(TestCase, PlayerCreationMixin, ArrayMixin):
         environment = self.controller.environment = Environment(10, self.clock)
         environment.terrain.set(0, 0, 0, loadTerrainFromString('DG\nMW'))
         responder = self.controller.lookupFunction(SetTerrain.commandName)
-        terrainObjects = dict(x=3, y=0, z=0, voxels=loadTerrainFromString('_'))
+        # XXX Unique terrain type
+        terrainObjects = dict(x=2, y=0, z=0, voxels=loadTerrainFromString('G'))
         terrainStrings = SetTerrain.makeArguments(terrainObjects, None)
         d = responder(terrainStrings)
         def gotResult(ignored):
             self.assertEquals(
                 environment.terrain.dict(),
                 {(0, 0, 0): DESERT, (1, 0, 0): GRASS,
-                 (0, 0, 1): MOUNTAIN, (1, 0, 1): WATER})
+                 (0, 0, 1): MOUNTAIN, (1, 0, 1): WATER,
+                 (2, 0, 0): GRASS})
         d.addCallback(gotResult)
         return d

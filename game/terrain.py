@@ -81,7 +81,7 @@ class Terrain(object):
                     max(existing[2], new[2])))
             self.voxels[:existing[0],:existing[1],:existing[2]] = data
 
-        self.voxels[x:,y:,z:] = voxels
+        self.voxels[x:new[0],y:new[1],z:new[2]] = voxels
         self._notify(Vector(x, y, z), Vector(*voxels.shape))
 
 
