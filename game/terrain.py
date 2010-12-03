@@ -193,6 +193,7 @@ class SurfaceMesh(object):
 
 
     def _append(self, key, vertices):
+        assert key not in self._voxelToSurface
         pos = self.important
         # XXX Bounds checking needed here.
         self.surface[pos:pos + len(vertices)] = vertices
@@ -265,7 +266,7 @@ class SurfaceMesh(object):
                     nx >= mx or ny >= my or nz >= mz):
                     continue
 
-                # Their may actually be no neighbor at all, if _removeVoxel is
+                # There may actually be no neighbor at all, if _removeVoxel is
                 # only being called because we observed an EMPTY voxel for the
                 # first time ever.
                 terrainType = self._terrain.voxels[nx, ny, nz]
@@ -274,11 +275,12 @@ class SurfaceMesh(object):
 
                 # Otherwise we can!
                 key = (nx, ny, nz, rface)
-                self._append(
-                    key,
-                    self._makeFace(
-                        rface,
-                        self._terrain.voxels[nx, ny, nz], nx, ny, nz))
+                if key not in self._voxelToSurface:
+                    self._append(
+                        key,
+                        self._makeFace(
+                            rface,
+                            self._terrain.voxels[nx, ny, nz], nx, ny, nz))
 
 
     def _exposed(self, x, y, z, face):
