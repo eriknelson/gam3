@@ -13,7 +13,7 @@ from game.test.util import (
 from game.environment import Environment
 from game.network import (Direction, Introduce, SetDirectionOf,
                           NetworkController, NewPlayer, SetMyDirection,
-                          RemovePlayer, SetTerrain, Terrain)
+                          RemovePlayer, GetTerrain, SetTerrain, Terrain)
 from game.direction import FORWARD, BACKWARD, LEFT, RIGHT
 from game.terrain import (
     WATER, GRASS, DESERT, MOUNTAIN, loadTerrainFromString)
@@ -215,6 +215,19 @@ class TerrainArgumentTests(TestCase):
         # Can't compare dicts directly, because numpy arrays are weird.
         self.assertEquals(objects.keys(), ["voxels"])
         self.assertTrue((objects["voxels"] == self.array).all())
+
+
+
+class GetTerrainCommandTests(CommandTestMixin, TestCase):
+    """
+    Tests for L{GetTerrain}.
+    """
+    command = GetTerrain
+
+    argumentObjects = {'x': 2, 'y': 7, 'z': 13}
+    argumentStrings = {'x': '2', 'y': '7', 'z': '13'}
+
+    responseObjects = responseStrings = {}
 
 
 

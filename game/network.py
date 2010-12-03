@@ -78,9 +78,22 @@ class Terrain(Argument):
 
 
 
+class GetTerrain(Command):
+    """
+    Request some terrain data from the server.  This command has no response,
+    but will cause the server to send a L{SetTerrain} soon.
+    """
+    arguments = [('x', Integer()),
+                 ('y', Integer()),
+                 ('z', Integer())]
+
+    requiresAnswer = False
+
+
+
 class SetTerrain(Command):
     """
-    Specify the type of terrain at one or more positions.
+    Specify some terrain data starting from a particular coordinate.
     """
     arguments = [('x', Integer()),
                  ('y', Integer()),
