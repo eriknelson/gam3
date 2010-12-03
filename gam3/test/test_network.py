@@ -14,8 +14,8 @@ from game.network import (Introduce, SetMyDirection, SetDirectionOf,
                           Direction, NewPlayer, RemovePlayer, SetTerrain)
 from game.player import Player
 from game.direction import LEFT, RIGHT
+from game.terrain import loadTerrainFromString
 
-from gam3.terrain import loadTerrainFromString
 from gam3.world import World
 from gam3.network import Gam3Factory, Gam3Server
 

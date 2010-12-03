@@ -8,7 +8,7 @@ import numpy
 from struct import pack, unpack
 
 from twisted.protocols.amp import (
-    AMP, AmpList, Command, Integer, Float, String, Argument)
+    AMP, Command, Integer, Float, Argument)
 
 from game.environment import Environment
 from game.vector import Vector
@@ -327,15 +327,14 @@ class NetworkController(AMP):
         """
         Add new terrain information to the environment.
 
-        @param terrain: A sequence of mappings with C{"type"}, C{"x"} and C{"y"}
-            keys.
+        @param x: The x coordinate where the given voxels begin.
+        @param y: The y coordinate where the given voxels begin.
+        @param z: The z coordinate where the given voxels begin.
+
+        @param voxels: An L{numpy.array} specifying terrain information starting
+            at the specified location and proceeding in the positive direction
+            along all axes
         """
-        dx, dy, dz = voxels.shape
-        for sx in range(dx):
-            for sy in range(dy):
-                for sz in range(dz):
-                    coordinate = x + sx, y + sy, z + sz
-                    terrain = voxels[sx, sy, sz]
-                    self.environment.terrain[coordinate] = terrain
+        self.environment.terrain.set(x, y, z, voxels)
         return {}
     SetTerrain.responder(setTerrain)

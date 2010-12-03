@@ -7,6 +7,7 @@ Model code for the substrate the game world inhabits.
 from twisted.internet.task import LoopingCall, Clock
 
 from game.player import Player
+from game.terrain import Terrain
 
 
 class SimulationTime(Clock):
@@ -40,14 +41,7 @@ class SimulationTime(Clock):
         Clock.__init__(self)
         self.granularity = granularity
         self.platformClock = platformClock
-        self.terrain = {}
-
-
-    def setTerrain(self, terrain):
-        """
-        Replace the existing terrain with the given new terrain.
-        """
-        self.terrain = terrain
+        self.terrain = Terrain()
 
 
     def _update(self, frames):

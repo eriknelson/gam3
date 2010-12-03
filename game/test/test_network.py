@@ -7,15 +7,16 @@ import numpy
 from twisted.trial.unittest import TestCase
 from twisted.internet.defer import Deferred
 from twisted.internet.task import Clock
-from twisted.protocols.amp import AmpList, Integer
 
-from game.test.util import PlayerCreationMixin, PlayerVisibilityObserver
+from game.test.util import (
+    ArrayMixin, PlayerCreationMixin, PlayerVisibilityObserver)
 from game.environment import Environment
 from game.network import (Direction, Introduce, SetDirectionOf,
                           NetworkController, NewPlayer, SetMyDirection,
                           RemovePlayer, SetTerrain, Terrain)
 from game.direction import FORWARD, BACKWARD, LEFT, RIGHT
-from game.terrain import GRASS, DESERT
+from game.terrain import (
+    WATER, GRASS, DESERT, MOUNTAIN, loadTerrainFromString)
 from game.vector import Vector
 
 
@@ -319,7 +320,7 @@ class SetDirectionOfTests(CommandTestMixin, TestCase):
 
 
 
-class ControllerTests(TestCase, PlayerCreationMixin):
+class ControllerTests(TestCase, PlayerCreationMixin, ArrayMixin):
     """
     L{NetworkController} takes network input and makes local changes to model
     objects.
@@ -600,32 +601,171 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         return d
 
 
-    def test_setTerrain(self):
+    def test_setTerrainAtOrigin(self):
         """
         L{NetworkController} should respond to the L{SetTerrain}
         command by updating its terrain model with the received data.
         """
         environment = self.controller.environment = Environment(10, self.clock)
         responder = self.controller.lookupFunction(SetTerrain.commandName)
-        terrainData = numpy.array(
-            [[[1, 2],
-              [3, 4]],
-             [[5, 6],
-              [7, 8]]])
-        terrainObjects = dict(x=1, y=2, z=3, voxels=terrainData)
+        terrainData = loadTerrainFromString('G')
+        terrainObjects = dict(x=0, y=0, z=0, voxels=terrainData)
         terrainStrings = SetTerrain.makeArguments(terrainObjects, None)
         d = responder(terrainStrings)
         def gotResult(ignored):
-            self.assertEqual(
-                environment.terrain,
-                {(1, 2, 3): 1,
-                 (1, 2, 4): 2,
-                 (1, 3, 3): 3,
-                 (1, 3, 4): 4,
-                 (2, 2, 3): 5,
-                 (2, 2, 4): 6,
-                 (2, 3, 3): 7,
-                 (2, 3, 4): 8})
+            self.assertEquals(
+                environment.terrain.dict(), {(0, 0, 0): GRASS})
         d.addCallback(gotResult)
         return d
 
+
+    def test_overwriteTerrain(self):
+        """
+        When L{NetworkController} receives a L{SetTerrain} which overlaps with
+        existing terrain data, the existing data is overwritten.
+        """
+        environment = self.controller.environment = Environment(10, self.clock)
+        environment.terrain.set(0, 0, 0, loadTerrainFromString('G'))
+        responder = self.controller.lookupFunction(SetTerrain.commandName)
+        terrainObjects = dict(x=0, y=0, z=0, voxels=loadTerrainFromString('M'))
+        terrainStrings = SetTerrain.makeArguments(terrainObjects, None)
+        d = responder(terrainStrings)
+        def gotResult(ignored):
+            self.assertEquals(
+                environment.terrain.dict(), {(0, 0, 0): MOUNTAIN})
+        d.addCallback(gotResult)
+        return d
+
+
+    def test_extendX(self):
+        """
+        When L{NetworkController} receives terrain in a L{SetTerrain} command
+        which extends beyond the current maximum X coordinate, the terrain array
+        is extended in the X direction to contain it.
+        """
+        environment = self.controller.environment = Environment(10, self.clock)
+        environment.terrain.set(0, 0, 0, loadTerrainFromString('DG'))
+        responder = self.controller.lookupFunction(SetTerrain.commandName)
+        terrainObjects = dict(x=3, y=0, z=0, voxels=loadTerrainFromString('W'))
+        terrainStrings = SetTerrain.makeArguments(terrainObjects, None)
+        d = responder(terrainStrings)
+        def gotResult(ignored):
+            self.assertEquals(
+                environment.terrain.dict(),
+                {(0, 0, 0): DESERT, (1, 0, 0): GRASS, (3, 0, 0): WATER})
+        d.addCallback(gotResult)
+        return d
+
+
+    def test_extendY(self):
+        """
+        When L{NetworkController} receives terrain in a L{SetTerrain} command
+        which extends beyond the current maximum Y coordinate, the terrain array
+        is extended in the Y direction to contain it.
+        """
+        environment = self.controller.environment = Environment(10, self.clock)
+        environment.terrain.set(0, 0, 0, loadTerrainFromString('D\n\nG'))
+        responder = self.controller.lookupFunction(SetTerrain.commandName)
+        terrainObjects = dict(x=0, y=3, z=0, voxels=loadTerrainFromString('W'))
+        terrainStrings = SetTerrain.makeArguments(terrainObjects, None)
+        d = responder(terrainStrings)
+        def gotResult(ignored):
+            self.assertEquals(
+                environment.terrain.dict(),
+                {(0, 0, 0): GRASS, (0, 1, 0): DESERT, (0, 3, 0): WATER})
+        d.addCallback(gotResult)
+        return d
+
+
+    def test_extendZ(self):
+        """
+        When L{NetworkController} receives terrain in a L{SetTerrain} command
+        which extends beyond the current maximum Z coordinate, the terrain array
+        is extended in the Z direction to contain it.
+        """
+        environment = self.controller.environment = Environment(10, self.clock)
+        environment.terrain.set(0, 0, 0, loadTerrainFromString('D\nG'))
+        responder = self.controller.lookupFunction(SetTerrain.commandName)
+        terrainObjects = dict(x=0, y=0, z=3, voxels=loadTerrainFromString('W'))
+        terrainStrings = SetTerrain.makeArguments(terrainObjects, None)
+        d = responder(terrainStrings)
+        def gotResult(ignored):
+            self.assertEquals(
+                environment.terrain.dict(),
+                {(0, 0, 0): DESERT, (0, 0, 1): GRASS, (0, 0, 3): WATER})
+        d.addCallback(gotResult)
+        return d
+
+
+    def test_preserveX(self):
+        """
+        When L{NetworkController} receives terrain in a L{SetTerrain} command
+        which doesn't extend as far in the X direction as the existing terrain
+        data, the existing terrain data beyond the new terrain data in the X
+        direction is preserved.
+        """
+        environment = self.controller.environment = Environment(10, self.clock)
+        environment.terrain.set(0, 0, 0, loadTerrainFromString('DG\n\nMW'))
+        responder = self.controller.lookupFunction(SetTerrain.commandName)
+        # XXX Would be better if this terrain type were unique to ensure the
+        # right data ends up in the right place.  But we're out of terrain types
+        # for now.
+        terrainObjects = dict(x=0, y=2, z=0, voxels=loadTerrainFromString('D'))
+        terrainStrings = SetTerrain.makeArguments(terrainObjects, None)
+        d = responder(terrainStrings)
+        def gotResult(ignored):
+            self.assertEquals(
+                environment.terrain.dict(),
+                {(0, 0, 0): MOUNTAIN, (1, 0, 0): WATER,
+                 (0, 1, 0): DESERT, (1, 1, 0): GRASS,
+                 (0, 2, 0): DESERT})
+        d.addCallback(gotResult)
+        return d
+
+
+    def test_preserveY(self):
+        """
+        When L{NetworkController} receives terrain in a L{SetTerrain} command
+        which doesn't extend as far in the Y direction as the existing terrain
+        data, the existing terrain data beyond the new terrain data in the Y
+        direction is preserved.
+        """
+        environment = self.controller.environment = Environment(10, self.clock)
+        environment.terrain.set(0, 0, 0, loadTerrainFromString('DG\n\nMW'))
+        responder = self.controller.lookupFunction(SetTerrain.commandName)
+        # XXX Unique terrain type
+        terrainObjects = dict(x=2, y=0, z=0, voxels=loadTerrainFromString('M'))
+        terrainStrings = SetTerrain.makeArguments(terrainObjects, None)
+        d = responder(terrainStrings)
+        def gotResult(ignored):
+            self.assertEquals(
+                environment.terrain.dict(),
+                {(0, 0, 0): MOUNTAIN, (1, 0, 0): WATER,
+                 (0, 1, 0): DESERT, (1, 1, 0): GRASS,
+                 (2, 0, 0): MOUNTAIN})
+        d.addCallback(gotResult)
+        return d
+
+
+    def test_preserveZ(self):
+        """
+        When L{NetworkController} receives terrain in a L{SetTerrain} command
+        which doesn't extend as far in the Z direction as the existing terrain
+        data, the existing terrain data beyond the new terrain data in the Z
+        direction is preserved.
+        """
+        environment = self.controller.environment = Environment(10, self.clock)
+        environment.terrain.set(0, 0, 0, loadTerrainFromString('DG\nMW'))
+        responder = self.controller.lookupFunction(SetTerrain.commandName)
+        # XXX Unique terrain type
+        terrainObjects = dict(x=2, y=0, z=0, voxels=loadTerrainFromString('G'))
+        terrainStrings = SetTerrain.makeArguments(terrainObjects, None)
+        d = responder(terrainStrings)
+        def gotResult(ignored):
+            self.assertEquals(
+                environment.terrain.dict(),
+                {(0, 0, 0): DESERT, (1, 0, 0): GRASS,
+                 (0, 0, 1): MOUNTAIN, (1, 0, 1): WATER,
+                 (2, 0, 0): GRASS})
+        d.addCallback(gotResult)
+        return d

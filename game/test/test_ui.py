@@ -241,12 +241,12 @@ class UITests(TestCase):
         initialEvents = []
         def gotInitialPlayer(player):
             initialEvents.append(('player', player))
-        def gotTerrain(terrain):
-            initialEvents.append(('terrain', terrain))
+        def gotTerrain(environment):
+            initialEvents.append(('environment', environment))
         self.ui.gotInitialPlayer = gotInitialPlayer
         self.ui.gotTerrain = gotTerrain
         self.ui.gotIntroduced(environment)
-        self.assertEqual(initialEvents, [('terrain', environment.terrain),
+        self.assertEqual(initialEvents, [('environment', environment),
                                          ('player', player)])
 
 
@@ -272,10 +272,10 @@ class UITests(TestCase):
         terrain = object()
         window = self.ui.window = StubWindow(None, None)
         self.ui.environment = Environment(10, Clock())
-        self.ui.gotTerrain(terrain)
+        self.ui.gotTerrain(self.ui.environment)
         [view] = window.scene._items
         self.assertTrue(isinstance(view, TerrainView))
-        self.assertIdentical(view.terrain, terrain)
+        self.assertIdentical(view.environment, self.ui.environment)
         self.assertIdentical(view.loader, loadImage)
 
 

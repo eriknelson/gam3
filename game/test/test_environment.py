@@ -7,7 +7,7 @@ from twisted.trial.unittest import TestCase
 from twisted.internet.task import Clock
 
 from game.environment import Environment, SimulationTime
-from game.test.util import PlayerVisibilityObserver
+from game.test.util import ArrayMixin, PlayerVisibilityObserver
 from game.vector import Vector
 
 
@@ -135,7 +135,7 @@ class EnvironmentTimeTests(SimulationTimeTestsMixin, TestCase):
 
 
 
-class EnvironmentTests(TestCase):
+class EnvironmentTests(TestCase, ArrayMixin):
     """
     Tests for L{game.environment.Environment}.
     """
@@ -152,20 +152,9 @@ class EnvironmentTests(TestCase):
 
     def test_terrain(self):
         """
-        An L{Environment} should start with an empty terrain dictionary.
+        An L{Environment} should start with an empty terrain array.
         """
-        self.assertEqual(self.environment.terrain, {})
-
-
-    def test_setTerrain(self):
-        """
-        L{Environment.setTerrain} should replace the existing terrain
-        dictionary with the specified new terrain dictionary.
-        """
-        replacementTerrain = {(1, 1): object()}
-        self.environment.terrain[(0, 0)] = object()
-        self.environment.setTerrain(replacementTerrain)
-        self.assertEqual(self.environment.terrain, replacementTerrain)
+        self.assertEquals(self.environment.terrain.dict(), {})
 
 
     def test_createPlayer(self):

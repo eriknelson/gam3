@@ -13,12 +13,11 @@ from twisted.application.service import IService
 
 from epsilon.structlike import record
 
-from gam3.test.util import ArrayMixin
 from gam3.world import Gam3Service, World, point
 
 from game.vector import Vector
 from game.test.test_environment import SimulationTimeTestsMixin
-from game.test.util import PlayerVisibilityObserver
+from game.test.util import ArrayMixin, PlayerVisibilityObserver
 
 
 class StubRandom(record('rangeResults')):
