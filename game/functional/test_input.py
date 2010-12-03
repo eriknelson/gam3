@@ -1,4 +1,6 @@
 
+from pygame import K_q
+
 from twisted.trial.unittest import TestCase
 from twisted.internet import reactor
 
@@ -6,17 +8,29 @@ from game.functional.test_view3d import SceneMixin
 from game.player import Player
 from game.vector import Vector
 
-class StdoutReportingController(object):
-    # XXX Make an interface for the controller and verify this fake.
-    def __init__(self):
+
+class QuittableController(object):
+    # XXX Make an interface for the controller and verify these fakes.
+    def __init__(self, reactor, window):
         self.player = Player(Vector(0, 0, 0), 0, reactor.seconds)
+        self.window = window
+
 
     def keyUp(self, key):
-        pass
+        if key == K_q:
+            self.window.stop()
+
 
     def keyDown(self, key):
         pass
 
+
+    def mouseMotion(self, pos, rel, buttons):
+        pass
+
+
+
+class StdoutReportingController(QuittableController):
     def mouseMotion(self, pos, rel, buttons):
         """
         Report to standard out the direction of the mouse movement.
@@ -40,6 +54,13 @@ class MouseInputTests(SceneMixin, TestCase):
         """
         When the mouse moves, the direction of movement is written to stdout.
         """
-        self.window.submitTo(StdoutReportingController())
-        reactor.callLater(2.0, self.window.stop)
+        self.window.submitTo(StdoutReportingController(reactor, self.window))
+        return self.window.go()
+
+
+    def test_grab(self):
+        """
+        Clicking on the window grabs the mouse.  Clicking again releases it.
+        """
+        self.window.submitTo(QuittableController(reactor, self.window))
         return self.window.go()
