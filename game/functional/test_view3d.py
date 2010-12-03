@@ -220,4 +220,5 @@ class PlayerViewTests(SceneMixin, TestCase):
         def finish(passthrough):
             c[0].cancel()
             return passthrough
+        d.addBoth(finish)
         return d
