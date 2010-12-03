@@ -392,17 +392,15 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
 
         self.terrain.set(x, y, z, loadTerrainFromString("_"))
         s, t = self.texCoords[GRASS]
-
-        texture = self.textureBase
-        self.assertArraysEqual(
-            self.surface.surface[:self.surface.important],
-            array([x + 2, y, z, s, t], 'f') + array(
-                list(_right + texture) + list(_left + texture) +
-                list(_back + texture) + list(_bottom + texture) +
-                list(_front + texture) + list(_top + texture), 'f'))
-
-        # Six vertices per face, six faces
-        self.assertEquals(self.surface.important, 36)
+        offset = array([x + 2, y, z, s, t], 'f') + self.textureBase
+        self.assertVertices(
+            self.surface,
+            [(RIGHT, _right + offset),
+             (LEFT, _left + offset),
+             (BACK, _back + offset),
+             (BOTTOM, _bottom + offset),
+             (FRONT, _front + offset),
+             (TOP, _top + offset)])
 
 
     def test_existingTerrain(self):
@@ -416,16 +414,41 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
         surface = SurfaceMesh(terrain, self.texCoords, self.e)
         s, t = self.texCoords[MOUNTAIN]
 
-        texture = self.textureBase
-        self.assertArraysEqual(
-            surface.surface[:surface.important],
-            array([x, y, z, s, t], 'f') + array(
-                list(_top + texture) + list(_front + texture) +
-                list(_bottom + texture) + list(_back + texture) +
-                list(_left + texture) + list(_right + texture), 'f'))
+        offset = array([x, y, z, s, t], 'f') + self.textureBase
+        self.assertVertices(
+            surface,
+            [(TOP, _top + offset),
+             (FRONT, _front + offset),
+             (BOTTOM, _bottom + offset),
+             (BACK, _back + offset),
+             (LEFT, _left + offset),
+             (RIGHT, _right + offset)])
 
-        # Six vertices per face, six faces
-        self.assertEquals(surface.important, 36)
+
+    def assertVertices(self, surface, expected):
+        pieces = []
+        for i in range(0, surface.important, 6):
+            pieces.append(surface.surface[i:i + 6])
+
+        notFound = []
+        for (face, vertices) in expected:
+            for n, piece in enumerate(pieces):
+                if (vertices == piece).all():
+                    del pieces[n]
+                    break
+            else:
+                notFound.append((face, vertices))
+
+        if notFound:
+            self.fail(
+                "Some expected vertices not found in surface mesh:\n"
+                "    notFound = %r\n"
+                "    pieces = %r\n" % (notFound, pieces))
+        if pieces:
+            self.fail(
+                "Some extra vertices left over:\n"
+                "    notFound = %r\n"
+                "    pieces = %r\n" % (notFound, pieces))
 
 
     def test_revealedFace(self):
@@ -439,15 +462,12 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
         self.terrain.set(x, y, z, loadTerrainFromString("_"))
 
         s, t = self.texCoords[MOUNTAIN]
-        texture = self.textureBase
-        self.assertArraysEqual(
-            self.surface.surface[:self.surface.important],
-            array([x, y, z, s, t], 'f') + array(
-                list(_top + texture) + list(_front + texture) +
-                list(_bottom + texture) + list(_back + texture) +
-                # Note the reversal of left and right here.  It had a right face
-                # already, but its left face was buried by the adjacent grass
-                # and so had no vertices in the surface mesh.  Revealing the
-                # left face causes vertices for the left face to be appended -
-                # after the vertices for the right face, in this case.
-                list(_right + texture) + list(_left + texture), 'f'))
+        offset = array([x + 1, y, z, s, t], 'f') + self.textureBase
+        self.assertVertices(
+            self.surface,
+            [(TOP, _top + offset),
+             (FRONT, _front + offset),
+             (BOTTOM, _bottom + offset),
+             (BACK, _back + offset),
+             (LEFT, _left + offset),
+             (RIGHT, _right + offset)])
