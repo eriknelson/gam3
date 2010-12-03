@@ -2,6 +2,8 @@
 Tests for L{game.network} (Network support for Game).
 """
 
+import numpy
+
 from twisted.trial.unittest import TestCase
 from twisted.internet.defer import Deferred
 from twisted.internet.task import Clock
@@ -13,7 +15,7 @@ from game.network import (Direction, Introduce, SetDirectionOf,
                           NetworkController, NewPlayer, SetMyDirection,
                           RemovePlayer, SetTerrain, Terrain)
 from game.direction import FORWARD, BACKWARD, LEFT, RIGHT
-from game.terrain import GRASS, MOUNTAIN, DESERT
+from game.terrain import GRASS, DESERT
 from game.vector import Vector
 
 
@@ -168,6 +170,53 @@ class NewPlayerCommandTests(CommandTestMixin, TestCase):
 
 
 
+class TerrainArgumentTests(TestCase):
+    """
+    Tests for L{Terrain}, an AMP argument serializer for 3d numpy arrays.
+    """
+    data = ''.join(map(chr, range(2 * 3 * 4)))
+    array = numpy.fromstring(data, 'b').reshape((2, 3, 4))
+    serialized = {
+        "voxels-dx": "2",
+        "voxels-dy": "3",
+        "voxels-dz": "4",
+        "voxels-type": "int8",
+        "voxels-data": data}
+    del data
+
+    def test_toBox(self):
+        """
+        L{Terrain.toBox} serializes the numpy array from C{objects} associated
+        with the key C{name}.  It adds C{I{name}-dx}, C{I{name}-dy}, and
+        C{I{name}-dz} keys to the C{strings} dict, with values representing the
+        size of the array in each of those dimensions.  It adds a
+        C{I{name}-type} key with the numpy array element type as a value.  It
+        adds a C{I{name}-data} key with the raw array data as a value.
+        """
+        objects = {"voxels": self.array}
+        strings = {}
+        argument = Terrain()
+        argument.toBox("voxels", strings, objects, None)
+        self.assertEquals(strings, self.serialized)
+
+
+    def test_fromBox(self):
+        """
+        L{Terrain.fromBox} reads the C{name}-prefixed I{dx}, I{dy}, I{dz},
+        I{type}, and I{data} keys from the strings dict passed to it and
+        constructs a numpy array with the indicated shape and type from the
+        data.  The array is put into the objects dict associated with the
+        C{name} key.
+        """
+        objects = {}
+        argument = Terrain()
+        argument.fromBox("voxels", self.serialized, objects, None)
+        # Can't compare dicts directly, because numpy arrays are weird.
+        self.assertEquals(objects.keys(), ["voxels"])
+        self.assertTrue((objects["voxels"] == self.array).all())
+
+
+
 class SetTerrainCommandTests(CommandTestMixin, TestCase):
     """
     Tests for L{SetTerrain}.
@@ -175,30 +224,46 @@ class SetTerrainCommandTests(CommandTestMixin, TestCase):
 
     command = SetTerrain
 
+    _shape = (1, 2, 10)
+    _data = range(10) + range(16, 26)
     argumentObjects = {
-        'terrain': [{'x': 393,
-                     'y': 292,
-                     'z': 12,
-                     'type': GRASS},
-                    {'x': 23,
-                     'y': 99,
-                     'z': -15,
-                     'type': MOUNTAIN}]}
+        'x': 393,
+        'y': 292,
+        'z': 12,
+        'voxels': numpy.fromstring(
+            ''.join(map(chr, _data)), 'b').reshape(_shape)
+        }
 
     argumentStrings = {
-        'terrain': (
-            '\x00\x04' 'type' '\x00\x05' 'grass'
-            '\x00\x01' 'x'    '\x00\x03' '393'
-            '\x00\x01' 'y'    '\x00\x03' '292'
-            '\x00\x01' 'z'    '\x00\x02' '12'
-            '\x00\x00'
-            '\x00\x04' 'type' '\x00\x08' 'mountain'
-            '\x00\x01' 'x'    '\x00\x02' '23'
-            '\x00\x01' 'y'    '\x00\x02' '99'
-            '\x00\x01' 'z'    '\x00\x03' '-15'
-            '\x00\x00')}
+        'x': '393',
+        'y': '292',
+        'z': '12',
+        'voxels-dx': '1',
+        'voxels-dy': '2',
+        'voxels-dz': '10',
+        'voxels-type': 'int8',
+        'voxels-data': (
+            '\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09'
+            '\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19'),
+        }
 
     responseObjects = responseStrings = {}
+
+
+    def test_parseArguments(self):
+        """
+        Parsing C{self.argumentStrings} should result in
+        C{self.argumentObjects}.  Duplicated here to implement correct
+        numpy.array comparison, since we cannot just use C{==}.
+        """
+        from twisted.protocols.amp import _stringsToObjects
+        box = _stringsToObjects(self.argumentStrings,
+                                self.command.arguments, None)
+        voxels = box.pop("voxels")
+        argumentObjects = self.argumentObjects.copy()
+        expected = argumentObjects.pop("voxels")
+        self.assertEquals(box, argumentObjects)
+        self.assertTrue((voxels == expected).all())
 
 
 
@@ -542,25 +607,25 @@ class ControllerTests(TestCase, PlayerCreationMixin):
         """
         environment = self.controller.environment = Environment(10, self.clock)
         responder = self.controller.lookupFunction(SetTerrain.commandName)
-        terrainArgument = AmpList([
-                ('x', Integer()),
-                ('y', Integer()),
-                ('z', Integer()),
-                ('type', Terrain())])
-        terrainModel = [
-            {'x': 123, 'y': 456, 'z': 5, 'type': GRASS},
-            {'x': 654, 'y': 321, 'z': 10, 'type': DESERT}]
-        terrainBytes = terrainArgument.toStringProto(
-            terrainModel,
-            self.controller)
-        d = responder({"terrain": terrainBytes})
+        terrainData = numpy.array(
+            [[[1, 2],
+              [3, 4]],
+             [[5, 6],
+              [7, 8]]])
+        terrainObjects = dict(x=1, y=2, z=3, voxels=terrainData)
+        terrainStrings = SetTerrain.makeArguments(terrainObjects, None)
+        d = responder(terrainStrings)
         def gotResult(ignored):
             self.assertEqual(
                 environment.terrain,
-                dict(((element['x'], element['y'], element['z']),
-                      element['type'])
-                     for element
-                     in terrainModel))
+                {(1, 2, 3): 1,
+                 (1, 2, 4): 2,
+                 (1, 3, 3): 3,
+                 (1, 3, 4): 4,
+                 (2, 2, 3): 5,
+                 (2, 2, 4): 6,
+                 (2, 3, 3): 7,
+                 (2, 3, 4): 8})
         d.addCallback(gotResult)
         return d
 

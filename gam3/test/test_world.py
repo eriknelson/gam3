@@ -3,6 +3,8 @@
 Tests for L{gam3.world}.
 """
 
+from numpy import array
+
 from zope.interface.verify import verifyObject
 
 from twisted.trial.unittest import TestCase
@@ -11,6 +13,7 @@ from twisted.application.service import IService
 
 from epsilon.structlike import record
 
+from gam3.test.util import ArrayMixin
 from gam3.world import Gam3Service, World, point
 
 from game.vector import Vector
@@ -33,7 +36,7 @@ class StubRandom(record('rangeResults')):
 
 
 
-class WorldTests(TestCase):
+class WorldTests(TestCase, ArrayMixin):
     """
     Tests for L{World}.
     """
@@ -41,7 +44,7 @@ class WorldTests(TestCase):
         """
         A newly created L{World} has an empty terrain mapping.
         """
-        self.assertEquals(World().terrain, {})
+        self.assertArraysEqual(World().terrain, array([]))
 
 
     def test_createPlayer(self):

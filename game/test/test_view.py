@@ -13,7 +13,7 @@ import pygame
 from pygame.event import Event
 
 from game import __file__ as gameFile
-from game.terrain import GRASS
+from game.terrain import GRASS, MOUNTAIN, DESERT, WATER
 from game.view import (
     Color, Scene,
     Viewport, Window, loadImage, TerrainView, PlayerView)
@@ -263,20 +263,48 @@ class TerrainViewTests(TestCase):
     """
     Tests for L{game.terrain.TerrainView}.
     """
-    def test_getImageForTerrain(self):
-        """
-        L{TerrainView._getImageForTerrain} returns a surface holding an image
-        suitable for the given terrain type.
-        """
+    def _imageForTerrainTest(self, type, result):
         paths = []
         def loadImage(path):
             paths.append(path)
             return MockSurface(path.basename(), (64, 64))
         view = TerrainView({}, loader=loadImage)
-        image = view._getImageForTerrain(GRASS)
-        self.assertEquals(image.label, "grass.png")
+        image = view._getImageForTerrain(type)
+        self.assertEquals(image.label, result)
         self.assertEqual(
-            paths, [FilePath(gameFile).sibling('data').child('grass.png')])
+            paths, [FilePath(gameFile).sibling('data').child(result)])
+
+
+    def test_getImageForGrass(self):
+        """
+        L{TerrainView._getImageForTerrain} returns a surface holding a grassy
+        image for the C{GRASS} terrain type.
+        """
+        self._imageForTerrainTest(GRASS, "grass.png")
+
+
+    def test_getImageForMountain(self):
+        """
+        L{TerrainView._getImageForTerrain} returns a surface holding a rocky
+        image for the C{MOUNTAIN} terrain type.
+        """
+        self._imageForTerrainTest(MOUNTAIN, "mountain.png")
+
+
+    def test_getImageForDesert(self):
+        """
+        L{TerrainView._getImageForTerrain} returns a surface holding a sandy
+        image for the C{DESERT} terrain type.
+        """
+        self._imageForTerrainTest(DESERT, "desert.png")
+
+
+    def test_getImageForWater(self):
+        """
+        L{TerrainView._getImageForTerrain} returns a surface holding a watery
+        image for the C{WATER} terrain type.
+        """
+        self._imageForTerrainTest(WATER, "water.png")
 
 
 

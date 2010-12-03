@@ -15,13 +15,13 @@ from twisted.protocols.policies import TrafficLoggingFactory
 from twisted.plugin import IPlugin
 
 from twisted.plugins.gam3_twistd import gam3plugin
+from gam3.test.util import ArrayMixin
 from gam3.network import Gam3Factory
 from gam3.world import TCP_SERVICE_NAME, GAM3_SERVICE_NAME, Gam3Service, World
+from gam3.terrain import loadTerrainFromString
 
-from game.terrain import GRASS, MOUNTAIN, DESERT
 
-
-class TwistdPluginTests(TestCase):
+class TwistdPluginTests(TestCase, ArrayMixin):
     """
     Tests for the plugin object which adds a service to twistd.
     """
@@ -104,29 +104,10 @@ class TwistdPluginTests(TestCase):
         If the terrain option is specified, terrain data is loaded from it.
         """
         terrain = self.mktemp()
-        FilePath(terrain).setContent("GGG\nGGM\nGMM\nGMD\n")
+        FilePath(terrain).setContent("GMDW")
         service = gam3plugin.makeService({
                 "port": 123, 'log-directory': None, 'terrain': terrain})
         gam3 = service.getServiceNamed(GAM3_SERVICE_NAME)
-        self.assertEquals(
+        self.assertArraysEqual(
             gam3.world.terrain,
-            {(0, 0, 3): GRASS, (1, 0, 3): GRASS, (2, 0, 3): GRASS,
-             (0, 0, 2): GRASS, (1, 0, 2): GRASS, (2, 0, 2): MOUNTAIN,
-             (0, 0, 1): GRASS, (1, 0, 1): MOUNTAIN, (2, 0, 1): MOUNTAIN,
-             (0, 0, 0): GRASS, (1, 0, 0): MOUNTAIN, (2, 0, 0): DESERT})
-
-
-    def test_ignoreTrailingWhitespace(self):
-        """
-        Trailing whitespace in the terrain file does not affect the resulting
-        terrain data.
-        """
-        terrain = self.mktemp()
-        FilePath(terrain).setContent("GM\nMD\n\n")
-        service = gam3plugin.makeService({
-                "port": 123, 'log-directory': None, 'terrain': terrain})
-        gam3 = service.getServiceNamed(GAM3_SERVICE_NAME)
-        self.assertEquals(
-            gam3.world.terrain,
-            {(0, 0, 1): GRASS, (1, 0, 1): MOUNTAIN,
-             (0, 0, 0): MOUNTAIN, (1, 0, 0): DESERT})
+            loadTerrainFromString("GMDW"))

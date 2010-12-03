@@ -11,6 +11,8 @@ r"""
 
 import random
 
+from numpy import array
+
 from twisted.application.service import Service
 
 from game.vector import Vector
@@ -53,7 +55,7 @@ class World(SimulationTime):
         self.playerCreationRectangle = playerCreationRectangle
         self.observers = []
         self.players = []
-        self.terrain = {}
+        self.terrain = array([])
 
 
     def createPlayer(self):
