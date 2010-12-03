@@ -20,10 +20,10 @@ class PlayerControllerTests(TestCase, PlayerCreationMixin):
         self.controller = PlayerController(self.player)
 
 
-    def test_ignore_unknown_keys(self):
+    def test_ignoreUnknownKeys(self):
         """
-        The PlayerController should not flip out if it gets a key that
-        it doesn't know about.
+        The PlayerController should not flip out if it gets a key that it
+        doesn't know about.
         """
         self.controller.keyDown(object())
         self.controller.keyUp(object())
@@ -151,6 +151,19 @@ class PlayerControllerTests(TestCase, PlayerCreationMixin):
         self.controller.keyDown(K_RIGHT)
         self.controller.keyDown(K_UP)
         self.assertEqual(self.player.direction, FORWARD + RIGHT)
+
+
+    def test_releaseUnpressedDirectionKey(self):
+        """
+        If a key up event is received for a direction key which the controller
+        did not know was pressed, the event is ignored.
+        """
+        # Get going in a direction.
+        self.controller.keyDown(K_LEFT)
+        # Here's the unexpected event.
+        self.controller.keyUp(K_UP)
+        # Ensure the direction remains the same.
+        self.assertEquals(self.player.direction, LEFT)
 
 
 

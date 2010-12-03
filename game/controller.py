@@ -59,9 +59,13 @@ class PlayerController(object):
         @param key: The key which is being released.
         """
         if key in KEYS_TO_DIRECTIONS:
-            self.downDirections.remove(key)
-            self.player.setDirection(
-                self.calculateDirection(self.downDirections))
+            try:
+                self.downDirections.remove(key)
+            except ValueError:
+                pass
+            else:
+                self.player.setDirection(
+                    self.calculateDirection(self.downDirections))
 
 
     def mouseMotion(self, position, (x, y), buttons):
