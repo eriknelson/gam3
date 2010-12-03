@@ -8,8 +8,8 @@ from twisted.internet.protocol import ServerFactory
 from twisted.internet import reactor
 from twisted.protocols.amp import AMP
 
-from game.network import (Introduce, SetDirectionOf, NewPlayer,
-                          SetMyDirection, RemovePlayer, SetTerrain)
+from game.network import (
+    Introduce, SetDirectionOf, NewPlayer, SetMyDirection, RemovePlayer)
 
 
 class Gam3Server(AMP):
@@ -87,14 +87,9 @@ class Gam3Server(AMP):
 
     def sendExistingState(self):
         """
-        Send information about terrain and connected players.
+        Send information about connected players.
         """
         self.sendExistingPlayers()
-        if self.world.terrain.size:
-            # XXX This is pretty inefficient for any respectable size.  Limit it
-            # somehow.
-            self.callRemote(
-                SetTerrain, x=0, y=0, z=0, voxels=self.world.terrain)
 
 
     def sendExistingPlayers(self):

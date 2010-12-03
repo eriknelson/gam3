@@ -164,52 +164,6 @@ class NetworkTests(TestCase):
         self.assertEqual(self.calls, [])
 
 
-    def test_noTerrain(self):
-        """
-        If the world is void and without form, no L{SetTerrain} command is sent
-        after the introduction.
-        """
-        clock = Clock()
-        world = World()
-
-        protocol = Gam3Server(world, clock=clock)
-        protocol.callRemote = self.callRemote
-
-        protocol.introduce()
-
-        # Advance because SetTerrain isn't sent until later FIXME BUG XXX see
-        # #2671.
-        clock.advance(0)
-
-        self.assertEquals(self.getCommands(SetTerrain), [])
-
-
-    def test_sendTerrain(self):
-        """
-        When a player connects and introduces himself, he should shortly
-        thereafter get a L{SetTerrain} for the terrain surrounding his location.
-        """
-        clock = Clock()
-        world = World()
-        world.terrain = loadTerrainFromString("GGM\nMMD")
-
-        protocol = Gam3Server(world, clock=clock)
-        protocol.callRemote = self.callRemote
-
-        protocol.introduce()
-
-        # Advance because SetTerrain isn't sent until later FIXME BUG XXX see
-        # #2671.
-        clock.advance(0)
-
-        self.assertEqual(
-            self.getCommands(SetTerrain),
-            # This comparison is allowed only because world.terrain is the same
-            # object passed to SetTerrain.  Because they are identical, the
-            # equality check is skipped.
-            [(SetTerrain, {'x': 0, 'y': 0, 'z': 0, 'voxels': world.terrain})])
-
-
     def test_oldPlayerNewPlayer(self):
         """
         When a player connects and introduces himself, he should shortly
@@ -375,8 +329,7 @@ class NetworkTests(TestCase):
         protocol = Gam3Server(world, clock=Clock())
         protocol.introduce()
         responder = protocol.lookupFunction(SetMyDirection.commandName)
-        d = responder({"direction": Direction().toString(RIGHT),
-                       'y': '1.5'})
+        d = responder({"direction": Direction().toString(RIGHT), 'y': '1.5'})
 
         def gotResult(box):
             self.assertEquals(protocol.player.direction, RIGHT)
