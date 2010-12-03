@@ -66,12 +66,11 @@ class Sphere(record("center radius color")):
 
     @ivar color: A L{Color} giving the color of this sphere.
     """
-    def __init__(self, *args, **kwargs):
-        super(Sphere, self).__init__(*args, **kwargs)
-        self.quad = gluNewQuadric()
-
-
+    quad = None
     def paint(self):
+        if self.quad is None:
+            self.quad = gluNewQuadric()
+
         glPushMatrix()
         glColor(self.color.red, self.color.green, self.color.blue)
         glTranslate(self.center.x, self.center.y, self.center.z)
@@ -389,23 +388,6 @@ class TerrainView(object):
         types.  These images are the source for texture data for each type of
         terrain.
     """
-    square = [(0, 0), (1, 0), (1, 1), (0, 1)]
-
-    directions = [
-        # up
-        ((0, 1, 0), [(0, 0, 0), (1, 0, 0), (1, 0, 1), (0, 0, 1)]),
-        # down
-        ((0, -1, 0), [(0, -1, 0), (1, -1, 0), (1, -1, 1), (0, -1, 1)]),
-        # forward
-        ((0, 0, -1), [(0, -1, 0), (1, -1, 0), (1, 0, 0), (0, 0, 0)]),
-        # backward
-        ((0, 0, 1), [(0, -1, 1), (1, -1, 1), (1, 0, 1), (0, 0, 1)]),
-        # right
-        ((-1, 0, 0), [(0, -1, 0), (0, 0, 0), (0, 0, 1), (0, -1, 1)]),
-         # left
-        ((1, 0, 0), [(1, -1, 0), (1, 0, 0), (1, 0, 1), (1, -1, 1)]),
-        ]
-
     _files = {
         GRASS: 'grass.png',
         MOUNTAIN: 'mountain.png',
