@@ -11,13 +11,12 @@ r"""
 
 import random
 
-from numpy import array
-
 from twisted.application.service import Service
 
 from game.vector import Vector
 from game.player import Player
 from game.environment import SimulationTime
+from game.terrain import Terrain
 
 from epsilon.structlike import record
 
@@ -55,7 +54,7 @@ class World(SimulationTime):
         self.playerCreationRectangle = playerCreationRectangle
         self.observers = []
         self.players = []
-        self.terrain = array([])
+        self.terrain = Terrain()
 
 
     def createPlayer(self):

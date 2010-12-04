@@ -9,7 +9,8 @@ from twisted.internet import reactor
 from twisted.protocols.amp import AMP
 
 from game.network import (
-    Introduce, SetDirectionOf, NewPlayer, SetMyDirection, RemovePlayer)
+    Introduce, SetDirectionOf, NewPlayer, SetMyDirection, RemovePlayer,
+    GetTerrain, SetTerrain)
 
 
 class Gam3Server(AMP):
@@ -133,6 +134,16 @@ class Gam3Server(AMP):
         v = self.player.getPosition()
         return {'x': v.x, 'y': v.y, 'z': v.z}
     SetMyDirection.responder(setMyDirection)
+
+
+    def getTerrain(self, x, y, z):
+        """
+        The client would like terrain data from the given coordinates.
+        """
+        self.callRemote(
+            SetTerrain, x=x, y=y, z=z,
+            voxels=self.world.terrain.voxels[x:,y:,z:])
+    GetTerrain.responder(getTerrain)
 
 
     def identifierForPlayer(self, player):

@@ -3,8 +3,6 @@
 Tests for L{gam3.world}.
 """
 
-from numpy import array
-
 from zope.interface.verify import verifyObject
 
 from twisted.trial.unittest import TestCase
@@ -16,6 +14,7 @@ from epsilon.structlike import record
 from gam3.world import Gam3Service, World, point
 
 from game.vector import Vector
+from game.terrain import Terrain
 from game.test.test_environment import SimulationTimeTestsMixin
 from game.test.util import ArrayMixin, PlayerVisibilityObserver
 
@@ -43,7 +42,9 @@ class WorldTests(TestCase, ArrayMixin):
         """
         A newly created L{World} has an empty terrain mapping.
         """
-        self.assertArraysEqual(World().terrain, array([]))
+        terrain = World().terrain
+        self.assertIsInstance(terrain, Terrain)
+        self.assertEquals(terrain.dict(), {})
 
 
     def test_createPlayer(self):

@@ -8,13 +8,16 @@ from twisted.trial.unittest import TestCase
 from twisted.internet.interfaces import IProtocolFactory
 from twisted.internet.task import Clock
 from twisted.test.proto_helpers import StringTransport
+from twisted.protocols.amp import _objectsToStrings, _stringsToObjects
 
 from game.vector import Vector
-from game.network import (Introduce, SetMyDirection, SetDirectionOf,
-                          Direction, NewPlayer, RemovePlayer, SetTerrain)
+from game.network import (
+    Introduce, SetMyDirection, SetDirectionOf, GetTerrain,
+    Direction, NewPlayer, RemovePlayer, SetTerrain)
 from game.player import Player
 from game.direction import LEFT, RIGHT
-from game.terrain import loadTerrainFromString
+from game.terrain import Terrain, loadTerrainFromString
+from game.test.util import ArrayMixin
 
 from gam3.world import World
 from gam3.network import Gam3Factory, Gam3Server
@@ -36,6 +39,7 @@ class FakeWorld(object):
 
     def __init__(self):
         self.players = []
+        self.terrain = Terrain()
 
 
     def createPlayer(self):
@@ -63,7 +67,7 @@ class FakeWorld(object):
 
 
 
-class NetworkTests(TestCase):
+class NetworkTests(TestCase, ArrayMixin):
     """
     Tests for the client-facing AMP server protocol.
 
@@ -84,14 +88,16 @@ class NetworkTests(TestCase):
         sent (and captured by the fake L{callRemote}).
         """
         return [
-            (cmd, args) for (cmd, args) in self.calls if cmd is commandClass]
+            args for (cmd, args) in self.calls if cmd is commandClass]
 
 
     def callRemote(self, command, **kw):
         """
         Add a call to C{self.calls}.
         """
-        self.calls.append((command, kw))
+        strings = _objectsToStrings(kw, command.arguments, {}, None)
+        objects = _stringsToObjects(strings, command.arguments, None)
+        self.calls.append((command, objects))
 
 
     def test_defaultClock(self):
@@ -147,9 +153,9 @@ class NetworkTests(TestCase):
         v = player.getPosition()
         self.assertEqual(
             self.getCommands(NewPlayer),
-            [(NewPlayer, {'identifier': protocol.identifierForPlayer(player),
-                          'x': v.x, 'y': v.y, 'z': v.z,
-                          'speed': player.speed})])
+            [{'identifier': protocol.identifierForPlayer(player),
+              'x': v.x, 'y': v.y, 'z': v.z,
+              'speed': player.speed}])
 
 
     def test_introductionDoesNotSendNewPlayer(self):
@@ -193,27 +199,24 @@ class NetworkTests(TestCase):
         calls = self.getCommands(NewPlayer)
         self.assertEqual(len(calls), 3)
 
-        for newPlayer in [(NewPlayer,
-                           {"identifier": protocol.identifierForPlayer(player1),
-                            "speed": player1.speed,
-                            "x": player1.getPosition().x,
-                            "y": player1.getPosition().y,
-                            "z": player1.getPosition().z,
-                            }),
-                          (NewPlayer,
-                           {"identifier": protocol.identifierForPlayer(player2),
-                            "speed": player2.speed,
-                            "x": player2.getPosition().x,
-                            "y": player2.getPosition().y,
-                            "z": player2.getPosition().z,
-                            }),
-                          (NewPlayer,
-                           {"identifier": protocol.identifierForPlayer(player3),
-                            "speed": player3.speed,
-                            "x": player3.getPosition().x,
-                            "y": player3.getPosition().y,
-                            "z": player3.getPosition().z,
-                            }),
+        for newPlayer in [{"identifier": protocol.identifierForPlayer(player1),
+                           "speed": player1.speed,
+                           "x": player1.getPosition().x,
+                           "y": player1.getPosition().y,
+                           "z": player1.getPosition().z,
+                           },
+                          {"identifier": protocol.identifierForPlayer(player2),
+                           "speed": player2.speed,
+                           "x": player2.getPosition().x,
+                           "y": player2.getPosition().y,
+                           "z": player2.getPosition().z,
+                           },
+                          {"identifier": protocol.identifierForPlayer(player3),
+                           "speed": player3.speed,
+                           "x": player3.getPosition().x,
+                           "y": player3.getPosition().y,
+                           "z": player3.getPosition().z,
+                           },
                           ]:
             self.assertTrue(newPlayer in calls)
 
@@ -365,6 +368,29 @@ class NetworkTests(TestCase):
         player = object()
         playerID = protocol.identifierForPlayer(player)
         self.assertIdentical(protocol.playerForIdentifier(playerID), player)
+
+
+    def test_getTerrain(self):
+        """
+        L{Gam3Server} responds to L{GetTerrain} commands by sending out a
+        L{SetTerrain} command containing the terrain at the requested
+        coordinates.
+        """
+        world = FakeWorld()
+        world.terrain.set(3, 12, 40, loadTerrainFromString("GD\nMW\nDG"))
+        protocol = Gam3Server(world, clock=Clock())
+        protocol.callRemote = self.callRemote
+        protocol.introduce()
+        responder = protocol.lookupFunction(GetTerrain.commandName)
+        responder({"x": 3, "y": 12, "z": 40})
+
+        [args] = self.getCommands(SetTerrain)
+        voxels = args.pop("voxels")
+        self.assertEquals(
+            args,
+            {"x": 3, "y": 12, "z": 40})
+        self.assertArraysEqual(
+            voxels, loadTerrainFromString("GD\nMW\nDG"))
 
 
 
