@@ -196,3 +196,14 @@ class EnvironmentTests(TestCase, ArrayMixin):
         player = object()
         self.environment.setInitialPlayer(player)
         self.assertIdentical(self.environment.initialPlayer, player)
+
+
+    def test_setNetwork(self):
+        """
+        L{Environment.setNetwork} changes the environment's C{network} attribute
+        from C{None} to its argument.
+        """
+        self.assertIdentical(self.environment.network, None)
+        network = object()
+        self.environment.setNetwork(network)
+        self.assertIdentical(self.environment.network, network)

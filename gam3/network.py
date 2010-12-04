@@ -140,9 +140,13 @@ class Gam3Server(AMP):
         """
         The client would like terrain data from the given coordinates.
         """
+        if x < 0 or y < 0 or z < 0:
+            return {}
+        voxels = self.world.terrain.voxels[x:x+64,y:y+8,z:z+64]
         self.callRemote(
             SetTerrain, x=x, y=y, z=z,
-            voxels=self.world.terrain.voxels[x:,y:,z:])
+            voxels=voxels)
+        return {}
     GetTerrain.responder(getTerrain)
 
 

@@ -497,11 +497,13 @@ class ControllerTests(TestCase, PlayerCreationMixin, ArrayMixin):
 
         self._assertThingsAboutPlayerCreation(
             self.controller.environment, Vector(x, y, z), speed)
-        self.assertTrue(isinstance(self.controller.environment, Environment))
-        self.assertEqual(self.controller.environment.granularity, granularity)
-        self.assertEqual(self.controller.environment.platformClock, self.clock)
-        introduced.addCallback(self.assertIdentical,
-                               self.controller.environment)
+        self.assertIsInstance(self.controller.environment, Environment)
+        self.assertEquals(self.controller.environment.granularity, granularity)
+        self.assertEquals(self.controller.environment.platformClock, self.clock)
+        self.assertIdentical(
+            self.controller.environment.network, self.controller)
+        introduced.addCallback(
+            self.assertIdentical, self.controller.environment)
         return introduced
 
 

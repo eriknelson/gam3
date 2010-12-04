@@ -85,6 +85,11 @@ class UI(object):
         self.window.submitTo(PlayerController(player))
 
 
+    def introduce(self, protocol):
+        self.protocol = protocol
+        return self.protocol.introduce()
+
+
     def gotIntroduced(self, environment):
         """
         Hook up a user-interface controller for the L{Player} and display the
@@ -107,6 +112,6 @@ class UI(object):
         - Run a GUI.
         """
         d = self.connect((host, port))
-        d.addCallback(lambda protocol: protocol.introduce())
+        d.addCallback(self.introduce)
         d.addCallback(self.gotIntroduced)
         return d

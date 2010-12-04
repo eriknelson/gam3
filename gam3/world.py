@@ -49,7 +49,7 @@ class World(SimulationTime):
                  granularity=1, platformClock=None):
         SimulationTime.__init__(self, granularity, platformClock)
         if playerCreationRectangle is None:
-            playerCreationRectangle = point(-1, -1), point(3, 3)
+            playerCreationRectangle = point(1, 1), point(5, 5)
         self.random = random
         self.playerCreationRectangle = playerCreationRectangle
         self.observers = []
@@ -63,7 +63,7 @@ class World(SimulationTime):
         """
         sw, ne = self.playerCreationRectangle
         x = self.random.randrange(sw.x, ne.x)
-        y = 1.0
+        y = 0.0
         z = self.random.randrange(sw.y, ne.y)
         player = Player(Vector(x, y, z), 2, self.seconds)
         for observer in self.observers:

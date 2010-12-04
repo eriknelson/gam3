@@ -256,6 +256,7 @@ class NetworkController(AMP):
             position = Vector(box['x'], box['y'], box['z'])
             speed = box['speed']
             self.environment = Environment(granularity, self.clock)
+            self.environment.setNetwork(self)
             self.createInitialPlayer(
                 self.environment, box['identifier'], position,
                 speed)

@@ -26,6 +26,7 @@ from OpenGL.arrays.vbo import VBO
 
 import pygame.display, pygame.locals
 
+from twisted.python.log import msg
 from twisted.python.filepath import FilePath
 from twisted.internet.task import LoopingCall
 from twisted.internet import reactor
@@ -35,6 +36,7 @@ from epsilon.structlike import record
 from game import __file__ as gameFile
 from game.vector import Vector
 from game.terrain import GRASS, MOUNTAIN, DESERT, WATER, SurfaceMesh
+from game.network import GetTerrain
 
 
 def loadImage(path):
@@ -53,6 +55,19 @@ class Color(record("red green blue")):
     """
     An RGB color.
     """
+
+
+
+def quantize(quantization, value):
+    """
+    Return the nearest integer smaller than C{value} which is a multiple of
+    C{quantization}.
+
+    @type quantization: C{int}
+    @type value: C{int}
+    @rtype: C{int}
+    """
+    return value - value % quantization
 
 
 
@@ -113,7 +128,7 @@ class FollowCamera(record('player')):
         # XXX Put the camera somewhere in the middle-ish of the player model.
         # This is a wild guess for now, camera position data should be available
         # from the model at some later point.
-        glTranslate(-v.x - 0.5, -v.y - 1, -v.z - 0.5)
+        glTranslate(-v.x - 0.5, -v.y - 2, -v.z - 0.5)
 
 
 
@@ -258,8 +273,8 @@ class Window(object):
     A top-level PyGame-based window. This acts as a container for
     other view objects.
 
-#     @ivar environment: The L{game.environment.Environment} which is being
-#         displayed.
+    @ivar environment: The L{game.environment.Environment} which is being
+        displayed.
     @ivar clock: Something providing
         L{twisted.internet.interfaces.IReactorTime}.
     @ivar screen: The L{pygame.Surface} which will be drawn to.
@@ -277,8 +292,9 @@ class Window(object):
                  clock=reactor,
                  display=pygame.display,
                  event=pygame.event):
-        environment.addObserver(self)
         self.viewport = Viewport((0, 0), (800, 600))
+        self.environment = environment
+        self.environment.addObserver(self)
         self.clock = clock
         self.display = display
         self.controller = None
@@ -318,12 +334,42 @@ class Window(object):
                     pygame.mouse.set_visible(not pygame.mouse.set_visible(True))
 
 
+    TERRAIN_CHECK_INTERVAL = 10
+    CHUNK_GRANULARITY = Vector(64, 8, 64)
+
+    def _checkTerrain(self, player):
+        terrain = self.environment.terrain
+        network = self.environment.network
+        if network is None:
+            msg("_checkTerrain found no network")
+            return
+
+        s = player.getPosition()
+
+        msg("_checkTerrain shape=%r position=%r" % (terrain.voxels.shape, s))
+        if terrain.voxels.shape[0] > s.x and \
+                terrain.voxels.shape[1] > s.y and \
+                terrain.voxels.shape[2] > s.z:
+            return
+
+        x = quantize(self.CHUNK_GRANULARITY.x, s.x)
+        y = quantize(self.CHUNK_GRANULARITY.y, s.y)
+        z = quantize(self.CHUNK_GRANULARITY.z, s.z)
+
+        # XXX Add an errback
+        network.callRemote(GetTerrain, x=x, y=y, z=z)
+
+
     def submitTo(self, controller):
         """
         Specify the given controller as the one to receive further
         events.
         """
         self.controller = controller
+        self._terrainCheck = LoopingCall(self._checkTerrain, controller.player)
+        self._terrainCheck.clock = self.clock
+        # XXX Needs an errback
+        self._terrainCheck.start(self.TERRAIN_CHECK_INTERVAL)
         # XXX Next line untested
         self.scene.camera = FollowCamera(controller.player)
 
@@ -398,6 +444,8 @@ class TerrainView(object):
 
     _texture = None
 
+    _datapath = FilePath(gameFile).sibling('data')
+
     def __init__(self, environment, loader):
         self._images = {}
         self.loader = loader
@@ -408,6 +456,7 @@ class TerrainView(object):
                 environment.terrain, self._coord, self._ext)
             self.environment.terrain.addObserver(self._surface.changed)
             self._vbo = VBO(self._surface.surface)
+            self._important = 0
 
 
     def _getImageForTerrain(self, terrainType):
@@ -419,7 +468,7 @@ class TerrainView(object):
         """
         if terrainType not in self._images:
             image = self.loader(
-                FilePath(gameFile).sibling('data').child(self._files[terrainType]))
+                self._datapath.child(self._files[terrainType]))
             self._images[terrainType] = image
         return self._images[terrainType]
 
@@ -485,6 +534,14 @@ class TerrainView(object):
         """
         if self._texture is None:
             self._texture = self._createTexture()
+
+        if self._important < self._surface.important:
+            # Got to copy some new data onto the Video Card[tm].
+            # Touch some VBO private stuff.
+            self._vbo._copy_segments.append((
+                    self._important * 4 * 5,
+                    (self._surface.important - self._important) * 4 * 5,
+                    self._surface.surface[self._important:self._surface.important]))
 
         glBindTexture(GL_TEXTURE_2D, self._texture)
         glEnableClientState(GL_VERTEX_ARRAY)

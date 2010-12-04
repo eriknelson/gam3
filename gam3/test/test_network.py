@@ -382,15 +382,17 @@ class NetworkTests(TestCase, ArrayMixin):
         protocol.callRemote = self.callRemote
         protocol.introduce()
         responder = protocol.lookupFunction(GetTerrain.commandName)
-        responder({"x": 3, "y": 12, "z": 40})
+        d = responder({"x": 3, "y": 12, "z": 40})
+        d.addCallback(self.assertEquals, {})
 
         [args] = self.getCommands(SetTerrain)
         voxels = args.pop("voxels")
         self.assertEquals(
             args,
             {"x": 3, "y": 12, "z": 40})
-        self.assertArraysEqual(
-            voxels, loadTerrainFromString("GD\nMW\nDG"))
+        self.assertArraysEqual(voxels, loadTerrainFromString("GD\nMW\nDG"))
+
+        return d
 
 
 

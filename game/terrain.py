@@ -4,6 +4,8 @@ Functionality related to the shape of the world.
 
 from numpy import array, zeros
 
+from twisted.python.log import msg
+
 from game.vector import Vector
 
 EMPTY, GRASS, MOUNTAIN, DESERT, WATER = range(5)
@@ -67,6 +69,7 @@ class Terrain(object):
         """
         Replace a chunk of voxels, starting from C{(x, y, z)}.
         """
+        msg("Terrain.set(%r, %r, %r)" % (x, y, z))
         existing = array(self.voxels.shape)
         new = array(voxels.shape)
         new[0] += x
@@ -75,7 +78,7 @@ class Terrain(object):
 
         if new[0] > existing[0] or new[1] > existing[1] or new[2] > existing[2]:
             data = self.voxels.copy()
-            self.voxels.resize((
+            self.voxels = zeros((
                     max(existing[0], new[0]),
                     max(existing[1], new[1]),
                     max(existing[2], new[2])))
@@ -299,6 +302,7 @@ class SurfaceMesh(object):
 
 
     def _addVoxel(self, x, y, z):
+        msg("_addVoxel %r" % ((x, y, z),))
         for face in FACES:
             key = (x, y, z, face)
             if key not in self._voxelToSurface:
@@ -330,3 +334,6 @@ class SurfaceMesh(object):
                         self._removeVoxel(x, y, z)
                     else:
                         self._addVoxel(x, y, z)
+
+        msg("SurfaceMesh.changed now has %r important elements" % (
+                self.important,))
