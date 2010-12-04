@@ -214,6 +214,7 @@ class Viewport(object):
         @return: A two-tuple of ints giving a position in the view coordinate
         system.
         """
+        # XXX Dead code?
         return (
             position[0] - self.modelPosition[0],
             self.viewSize[1] - (position[1] - self.modelPosition[1]))
@@ -334,6 +335,7 @@ class Window(object):
 
         @return: A Deferred that fires when this window is closed by the user.
         """
+        # XXX Make this pygame.display.init()
         pygame.init()
         self.screen = self.display.set_mode(
             self.viewport.viewSize,
