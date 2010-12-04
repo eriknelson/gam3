@@ -287,7 +287,6 @@ class Window(object):
         self.scene.camera = StaticCamera(Vector(0, 0, 0), Vector(0, 0, 0))
 
 
-
     def paint(self):
         """
         Call C{paint} on all views which have been directly added to
@@ -316,7 +315,6 @@ class Window(object):
                 elif event.type == pygame.MOUSEBUTTONUP:
                     pygame.event.set_grab(not pygame.event.get_grab())
                     pygame.mouse.set_visible(not pygame.mouse.set_visible(True))
-
 
 
     def submitTo(self, controller):
