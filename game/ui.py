@@ -98,7 +98,6 @@ class UI(object):
         return self.window.go()
 
 
-
     def start(self, (host, port)):
         """
         Let's Go!

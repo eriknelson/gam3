@@ -284,6 +284,7 @@ class Window(object):
         self.controller = None
         self.event = event
         self.scene = Scene()
+        self.scene.add(TerrainView(environment, loadImage))
         self.scene.camera = StaticCamera(Vector(0, 0, 0), Vector(0, 0, 0))
 
 

@@ -782,3 +782,4 @@ class ControllerTests(TestCase, PlayerCreationMixin, ArrayMixin):
                  (2, 0, 0): GRASS})
         d.addCallback(gotResult)
         return d
+
