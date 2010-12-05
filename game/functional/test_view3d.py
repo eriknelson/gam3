@@ -200,6 +200,25 @@ class TerrainViewTests(SceneMixin, TestCase):
         return self.window.go()
 
 
+    def test_dynamicUpdate(self):
+        """
+        One green cube should appear, then a grey cube to its left, then the
+        green cube should disappear.
+        """
+        self.window.scene.camera.position = Vector(2, 1.1, 5)
+
+        reactor.callLater(
+            1.0, self.terrain.set, 1, 0, 0, loadTerrainFromString("G"))
+
+        reactor.callLater(
+            2.0, self.terrain.set, 0, 0, 0, loadTerrainFromString("M"))
+
+        reactor.callLater(
+            3.0, self.terrain.set, 1, 0, 0, loadTerrainFromString("_"))
+
+        return self.window.go()
+
+
 
 class PlayerViewTests(SceneMixin, TestCase):
     """
