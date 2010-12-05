@@ -208,6 +208,14 @@ class SurfaceMesh(object):
         # The surface mesh array will now end at this index.
         end = self.important - 6
 
+        if start == end:
+            # The vertices being removed by this compaction are at the end of
+            # the important part of the surface mesh array.  That means we can
+            # just subtract from the important marker instead of copying fresh
+            # data on top of these vertices.
+            self.important -= length
+            return
+
         # Find the voxel that owns the vertices at the end of the surface mesh
         # array.
         mx, my, mz = self.surface[end][:3]
@@ -242,15 +250,9 @@ class SurfaceMesh(object):
         for face in FACES:
             key = (x, y, z, face)
             if key in self._voxelToSurface:
+                # Get rid of the vertices for this face of this voxel.
                 begin, length = self._voxelToSurface.pop(key)
-                if begin + length == self.important:
-                    # If these voxels are at the end, just reduce
-                    # the top marker.
-                    self.important -= length
-                else:
-                    # Otherwise move some vertices from the end to
-                    # overwrite these.
-                    self._compact(x, y, z, face, begin, length)
+                self._compact(x, y, z, face, begin, length)
             else:
                 # If the voxel is missing a face, that's because it has a
                 # neighbor!  Append vertices for that neighbor's revealed face.
