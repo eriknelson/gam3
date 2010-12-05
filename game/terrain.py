@@ -315,6 +315,23 @@ class SurfaceMesh(object):
                         self._makeFace(
                             face,
                             self._terrain.voxels[x, y, z], x, y, z))
+                else:
+                    # If the neighbor is not empty, then one of *its* faces is
+                    # now obscured, remove it.
+                    dx, dy, dz, rface = NEIGHBORS[face]
+                    nx, ny, nz = x + dx, y + dy, z + dz
+                    try:
+                        start, length = self._voxelToSurface.pop((
+                                nx, ny, nz, rface))
+                    except KeyError:
+                        # Except the neighbor's is not in the surface mesh.
+                        # This happens when a bunch of voxels appear at once,
+                        # and we skipped adding the neighbor face because we saw
+                        # this voxel (the one at x, y, z) and knew we'd just
+                        # have to remove it.
+                        pass
+                    else:
+                        self._compact(nx, ny, nz, rface, start, length)
 
 
     def changed(self, position, shape):
@@ -331,8 +348,10 @@ class SurfaceMesh(object):
                 for z in range(int(position.z), int(position.z + shape.z)):
 
                     if voxels[x, y, z] == EMPTY:
+                        msg("SurfaceMesh.changed removing %r" % ((x, y, z),))
                         self._removeVoxel(x, y, z)
                     else:
+                        msg("SurfaceMesh.changed adding %r" % ((x, y, z),))
                         self._addVoxel(x, y, z)
 
         msg("SurfaceMesh.changed now has %r important elements" % (

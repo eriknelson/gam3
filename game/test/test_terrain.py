@@ -471,3 +471,32 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
              (BACK, _back + offset),
              (LEFT, _left + offset),
              (RIGHT, _right + offset)])
+
+
+    def test_obscuredFace(self):
+        """
+        When a voxel becomes non-empty and is adjacent to another non-empty
+        voxel, the vertices for the obscured face of the original voxel are
+        removed from the surface mesh array.
+        """
+        x, y, z = 1, 3, 5
+        self.terrain.set(x, y, z, loadTerrainFromString("_M"))
+        self.terrain.set(x, y, z, loadTerrainFromString("G"))
+
+        gs, gt = self.texCoords[GRASS]
+        ms, mt = self.texCoords[MOUNTAIN]
+        goffset = array([x, y, z, gs, gt], 'f') + self.textureBase
+        moffset = array([x + 1, y, z, ms, mt], 'f') + self.textureBase
+        self.assertVertices(
+            self.surface,
+            [(TOP, _top + goffset),
+             (FRONT, _front + goffset),
+             (BOTTOM, _bottom + goffset),
+             (BACK, _back + goffset),
+             (LEFT, _left + goffset),
+
+             (TOP, _top + moffset),
+             (FRONT, _front + moffset),
+             (BOTTOM, _bottom + moffset),
+             (BACK, _back + moffset),
+             (RIGHT, _right + moffset)])

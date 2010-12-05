@@ -144,8 +144,7 @@ class TerrainViewTests(SceneMixin, TestCase):
     def setUp(self):
         SceneMixin.setUp(self)
         self.window.scene.camera.position = Vector(-0.5, 1.1, 5)
-        self.view = TerrainView(self.environment, loadImage)
-        self.window.scene.add(self.view)
+        self.view = self.window.scene._items[0]
 
 
     def test_alone(self):
