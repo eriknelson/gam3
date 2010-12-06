@@ -536,8 +536,10 @@ class TerrainView(object):
             self._texture = self._createTexture()
 
         if self._important < self._surface.important:
-            # Got to copy some new data onto the Video Card[tm].
-            # Touch some VBO private stuff.
+            # Got to copy some new data onto the Video Card[tm].  Touch some VBO
+            # private stuff. XXX This probably isn't sufficient.  If internal
+            # parts of the VBO array have changed, we may need to copy them as
+            # well.
             self._vbo._copy_segments.append((
                     self._important * 4 * 5,
                     (self._surface.important - self._important) * 4 * 5,
