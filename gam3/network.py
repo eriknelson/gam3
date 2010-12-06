@@ -4,6 +4,7 @@
 Network functionality of Gam3.
 """
 
+from twisted.python.log import msg
 from twisted.internet.protocol import ServerFactory
 from twisted.internet import reactor
 from twisted.protocols.amp import AMP
@@ -140,9 +141,10 @@ class Gam3Server(AMP):
         """
         The client would like terrain data from the given coordinates.
         """
+        msg("Client requested terrain at %r" % ((x, y, z),))
         if x < 0 or y < 0 or z < 0:
             return {}
-        voxels = self.world.terrain.voxels[x:x+64,y:y+8,z:z+64]
+        voxels = self.world.terrain.voxels[x:x+8,y:y+2,z:z+8]
         self.callRemote(
             SetTerrain, x=x, y=y, z=z,
             voxels=voxels)

@@ -260,10 +260,11 @@ class CheckTerrainTests(TestCase):
         self.window = Window(self.environment, clock=self.clock)
 
 
-    def test_requestUnknownTerrain(self):
+    def test_requestExtendedTerrain(self):
         """
         L{Window._checkTerrain} issues L{GetTerrain} requests for the terrain at
-        the player's quantized position.
+        the player's quantized position if that position is beyond the bounds of
+        the terrain array.
         """
         position = Vector(1, 2, 3)
         player = Player(position, None, self.clock.seconds)
@@ -277,6 +278,29 @@ class CheckTerrainTests(TestCase):
                 'x': quantize(self.window.CHUNK_GRANULARITY.x, position.x),
                 'y': quantize(self.window.CHUNK_GRANULARITY.y, position.y),
                 'z': quantize(self.window.CHUNK_GRANULARITY.z, position.z)})
+
+
+    def test_requestUnknownTerrain(self):
+        """
+        L{Window._checkTerrain} issues L{GetTerrain} requests for the terrain at
+        the player's quantized position if the terrain at that position is
+        marked as L{UNKNOWN}.
+        """
+        position = Vector(1, 2, 3)
+        player = Player(position, None, self.clock.seconds)
+
+        g = self.window.CHUNK_GRANULARITY
+        self.environment.terrain.set(g.x, g.y, g.z, loadTerrainFromString("G"))
+
+        self.window._checkTerrain(player)
+
+        [(command, kw)] = self.calls
+        self.assertIdentical(command, GetTerrain)
+        self.assertEquals(
+            kw, {
+                'x': quantize(g.x, position.x),
+                'y': quantize(g.y, position.y),
+                'z': quantize(g.z, position.z)})
 
 
     def test_knownTerrain(self):

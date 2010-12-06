@@ -35,7 +35,7 @@ from epsilon.structlike import record
 
 from game import __file__ as gameFile
 from game.vector import Vector
-from game.terrain import GRASS, MOUNTAIN, DESERT, WATER, SurfaceMesh
+from game.terrain import UNKNOWN, GRASS, MOUNTAIN, DESERT, WATER, SurfaceMesh
 from game.network import GetTerrain
 
 
@@ -334,8 +334,8 @@ class Window(object):
                     pygame.mouse.set_visible(not pygame.mouse.set_visible(True))
 
 
-    TERRAIN_CHECK_INTERVAL = 10
-    CHUNK_GRANULARITY = Vector(64, 8, 64)
+    TERRAIN_CHECK_INTERVAL = 2
+    CHUNK_GRANULARITY = Vector(8, 2, 8)
 
     def _checkTerrain(self, player):
         terrain = self.environment.terrain
@@ -346,18 +346,17 @@ class Window(object):
 
         s = player.getPosition()
 
-        msg("_checkTerrain shape=%r position=%r" % (terrain.voxels.shape, s))
-        if terrain.voxels.shape[0] > s.x and \
-                terrain.voxels.shape[1] > s.y and \
-                terrain.voxels.shape[2] > s.z:
-            return
-
         x = quantize(self.CHUNK_GRANULARITY.x, s.x)
         y = quantize(self.CHUNK_GRANULARITY.y, s.y)
         z = quantize(self.CHUNK_GRANULARITY.z, s.z)
 
-        # XXX Add an errback
-        network.callRemote(GetTerrain, x=x, y=y, z=z)
+        msg("_checkTerrain shape=%r position=%r" % (terrain.voxels.shape, s))
+        if s.x >= terrain.voxels.shape[0] or \
+                s.y >= terrain.voxels.shape[1] or \
+                s.z >= terrain.voxels.shape[2] or \
+                terrain.voxels[x, y, z] == UNKNOWN:
+            # XXX Add an errback
+            network.callRemote(GetTerrain, x=x, y=y, z=z)
 
 
     def submitTo(self, controller):

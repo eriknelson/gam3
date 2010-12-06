@@ -2,13 +2,13 @@
 Functionality related to the shape of the world.
 """
 
-from numpy import array, zeros
+from numpy import array, zeros, empty
 
 from twisted.python.log import msg
 
 from game.vector import Vector
 
-EMPTY, GRASS, MOUNTAIN, DESERT, WATER = range(5)
+EMPTY, GRASS, MOUNTAIN, DESERT, WATER, UNKNOWN = range(6)
 
 TOP, FRONT, BOTTOM, BACK, LEFT, RIGHT = range(6)
 FACES = (TOP, FRONT, BOTTOM, BACK, LEFT, RIGHT)
@@ -62,7 +62,7 @@ class Terrain(object):
                     for x in range(self.voxels.shape[0])
                     for y in range(self.voxels.shape[1])
                     for z in range(self.voxels.shape[2])
-                    if self.voxels[x, y, z] != EMPTY)
+                    if self.voxels[x, y, z] not in (EMPTY, UNKNOWN))
 
 
     def set(self, x, y, z, voxels):
@@ -78,10 +78,11 @@ class Terrain(object):
 
         if new[0] > existing[0] or new[1] > existing[1] or new[2] > existing[2]:
             data = self.voxels.copy()
-            self.voxels = zeros((
+            self.voxels = empty((
                     max(existing[0], new[0]),
                     max(existing[1], new[1]),
-                    max(existing[2], new[2])))
+                    max(existing[2], new[2])), 'b')
+            self.voxels.fill(UNKNOWN)
             self.voxels[:existing[0],:existing[1],:existing[2]] = data
 
         self.voxels[x:new[0],y:new[1],z:new[2]] = voxels
@@ -275,7 +276,7 @@ class SurfaceMesh(object):
                 # only being called because we observed an EMPTY voxel for the
                 # first time ever.
                 terrainType = self._terrain.voxels[nx, ny, nz]
-                if terrainType == EMPTY:
+                if terrainType in (EMPTY, UNKNOWN):
                     continue
 
                 # Otherwise we can!
@@ -300,7 +301,7 @@ class SurfaceMesh(object):
         return (
             x < 0 or y < 0 or z < 0 or
             x >= mx or y >= my or z >= mz or
-            voxels[x, y, z] == EMPTY)
+            voxels[x, y, z] in (EMPTY, UNKNOWN))
 
 
     def _addVoxel(self, x, y, z):
@@ -352,7 +353,7 @@ class SurfaceMesh(object):
                     if voxels[x, y, z] == EMPTY:
                         msg("SurfaceMesh.changed removing %r" % ((x, y, z),))
                         self._removeVoxel(x, y, z)
-                    else:
+                    elif voxels[x, y, z] != UNKNOWN:
                         msg("SurfaceMesh.changed adding %r" % ((x, y, z),))
                         self._addVoxel(x, y, z)
 

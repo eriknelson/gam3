@@ -11,7 +11,7 @@ from game.test.util import ArrayMixin
 from game.vector import Vector
 from game.terrain import (
     LEFT, RIGHT, TOP, BOTTOM, FRONT, BACK,
-    EMPTY, GRASS, MOUNTAIN, DESERT, WATER,
+    UNKNOWN, EMPTY, GRASS, MOUNTAIN, DESERT, WATER,
     Terrain, SurfaceMesh, loadTerrainFromString,
     _top, _front, _bottom, _back, _left, _right)
 
@@ -107,10 +107,25 @@ class LoadTerrainFromStringTests(TestCase, ArrayMixin):
 
 
 
-class TerrainTests(TestCase):
+class TerrainTests(TestCase, ArrayMixin):
     """
     Tests for L{terrain.Terrain}.
     """
+    def test_dict(self):
+        """
+        L{Terrain.dict} returns a C{dict} containing all of the terrain data,
+        with keys of three-tuples of voxel coordinates and values of terrain
+        types.
+        """
+        terrain = Terrain()
+        terrain.voxels = array([[[
+                        GRASS, MOUNTAIN, EMPTY, WATER, UNKNOWN, DESERT]]], 'b')
+        self.assertEquals(
+            terrain.dict(),
+            {(0, 0, 0): GRASS, (0, 0, 1): MOUNTAIN,
+             (0, 0, 3): WATER, (0, 0, 5): DESERT})
+
+
     def test_observeChanges(self):
         """
         L{Terrain.observeChanges} takes a callable and causes later calls to
@@ -123,6 +138,19 @@ class TerrainTests(TestCase):
             lambda position, shape: events.append((position, shape)))
         terrain.set(4, 5, 6, loadTerrainFromString("GGG\nGGG"))
         self.assertEquals(events, [(Vector(4, 5, 6), Vector(3, 1, 2))])
+
+
+    def test_unknownTerrain(self):
+        """
+        When there is a gap in known terrain left by L{Terrain.set} calls, the
+        unknown terrain is initialized to L{UNKNOWN}.
+        """
+        terrain = Terrain()
+        terrain.set(0, 0, 0, loadTerrainFromString("G"))
+        terrain.set(0, 0, 2, loadTerrainFromString("G"))
+        self.assertArraysEqual(
+            terrain.voxels,
+            array([[[GRASS, UNKNOWN, GRASS]]], 'b'))
 
 
 
