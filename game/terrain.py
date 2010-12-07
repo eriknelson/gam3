@@ -135,12 +135,15 @@ class SurfaceMesh(object):
     A terrain change observer which constructs a surface mesh of the terrain
     from prism updates.
 
-    @ivar surface: A triangle mesh of the exposed terrain which should be
-        rendered.  Each element of the array contains position and texture
-        information about one vertex of one triangle, as (x, y, z, tx, ty, tz).
+    @ivar _surfaceFactory: A callable which will return a new array with shape
+        (N, 5) for some fairly large N.  Whenever an array is completely filled
+        with vertices, this is called to get a new one.
 
-    @ivar important: An index into C{surface} indicating the end of the useful
-        elements.  Elements beyond this are garbage to be ignored.
+    @ivar _surfaces: A list of two-tuples of arrays holding the triangle mesh of
+        the exposed terrain which should be rendered and an index giving the
+        first unused index in the corresponding array.  Each element of the
+        array contains position and texture information about one vertex of one
+        triangle, as (x, y, z, tx, ty).
 
     @ivar _voxelToSurface: A dictionary mapping the world position of a voxel to
         a pair indicating a slice of C{surface} which is displaying a face of
@@ -153,10 +156,11 @@ class SurfaceMesh(object):
     @ivar _textureExtent: A float indicating the distance between the sides of
         the textures.
     """
-    def __init__(self, terrain, textureOffsets=None, textureExtent=None):
+    def __init__(self, terrain, surfaceFactory, textureOffsets=None,
+                 textureExtent=None):
         self._terrain = terrain
-        self.surface = zeros((1000000, 5), dtype='f')
-        self.important = 0
+        self._surfaceFactory = surfaceFactory
+        self._surfaces = [surfaceFactory()]
         self._voxelToSurface = {}
         self._textureOffsets = textureOffsets
         self._textureExtent = textureExtent
@@ -198,28 +202,28 @@ class SurfaceMesh(object):
 
     def _append(self, key, vertices):
         assert key not in self._voxelToSurface
-        pos = self.important
+        pos = self._surfaces[-1][2]
         # XXX Bounds checking needed here.
-        self.surface[pos:pos + len(vertices)] = vertices
+        self._surfaces[-1][0][pos:pos + len(vertices)] = vertices
         self._voxelToSurface[key] = (pos, len(vertices))
-        self.important += len(vertices)
+        self._surfaces[-1][2] += len(vertices)
 
 
     def _compact(self, x, y, z, face, start, length):
         # The surface mesh array will now end at this index.
-        end = self.important - 6
+        end = self._surfaces[-1][2] - 6
 
         if start == end:
             # The vertices being removed by this compaction are at the end of
             # the important part of the surface mesh array.  That means we can
             # just subtract from the important marker instead of copying fresh
             # data on top of these vertices.
-            self.important -= length
+            self._surfaces[-1][2] -= length
             return
 
         # Find the voxel that owns the vertices at the end of the surface mesh
         # array.
-        mx, my, mz = self.surface[end][:3]
+        mx, my, mz = self._surfaces[-1][1][end][:3]
 
         possibilities = [
             (mx - 1, my - 1, mz,     TOP),
@@ -242,9 +246,10 @@ class SurfaceMesh(object):
         # end of the surface mesh.  Now it's stored wherever we're overwriting.
         self._voxelToSurface[key] = (start, length)
         # Actually overwrite.
-        self.surface[start:start + length] = self.surface[end:self.important]
+        self._surfaces[-1][0][start:start + length] = self._surfaces[-1][1][
+            end:self._surfaces[-1][2]]
         # Note that the surface mesh is shorter now.
-        self.important = end
+        self._surfaces[-1][2] = end
 
 
     def _removeVoxel(self, x, y, z):
@@ -344,8 +349,8 @@ class SurfaceMesh(object):
         """
         voxels = self._terrain.voxels
 
-        # Visit each voxel in the changed region plus one in each direction
-        # (XXX) and re-determine if it should now be part of the surface mesh.
+        # Visit each voxel in the changed region and re-determine if it should
+        # now be part of the surface mesh.
         for x in range(int(position.x), int(position.x + shape.x)):
             for y in range(int(position.y), int(position.y + shape.y)):
                 for z in range(int(position.z), int(position.z + shape.z)):
@@ -358,4 +363,4 @@ class SurfaceMesh(object):
                         self._addVoxel(x, y, z)
 
         msg("SurfaceMesh.changed now has %r important elements" % (
-                self.important,))
+                self._surfaces[-1][2],))

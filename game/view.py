@@ -6,6 +6,8 @@ View code!
 
 from __future__ import division
 
+from numpy import zeros
+
 from OpenGL.GL import (
     GL_PROJECTION, GL_MODELVIEW, GL_RGBA, GL_UNSIGNED_BYTE,
     GL_COLOR_MATERIAL, GL_LIGHTING, GL_DEPTH_TEST, GL_LIGHT0, GL_POSITION,
@@ -476,14 +478,20 @@ class TerrainView(object):
     def __init__(self, environment, loader):
         self._images = {}
         self.loader = loader
+        self._vbos = []
         if environment is not None:
             self._coord, self._ext = self._getTextureForTerrain()
             self.environment = environment
             self._surface = SurfaceMesh(
-                environment.terrain, self._coord, self._ext)
+                environment.terrain, self._surfaceFactory, self._coord,
+                self._ext)
             self.environment.terrain.addObserver(self._surface.changed)
-            self._vbo = VBO(self._surface.surface)
-            self._important = 0
+
+
+    def _surfaceFactory(self):
+        data = zeros((1000000, 5), 'f')
+        self._vbos.append([VBO(data), data, 0])
+        return self._vbos[-1]
 
 
     def _getImageForTerrain(self, terrainType):
@@ -562,27 +570,15 @@ class TerrainView(object):
         if self._texture is None:
             self._texture = self._createTexture()
 
-        if self._important < self._surface.important:
-            # Got to copy some new data onto the Video Card[tm].  Touch some VBO
-            # private stuff. XXX This probably isn't sufficient.  If internal
-            # parts of the VBO array have changed, we may need to copy them as
-            # well.
-            self._vbo._copy_segments.append((
-                    self._important * 4 * 5,
-                    (self._surface.important - self._important) * 4 * 5,
-                    self._surface.surface[self._important:self._surface.important]))
-
         glBindTexture(GL_TEXTURE_2D, self._texture)
         glEnableClientState(GL_VERTEX_ARRAY)
         glEnableClientState(GL_TEXTURE_COORD_ARRAY)
-        self._vbo.bind()
-        glVertexPointer(3, GL_FLOAT, 4 * 5, self._vbo)
-        glTexCoordPointer(2, GL_FLOAT, 4 * 5, self._vbo + (4 * 3))
-#         glPushMatrix()
-#         glTranslate(x, y, z)
-        glDrawArrays(GL_TRIANGLES, 0, self._surface.important)
-#         glPopMatrix()
-        self._vbo.unbind()
+        for (vbo, data, length) in self._vbos:
+            vbo.bind()
+            glVertexPointer(3, GL_FLOAT, 4 * 5, vbo)
+            glTexCoordPointer(2, GL_FLOAT, 4 * 5, vbo + (4 * 3))
+            glDrawArrays(GL_TRIANGLES, 0, length)
+            vbo.unbind()
         glDisableClientState(GL_VERTEX_ARRAY)
         glDisableClientState(GL_TEXTURE_COORD_ARRAY)
         glBindTexture(GL_TEXTURE_2D, 0)
