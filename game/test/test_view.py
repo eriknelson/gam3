@@ -259,6 +259,9 @@ class CheckTerrainTests(TestCase):
         self.environment.setNetwork(FakeNetwork())
         self.window = Window(self.environment, clock=self.clock)
 
+        # Chop this down for simplicity in the tests that don't care about it.
+        self.window.CHUNK_OFFSET = Vector(0, 0, 0)
+
 
     def test_requestExtendedTerrain(self):
         """
@@ -301,6 +304,30 @@ class CheckTerrainTests(TestCase):
                 'x': quantize(g.x, position.x),
                 'y': quantize(g.y, position.y),
                 'z': quantize(g.z, position.z)})
+
+
+    def test_requestNearbyUnknownTerrain(self):
+        """
+        L{Window._checkTerrain} issues L{GetTerrain} requests for the terrain in
+        quantized chunks adjacent to the player's position if the terrain in
+        those chunks is marked as L{UNKNOWN}.
+        """
+        self.window.CHUNK_GRANULARITY = Vector(2, 1, 3)
+        self.window.CHUNK_OFFSET = Vector(1, 1, 1)
+        pos = Vector(3, 4, 5)
+        player = Player(pos, None, self.clock.seconds)
+
+        self.window._checkTerrain(player)
+
+        self.assertEquals(
+            set([(x, y, z)
+                 for x in (0, 2, 4)
+                 for y in (3, 4, 5)
+                 for z in (0, 3, 6)]),
+            set([(c['x'], c['y'], c['z']) for (cmd, c) in self.calls]))
+
+        self.assertEquals(len(self.calls), 3 ** 3)
+
 
 
     def test_knownTerrain(self):

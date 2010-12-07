@@ -334,10 +334,25 @@ class Window(object):
                     pygame.mouse.set_visible(not pygame.mouse.set_visible(True))
 
 
+    # The interval at which to check to see if more terrain data must be
+    # requested.
     TERRAIN_CHECK_INTERVAL = 2
+
+    # The size of the terrain chunk to request from the server.  This must never
+    # change within a single process, since only one voxel in one corner of each
+    # chunk is examined to determine if the data is present or not (and probably
+    # for other reasons too).
     CHUNK_GRANULARITY = Vector(8, 2, 8)
 
+    # The distance in chunks in each direction to look around the player's
+    # position for more missing terrain to request.
+    CHUNK_OFFSET = Vector(2, 0, 2)
+
     def _checkTerrain(self, player):
+        """
+        Examine the player's position and the currently known terrain data and
+        sometimes request more terrain data from the server.
+        """
         terrain = self.environment.terrain
         network = self.environment.network
         if network is None:
@@ -346,17 +361,30 @@ class Window(object):
 
         s = player.getPosition()
 
-        x = quantize(self.CHUNK_GRANULARITY.x, s.x)
-        y = quantize(self.CHUNK_GRANULARITY.y, s.y)
-        z = quantize(self.CHUNK_GRANULARITY.z, s.z)
+        g = self.CHUNK_GRANULARITY
+        x = int(quantize(g.x, s.x))
+        y = int(quantize(g.y, s.y))
+        z = int(quantize(g.z, s.z))
 
-        msg("_checkTerrain shape=%r position=%r" % (terrain.voxels.shape, s))
-        if s.x >= terrain.voxels.shape[0] or \
-                s.y >= terrain.voxels.shape[1] or \
-                s.z >= terrain.voxels.shape[2] or \
-                terrain.voxels[x, y, z] == UNKNOWN:
-            # XXX Add an errback
-            network.callRemote(GetTerrain, x=x, y=y, z=z)
+        dx = int(self.CHUNK_OFFSET.x * g.x)
+        dy = int(self.CHUNK_OFFSET.y * g.y)
+        dz = int(self.CHUNK_OFFSET.z * g.z)
+        for px in range(x - dx, x + dx + 1, int(g.x)):
+            for py in range(y - dy, y + dy + 1, int(g.y)):
+                for pz in range(z - dz, z + dz + 1, int(g.z)):
+
+                    msg("_checkTerrain shape=%r position=%r" % (
+                            terrain.voxels.shape, (px, py, pz)))
+
+                    if px < 0 or py < 0 or pz < 0:
+                        continue
+
+                    if px >= terrain.voxels.shape[0] or \
+                            py >= terrain.voxels.shape[1] or \
+                            pz >= terrain.voxels.shape[2] or \
+                            terrain.voxels[px, py, pz] == UNKNOWN:
+                        # XXX Add an errback
+                        network.callRemote(GetTerrain, x=px, y=py, z=pz)
 
 
     def submitTo(self, controller):
