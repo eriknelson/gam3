@@ -111,6 +111,16 @@ class TerrainTests(TestCase, ArrayMixin):
     """
     Tests for L{terrain.Terrain}.
     """
+    def test_initial(self):
+        """
+        When L{Terrain} is instantiated, it allocates storage only for the voxel
+        at (0, 0, 0) and indicates that the terrain type for that voxel is
+        unknown.
+        """
+        terrain = Terrain()
+        self.assertArraysEqual(terrain.voxels, array([[[UNKNOWN]]], 'b'))
+
+
     def test_dict(self):
         """
         L{Terrain.dict} returns a C{dict} containing all of the terrain data,

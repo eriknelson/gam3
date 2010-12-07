@@ -49,7 +49,7 @@ class Terrain(object):
     @type _observers: C{list}
     """
     def __init__(self):
-        self.voxels = zeros((1, 1, 1), 'b')
+        self.voxels = array([[[UNKNOWN]]], ndmin=3, dtype='b')
         # XXX Seriously why do I implement this eleven times a day?
         self._observers = []
 
