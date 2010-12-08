@@ -286,8 +286,12 @@ class Window(object):
 
     @ivar display: Something like L{pygame.display}.
     @ivar event: Something like L{pygame.event}.
+
+    @ivar _terrainCheck: A L{LoopingCall} to check check for missing terrain and
+        request it from the server.
     """
     screen = None
+    _terrainCheck = None
 
     def __init__(self,
                  environment,
@@ -405,8 +409,7 @@ class Window(object):
 
         @return: A Deferred that fires when this window is closed by the user.
         """
-        # XXX Make this pygame.display.init()
-        pygame.init()
+        self.display.init()
         self.screen = self.display.set_mode(
             self.viewport.viewSize,
             pygame.locals.DOUBLEBUF | pygame.locals.OPENGL)
@@ -426,6 +429,8 @@ class Window(object):
         """
         Stop updating this window and handling events for it.
         """
+        if self._terrainCheck is not None:
+            self._terrainCheck.stop()
         self._inputCall.stop()
 
 

@@ -29,10 +29,18 @@ class MockDisplay(object):
     """
     An object that is supposed to look like L{pygame.display}.
 
+    @ivar initialized: A C{bool} indicating whether the C{init} method has yet
+        been called.
+
     @ivar flipped: An integer giving the number of times C{flip} has
-    been called.
+        been called.
     """
+    initialized = False
     flipped = 0
+
+    def init(self):
+        self.initialized = True
+
 
     def flip(self):
         """
@@ -46,6 +54,9 @@ class MockDisplay(object):
         """
         Create a display surface for the given mode.
         """
+        if not self.initialized:
+            raise Exception(
+                "Cannot set display mode until init has been called.")
         self._screen = MockSurface("<display>", size)
         return self._screen
 
@@ -151,8 +162,17 @@ class WindowTests(TestCase):
         The L{Window}'s default clock should be L{twisted.internet.reactor}.
         """
         from twisted.internet import reactor
-        window = Window(self.environment)
+        window = Window(self.environment, display=self.display)
         self.assertIdentical(window.clock, reactor)
+
+
+    def test_defaultDisplay(self):
+        """
+        The L{Window}'s default display should be L{pygame.display}.
+        """
+        from pygame import display
+        window = Window(self.environment)
+        self.assertIdentical(window.display, display)
 
 
     def test_submitTo(self):
@@ -257,10 +277,34 @@ class CheckTerrainTests(TestCase):
         self.clock = Clock()
         self.environment = Environment(1, self.clock)
         self.environment.setNetwork(FakeNetwork())
-        self.window = Window(self.environment, clock=self.clock)
+        self.window = Window(
+            self.environment, clock=self.clock, display=MockDisplay())
 
         # Chop this down for simplicity in the tests that don't care about it.
         self.window.CHUNK_OFFSET = Vector(0, 0, 0)
+
+
+    def test_submitTo(self):
+        """
+        L{Window.submitTo} starts a loop which calls L{Window._checkTerrain}.
+        """
+        called = []
+        self.window._checkTerrain = called.append
+        controller = MockController(self.clock)
+        self.window.submitTo(controller)
+        self.assertEquals(called, [controller.player])
+        self.clock.advance(self.window.TERRAIN_CHECK_INTERVAL)
+        self.assertEquals(called, [controller.player] * 2)
+
+
+    def test_stop(self):
+        """
+        L{Window.stop} stops the loop which calls L{Window._checkTerrain}.
+        """
+        self.window.submitTo(MockController(self.clock))
+        self.window.go()
+        self.window.stop()
+        self.assertEquals(len(self.clock.calls), 0)
 
 
     def test_requestExtendedTerrain(self):
