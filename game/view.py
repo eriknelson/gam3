@@ -358,7 +358,6 @@ class Window(object):
         terrain = self.environment.terrain
         network = self.environment.network
         if network is None:
-            msg("_checkTerrain found no network")
             return
 
         s = player.getPosition()
@@ -374,9 +373,6 @@ class Window(object):
         for px in range(x - dx, x + dx + 1, int(g.x)):
             for py in range(y - dy, y + dy + 1, int(g.y)):
                 for pz in range(z - dz, z + dz + 1, int(g.z)):
-
-                    msg("_checkTerrain shape=%r position=%r" % (
-                            terrain.voxels.shape, (px, py, pz)))
 
                     if px < 0 or py < 0 or pz < 0:
                         continue
@@ -598,7 +594,7 @@ class PlayerView(record('player')):
         # Slide back because the pyramid below is centered at 0.5, 0, 0.5
         # instead of at the origin.  Without this it rotates around its corner
         # instead of around its center.
-        glTranslate(-0.5, 0, -0.5)
+        glTranslate(-0.5, 1, -0.5)
 
         glColor(1.0, 1.0, 1.0)
 

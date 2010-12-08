@@ -141,7 +141,6 @@ class Gam3Server(AMP):
         """
         The client would like terrain data from the given coordinates.
         """
-        msg("Client requested terrain at %r" % ((x, y, z),))
         if x < 0 or y < 0 or z < 0:
             return {}
         voxels = self.world.terrain.voxels[x:x+8,y:y+2,z:z+8]

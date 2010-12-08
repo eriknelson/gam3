@@ -69,7 +69,6 @@ class Terrain(object):
         """
         Replace a chunk of voxels, starting from C{(x, y, z)}.
         """
-        msg("Terrain.set(%r, %r, %r)" % (x, y, z))
         existing = array(self.voxels.shape)
         new = array(voxels.shape)
         new[0] += x
@@ -310,7 +309,6 @@ class SurfaceMesh(object):
 
 
     def _addVoxel(self, x, y, z):
-        msg("_addVoxel %r" % ((x, y, z),))
         for face in FACES:
             key = (x, y, z, face)
             if key not in self._voxelToSurface:
@@ -356,11 +354,6 @@ class SurfaceMesh(object):
                 for z in range(int(position.z), int(position.z + shape.z)):
 
                     if voxels[x, y, z] == EMPTY:
-                        msg("SurfaceMesh.changed removing %r" % ((x, y, z),))
                         self._removeVoxel(x, y, z)
                     elif voxels[x, y, z] != UNKNOWN:
-                        msg("SurfaceMesh.changed adding %r" % ((x, y, z),))
                         self._addVoxel(x, y, z)
-
-        msg("SurfaceMesh.changed now has %r important elements" % (
-                self._surfaces[-1][2],))
