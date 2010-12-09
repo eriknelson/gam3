@@ -199,7 +199,8 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
             MOUNTAIN: (0.5, 0.75),
             GRASS: (0.25, 0.5),
             }
-        self.surfaceArray = self.mesh = [zeros((1000, 5), 'f'), 0]
+        vertices = zeros((1000, 5), 'f')
+        self.surfaceArray = self.mesh = [vertices, vertices, 0]
         self.terrain = Terrain()
         self.surface = SurfaceMesh(
             self.terrain, self.surfaceFactory, self.texCoords, self.e)
@@ -291,7 +292,7 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
         texture = self.textureBase
         s, t = self.texCoords[GRASS]
         self.assertArraysEqual(
-            self.mesh[0][:self.mesh[1]],
+            self.mesh[0][:self.mesh[2]],
             array([x, y, z, s, t], 'f') + array(vertices + texture, 'f'))
 
         # And it should know where they are.
@@ -372,7 +373,7 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
 
         texture = self.textureBase
         self.assertArraysEqual(
-            self.mesh[0][:self.mesh[1]],
+            self.mesh[0][:self.mesh[2]],
             array([x, y, z, s, t], 'f') + array(
                 list(_top + texture) + list(_front + texture) +
                 list(_bottom + texture) +list(_back + texture) +
@@ -380,7 +381,7 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
                 'f'))
 
         # Six vertices per face, six faces
-        self.assertEquals(self.mesh[1], 36)
+        self.assertEquals(self.mesh[2], 36)
 
 
     def test_unchangedVoxel(self):
@@ -400,7 +401,7 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
         self.test_oneVoxel()
         self.terrain.set(self.x, self.y, self.z, loadTerrainFromString("_"))
 
-        self.assertEquals(self.mesh[1], 0)
+        self.assertEquals(self.mesh[2], 0)
 
 
     def test_twoVoxels(self):
@@ -418,7 +419,7 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
 
         texture = self.textureBase
         self.assertArraysEqual(
-            self.mesh[0][:self.mesh[1]],
+            self.mesh[0][:self.mesh[2]],
             concatenate((
                     # mountain
                     array([x, y, z, ms, mt], 'f') + array(
@@ -431,7 +432,7 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
                         list(_bottom + texture) + list(_back + texture) +
                         list(_right + texture), 'f'))))
         # Six vertices per face, ten faces
-        self.assertEquals(self.mesh[1], 60)
+        self.assertEquals(self.mesh[2], 60)
 
 
     def test_removeSecondVoxel(self):
