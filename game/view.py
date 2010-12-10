@@ -575,7 +575,9 @@ class TerrainView(object):
         glBindTexture(GL_TEXTURE_2D, self._texture)
         glEnableClientState(GL_VERTEX_ARRAY)
         glEnableClientState(GL_TEXTURE_COORD_ARRAY)
-        for (vbo, data, length) in self._vbos:
+        for surface in self._vbos:
+            vbo = surface.update
+            length = surface.important
             vbo.bind()
             glVertexPointer(3, GL_FLOAT, 4 * 5, vbo)
             glTexCoordPointer(2, GL_FLOAT, 4 * 5, vbo + (4 * 3))
