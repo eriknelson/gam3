@@ -2,11 +2,13 @@
 Functionality related to the shape of the world.
 """
 
-from numpy import array, zeros
+from numpy import array, zeros, empty
+
+from twisted.python.log import err
 
 from game.vector import Vector
 
-EMPTY, GRASS, MOUNTAIN, DESERT, WATER = range(5)
+EMPTY, GRASS, MOUNTAIN, DESERT, WATER, UNKNOWN = range(6)
 
 TOP, FRONT, BOTTOM, BACK, LEFT, RIGHT = range(6)
 FACES = (TOP, FRONT, BOTTOM, BACK, LEFT, RIGHT)
@@ -47,7 +49,7 @@ class Terrain(object):
     @type _observers: C{list}
     """
     def __init__(self):
-        self.voxels = zeros((1, 1, 1), 'b')
+        self.voxels = array([[[UNKNOWN]]], ndmin=3, dtype='b')
         # XXX Seriously why do I implement this eleven times a day?
         self._observers = []
 
@@ -60,7 +62,7 @@ class Terrain(object):
                     for x in range(self.voxels.shape[0])
                     for y in range(self.voxels.shape[1])
                     for z in range(self.voxels.shape[2])
-                    if self.voxels[x, y, z] != EMPTY)
+                    if self.voxels[x, y, z] not in (EMPTY, UNKNOWN))
 
 
     def set(self, x, y, z, voxels):
@@ -75,10 +77,11 @@ class Terrain(object):
 
         if new[0] > existing[0] or new[1] > existing[1] or new[2] > existing[2]:
             data = self.voxels.copy()
-            self.voxels.resize((
+            self.voxels = empty((
                     max(existing[0], new[0]),
                     max(existing[1], new[1]),
-                    max(existing[2], new[2])))
+                    max(existing[2], new[2])), 'b')
+            self.voxels.fill(UNKNOWN)
             self.voxels[:existing[0],:existing[1],:existing[2]] = data
 
         self.voxels[x:new[0],y:new[1],z:new[2]] = voxels
@@ -118,12 +121,12 @@ _cube = {
 def _s(n):
     return _cube[n] + (0, 0)
 
-_top = array(map(_s, [7, 8, 5, 7, 6, 5]))
-_front = array(map(_s, [5, 1, 2, 5, 6, 2]))
-_bottom = array(map(_s, [1, 3, 4, 1, 2, 4]))
-_back = array(map(_s, [3, 8, 7, 3, 4, 7]))
-_left = array(map(_s, [3, 1, 5, 3, 8, 5]))
-_right = array(map(_s, [2, 4, 7, 2, 6, 7]))
+_top = array(map(_s, [7, 8, 5, 7, 6, 5]), 'f')
+_front = array(map(_s, [5, 1, 2, 5, 6, 2]), 'f')
+_bottom = array(map(_s, [1, 3, 4, 1, 2, 4]), 'f')
+_back = array(map(_s, [3, 8, 7, 3, 4, 7]), 'f')
+_left = array(map(_s, [3, 1, 5, 3, 8, 5]), 'f')
+_right = array(map(_s, [2, 4, 7, 2, 6, 7]), 'f')
 
 
 class SurfaceMesh(object):
@@ -164,7 +167,7 @@ class SurfaceMesh(object):
                 [0, 0, 0, textureExtent, 0],
                 [0, 0, 0, textureExtent, textureExtent],
                 [0, 0, 0, 0, textureExtent]
-                ])
+                ], 'f')
 
         fronttex = toptex
         bottomtex = toptex
@@ -189,7 +192,13 @@ class SurfaceMesh(object):
         s, t = self._textureOffsets[textureType]
         offset = [x, y, z, s, t]
         pos, tex = self._faces[face]
-        return pos + tex + offset
+        # First do a copying operation so neither of the base data arrays
+        # changes.
+        result = pos + tex
+        # Next do an in-place operation, for performance and to retain the
+        # dtype.
+        result += offset
+        return result
 
 
     def _append(self, key, vertices):
@@ -223,8 +232,11 @@ class SurfaceMesh(object):
             if self._voxelToSurface.get(key) == (end, 6):
                 break
         else:
-            # If we get here, we are screwed.
-            assert False, "Oh no... Lost geometry :("
+            err(Exception(
+                    "Could not find voxel owning vertices at end of surface "
+                    "mesh array."))
+            return
+
 
         # Change the tracking data for the voxel which used to be stored at the
         # end of the surface mesh.  Now it's stored wherever we're overwriting.
@@ -270,7 +282,7 @@ class SurfaceMesh(object):
                 # only being called because we observed an EMPTY voxel for the
                 # first time ever.
                 terrainType = self._terrain.voxels[nx, ny, nz]
-                if terrainType == EMPTY:
+                if terrainType in (EMPTY, UNKNOWN):
                     continue
 
                 # Otherwise we can!
@@ -295,7 +307,7 @@ class SurfaceMesh(object):
         return (
             x < 0 or y < 0 or z < 0 or
             x >= mx or y >= my or z >= mz or
-            voxels[x, y, z] == EMPTY)
+            voxels[x, y, z] in (EMPTY, UNKNOWN))
 
 
     def _addVoxel(self, x, y, z):
@@ -320,13 +332,13 @@ class SurfaceMesh(object):
         """
         voxels = self._terrain.voxels
 
-        # Visit each voxel in the changed region plus one in each direction
-        # (XXX) and re-determine if it should now be part of the surface mesh.
+        # Visit each voxel in the changed region and re-determine if it should
+        # now be part of the surface mesh.
         for x in range(int(position.x), int(position.x + shape.x)):
             for y in range(int(position.y), int(position.y + shape.y)):
                 for z in range(int(position.z), int(position.z + shape.z)):
 
                     if voxels[x, y, z] == EMPTY:
                         self._removeVoxel(x, y, z)
-                    else:
+                    elif voxels[x, y, z] != UNKNOWN:
                         self._addVoxel(x, y, z)

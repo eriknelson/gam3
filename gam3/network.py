@@ -90,11 +90,6 @@ class Gam3Server(AMP):
         Send information about terrain and connected players.
         """
         self.sendExistingPlayers()
-        if self.world.terrain.size:
-            # XXX This is pretty inefficient for any respectable size.  Limit it
-            # somehow.
-            self.callRemote(
-                SetTerrain, x=0, y=0, z=0, voxels=self.world.terrain)
 
 
     def sendExistingPlayers(self):
