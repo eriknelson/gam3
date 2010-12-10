@@ -23,6 +23,12 @@ NEIGHBORS = {
     RIGHT: (1, 0, 0, LEFT)}
 
 
+# The size of the terrain chunk to request from the server.  This must never
+# change within a single process, since only one voxel in one corner of each
+# chunk is examined to determine if the data is present or not (and probably for
+# other reasons too).
+CHUNK_GRANULARITY = Vector(8, 2, 8)
+
 def loadTerrainFromString(map):
     """
     Load terrain from the given map string.  The string represents two

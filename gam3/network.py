@@ -4,11 +4,11 @@
 Network functionality of Gam3.
 """
 
-from twisted.python.log import msg
 from twisted.internet.protocol import ServerFactory
 from twisted.internet import reactor
 from twisted.protocols.amp import AMP
 
+from game.terrain import CHUNK_GRANULARITY
 from game.network import (
     Introduce, SetDirectionOf, NewPlayer, SetMyDirection, RemovePlayer,
     GetTerrain, SetTerrain)
@@ -143,7 +143,10 @@ class Gam3Server(AMP):
         """
         if x < 0 or y < 0 or z < 0:
             return {}
-        voxels = self.world.terrain.voxels[x:x+8,y:y+2,z:z+8]
+        voxels = self.world.terrain.voxels[
+            x:x + CHUNK_GRANULARITY.x,
+            y:y + CHUNK_GRANULARITY.y,
+            z:z + CHUNK_GRANULARITY.z]
         self.callRemote(
             SetTerrain, x=x, y=y, z=z,
             voxels=voxels)

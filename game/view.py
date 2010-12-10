@@ -37,7 +37,8 @@ from epsilon.structlike import record
 from game import __file__ as gameFile
 from game.vector import Vector
 from game.terrain import (
-    UNKNOWN, GRASS, MOUNTAIN, DESERT, WATER, SurfaceMesh, SurfaceMeshVertices)
+    UNKNOWN, GRASS, MOUNTAIN, DESERT, WATER, CHUNK_GRANULARITY,
+    SurfaceMesh, SurfaceMeshVertices)
 from game.network import GetTerrain
 
 
@@ -275,6 +276,11 @@ class Window(object):
     A top-level PyGame-based window. This acts as a container for
     other view objects.
 
+    @ivar CHUNK_GRANULARITY: A L{Vector} giving the dimensions of terrain data
+        which will be received from the server.  Keeping this fixed means that
+        only a single coordinate needs to be checked to determine if terrain
+        data is needed for a prism of this size.
+
     @ivar environment: The L{game.environment.Environment} which is being
         displayed.
     @ivar clock: Something providing
@@ -292,6 +298,9 @@ class Window(object):
     """
     screen = None
     _terrainCheck = None
+
+    CHUNK_GRANULARITY = CHUNK_GRANULARITY
+
 
     def __init__(self,
                  environment,
@@ -343,12 +352,6 @@ class Window(object):
     # The interval at which to check to see if more terrain data must be
     # requested.
     TERRAIN_CHECK_INTERVAL = 2
-
-    # The size of the terrain chunk to request from the server.  This must never
-    # change within a single process, since only one voxel in one corner of each
-    # chunk is examined to determine if the data is present or not (and probably
-    # for other reasons too).
-    CHUNK_GRANULARITY = Vector(8, 2, 8)
 
     # The distance in chunks in each direction to look around the player's
     # position for more missing terrain to request.
