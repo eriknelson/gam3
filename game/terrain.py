@@ -4,6 +4,8 @@ Functionality related to the shape of the world.
 
 from numpy import array, zeros, empty
 
+from twisted.python.log import err
+
 from game.vector import Vector
 
 EMPTY, GRASS, MOUNTAIN, DESERT, WATER, UNKNOWN = range(6)
@@ -119,12 +121,12 @@ _cube = {
 def _s(n):
     return _cube[n] + (0, 0)
 
-_top = array(map(_s, [7, 8, 5, 7, 6, 5]))
-_front = array(map(_s, [5, 1, 2, 5, 6, 2]))
-_bottom = array(map(_s, [1, 3, 4, 1, 2, 4]))
-_back = array(map(_s, [3, 8, 7, 3, 4, 7]))
-_left = array(map(_s, [3, 1, 5, 3, 8, 5]))
-_right = array(map(_s, [2, 4, 7, 2, 6, 7]))
+_top = array(map(_s, [7, 8, 5, 7, 6, 5]), 'f')
+_front = array(map(_s, [5, 1, 2, 5, 6, 2]), 'f')
+_bottom = array(map(_s, [1, 3, 4, 1, 2, 4]), 'f')
+_back = array(map(_s, [3, 8, 7, 3, 4, 7]), 'f')
+_left = array(map(_s, [3, 1, 5, 3, 8, 5]), 'f')
+_right = array(map(_s, [2, 4, 7, 2, 6, 7]), 'f')
 
 
 class SurfaceMesh(object):
@@ -169,7 +171,7 @@ class SurfaceMesh(object):
                 [0, 0, 0, textureExtent, 0],
                 [0, 0, 0, textureExtent, textureExtent],
                 [0, 0, 0, 0, textureExtent]
-                ])
+                ], 'f')
 
         fronttex = toptex
         bottomtex = toptex
@@ -194,7 +196,13 @@ class SurfaceMesh(object):
         s, t = self._textureOffsets[textureType]
         offset = [x, y, z, s, t]
         pos, tex = self._faces[face]
-        return pos + tex + offset
+        # First do a copying operation so neither of the base data arrays
+        # changes.
+        result = pos + tex
+        # Next do an in-place operation, for performance and to retain the
+        # dtype.
+        result += offset
+        return result
 
 
     def _append(self, key, vertices):
@@ -236,8 +244,11 @@ class SurfaceMesh(object):
             if self._voxelToSurface.get(key) == (end, 6):
                 break
         else:
-            # If we get here, we are screwed.
-            assert False, "Oh no... Lost geometry :("
+            err(Exception(
+                    "Could not find voxel owning vertices at end of surface "
+                    "mesh array."))
+            return
+
 
         # Change the tracking data for the voxel which used to be stored at the
         # end of the surface mesh.  Now it's stored wherever we're overwriting.
