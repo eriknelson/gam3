@@ -6,6 +6,8 @@ from numpy import array, zeros, empty
 
 from twisted.python.log import err
 
+from epsilon.structlike import record
+
 from game.vector import Vector
 
 EMPTY, GRASS, MOUNTAIN, DESERT, WATER, UNKNOWN = range(6)
@@ -106,6 +108,26 @@ class Terrain(object):
         self._observers.append(observer)
 
 
+
+class SurfaceMeshVertices(record('update data important')):
+    """
+    Represent some pre-allocated, contiguous storage for surface mesh vertex
+    data.
+
+    @ivar update: A sequence-like object to which sequences of vertex position
+        and texture data may be assigned.  The shape should be (N * 6, 5).
+
+    @ivar data: A sequence-like object from which sequences of vertex position
+        and texture data may be read.  That's right, you can't read from
+        C{update}; read from this instead.
+
+    @ivar important: An index into C{update} and C{data} indicating the first
+        unused position.  When adding new data to C{update}, this should be
+        updated accordingly.
+    """
+
+
+
 _cube = {
     3: (0, 0, 0),  # Front
     4: (1, 0, 0),
@@ -134,15 +156,12 @@ class SurfaceMesh(object):
     A terrain change observer which constructs a surface mesh of the terrain
     from prism updates.
 
-    @ivar _surfaceFactory: A callable which will return a new array with shape
-        (N, 5) for some fairly large N.  Whenever an array is completely filled
+    @ivar _surfaceFactory: A callable which will return an empty
+        L{SurfaceMeshVertices} instance.  Whenever an array is completely filled
         with vertices, this is called to get a new one.
 
-    @ivar _surfaces: A list of two-tuples of arrays holding the triangle mesh of
-        the exposed terrain which should be rendered and an index giving the
-        first unused index in the corresponding array.  Each element of the
-        array contains position and texture information about one vertex of one
-        triangle, as (x, y, z, tx, ty).
+    @ivar _surfaces: A list of L{SurfaceMeshVertices} instances holding the
+        triangle mesh of the exposed terrain which should be rendered
 
     @ivar _voxelToSurface: A dictionary mapping the world position of a voxel to
         a pair indicating a slice of C{surface} which is displaying a face of
@@ -207,28 +226,31 @@ class SurfaceMesh(object):
 
     def _append(self, key, vertices):
         assert key not in self._voxelToSurface
-        pos = self._surfaces[-1][2]
+        surface = self._surfaces[-1]
+        pos = surface.important
         # XXX Bounds checking needed here.
-        self._surfaces[-1][0][pos:pos + len(vertices)] = vertices
+        surface.update[pos:pos + len(vertices)] = vertices
         self._voxelToSurface[key] = (pos, len(vertices))
-        self._surfaces[-1][2] += len(vertices)
+        surface.important += len(vertices)
 
 
     def _compact(self, x, y, z, face, start, length):
+        surface = self._surfaces[-1]
+
         # The surface mesh array will now end at this index.
-        end = self._surfaces[-1][2] - 6
+        end = surface.important - 6
 
         if start == end:
             # The vertices being removed by this compaction are at the end of
             # the important part of the surface mesh array.  That means we can
             # just subtract from the important marker instead of copying fresh
             # data on top of these vertices.
-            self._surfaces[-1][2] -= length
+            surface.important -= length
             return
 
         # Find the voxel that owns the vertices at the end of the surface mesh
         # array.
-        mx, my, mz = self._surfaces[-1][1][end][:3]
+        mx, my, mz = surface.data[end][:3]
 
         possibilities = [
             (mx - 1, my - 1, mz,     TOP),
@@ -254,10 +276,10 @@ class SurfaceMesh(object):
         # end of the surface mesh.  Now it's stored wherever we're overwriting.
         self._voxelToSurface[key] = (start, length)
         # Actually overwrite.
-        self._surfaces[-1][0][start:start + length] = self._surfaces[-1][1][
-            end:self._surfaces[-1][2]]
+        surface.update[start:start + length] = surface.data[
+            end:surface.important]
         # Note that the surface mesh is shorter now.
-        self._surfaces[-1][2] = end
+        surface.important = end
 
 
     def _removeVoxel(self, x, y, z):

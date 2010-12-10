@@ -28,7 +28,6 @@ from OpenGL.arrays.vbo import VBO
 
 import pygame.display, pygame.locals
 
-from twisted.python.log import msg
 from twisted.python.filepath import FilePath
 from twisted.internet.task import LoopingCall
 from twisted.internet import reactor
@@ -37,7 +36,8 @@ from epsilon.structlike import record
 
 from game import __file__ as gameFile
 from game.vector import Vector
-from game.terrain import UNKNOWN, GRASS, MOUNTAIN, DESERT, WATER, SurfaceMesh
+from game.terrain import (
+    UNKNOWN, GRASS, MOUNTAIN, DESERT, WATER, SurfaceMesh, SurfaceMeshVertices)
 from game.network import GetTerrain
 
 
@@ -491,8 +491,9 @@ class TerrainView(object):
 
     def _surfaceFactory(self):
         data = zeros((1000000, 5), 'f')
-        self._vbos.append([VBO(data), data, 0])
-        return self._vbos[-1]
+        result = SurfaceMeshVertices(VBO(data), data, 0)
+        self._vbos.append(result)
+        return result
 
 
     def _getImageForTerrain(self, terrainType):
