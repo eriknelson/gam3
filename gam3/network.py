@@ -4,12 +4,14 @@
 Network functionality of Gam3.
 """
 
+from twisted.python.log import msg
 from twisted.internet.protocol import ServerFactory
 from twisted.internet import reactor
 from twisted.protocols.amp import AMP
 
-from game.network import (Introduce, SetDirectionOf, NewPlayer,
-                          SetMyDirection, RemovePlayer, SetTerrain)
+from game.network import (
+    Introduce, SetDirectionOf, NewPlayer, SetMyDirection, RemovePlayer,
+    GetTerrain, SetTerrain)
 
 
 class Gam3Server(AMP):
@@ -87,7 +89,7 @@ class Gam3Server(AMP):
 
     def sendExistingState(self):
         """
-        Send information about terrain and connected players.
+        Send information about connected players.
         """
         self.sendExistingPlayers()
 
@@ -133,6 +135,20 @@ class Gam3Server(AMP):
         v = self.player.getPosition()
         return {'x': v.x, 'y': v.y, 'z': v.z}
     SetMyDirection.responder(setMyDirection)
+
+
+    def getTerrain(self, x, y, z):
+        """
+        The client would like terrain data from the given coordinates.
+        """
+        if x < 0 or y < 0 or z < 0:
+            return {}
+        voxels = self.world.terrain.voxels[x:x+8,y:y+2,z:z+8]
+        self.callRemote(
+            SetTerrain, x=x, y=y, z=z,
+            voxels=voxels)
+        return {}
+    GetTerrain.responder(getTerrain)
 
 
     def identifierForPlayer(self, player):

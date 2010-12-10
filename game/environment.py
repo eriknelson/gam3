@@ -77,8 +77,12 @@ class Environment(SimulationTime):
 
     @ivar initialPlayer: C{None} until an initial player is set, then whatever
         L{Player} it is set to.
+
+    @ivar network: A L{NetworkController} instance connected to the server for
+        the world this environment is a view on to.
     """
     initialPlayer = None
+    network = None
 
     def __init__(self, *a, **kw):
         SimulationTime.__init__(self, *a, **kw)
@@ -90,6 +94,14 @@ class Environment(SimulationTime):
         Set the initial player to the given player.
         """
         self.initialPlayer = player
+
+
+    def setNetwork(self, network):
+        """
+        Specify a connected L{NetworkController} instance which can be used to
+        communicate with the server.
+        """
+        self.network = network
 
 
     def addObserver(self, observer):

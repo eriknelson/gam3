@@ -13,13 +13,14 @@ import pygame
 from pygame.event import Event
 
 from game import __file__ as gameFile
-from game.terrain import GRASS, MOUNTAIN, DESERT, WATER
+from game.terrain import GRASS, MOUNTAIN, DESERT, WATER, loadTerrainFromString
 from game.view import (
-    Color, Scene,
-    Viewport, Window, loadImage, TerrainView, PlayerView)
+    Color, Scene, loadImage, quantize,
+    Viewport, Window, TerrainView, PlayerView)
 from game.test.util import MockSurface
 from game.controller import K_LEFT
 from game.environment import Environment
+from game.network import GetTerrain
 from game.player import Player
 from game.vector import Vector
 
@@ -28,10 +29,18 @@ class MockDisplay(object):
     """
     An object that is supposed to look like L{pygame.display}.
 
+    @ivar initialized: A C{bool} indicating whether the C{init} method has yet
+        been called.
+
     @ivar flipped: An integer giving the number of times C{flip} has
-    been called.
+        been called.
     """
+    initialized = False
     flipped = 0
+
+    def init(self):
+        self.initialized = True
+
 
     def flip(self):
         """
@@ -45,6 +54,9 @@ class MockDisplay(object):
         """
         Create a display surface for the given mode.
         """
+        if not self.initialized:
+            raise Exception(
+                "Cannot set display mode until init has been called.")
         self._screen = MockSurface("<display>", size)
         return self._screen
 
@@ -67,6 +79,37 @@ class MockView(object):
         Set the C{painted} attribute to True.
         """
         self.paints += 1
+
+
+
+class QuantizeTests(TestCase):
+    """
+    Tests for L{quantize}, a function used to find the corner of a chunk of
+    terrain to request from the server.
+    """
+    def test_nearZero(self):
+        """
+        L{quantize} returns C{0} for a value less than the quantization value.
+        """
+        self.assertEquals(quantize(12, 3), 0)
+
+
+    def test_positive(self):
+        """
+        In general, for positive values, L{quantize} returns the nearest value
+        which is a multiple of the quantization value and which is also smaller
+        than the value.
+        """
+        self.assertEquals(quantize(13, 15), 13)
+        self.assertEquals(quantize(13, 27), 26)
+
+
+    def test_negative(self):
+        """
+        Quantization follows the exact same rules for negative values.
+        """
+        self.assertEquals(quantize(13, -1), -13)
+        self.assertEquals(quantize(13, -14), -26)
 
 
 
@@ -119,8 +162,17 @@ class WindowTests(TestCase):
         The L{Window}'s default clock should be L{twisted.internet.reactor}.
         """
         from twisted.internet import reactor
-        window = Window(self.environment)
+        window = Window(self.environment, display=self.display)
         self.assertIdentical(window.clock, reactor)
+
+
+    def test_defaultDisplay(self):
+        """
+        The L{Window}'s default display should be L{pygame.display}.
+        """
+        from pygame import display
+        window = Window(self.environment)
+        self.assertIdentical(window.display, display)
 
 
     def test_submitTo(self):
@@ -152,6 +204,21 @@ class WindowTests(TestCase):
         self.event.events = [Event(pygame.KEYUP, key=pygame.K_LEFT)]
         self.window.handleInput()
         self.assertEquals(controller.ups, [K_LEFT])
+
+
+    def test_terrainRequested(self):
+        """
+        Periodically, if the player is near a coordinate for which terrain data
+        is not locally available, that data is requested from the server.
+        """
+        called = []
+        self.window._checkTerrain = lambda player: called.append(player)
+
+        controller = MockController(self.clock)
+        self.window.submitTo(controller)
+        self.clock.advance(0)
+
+        self.assertEquals(called, [controller.player])
 
 
     def test_playerCreated(self):
@@ -192,6 +259,144 @@ class WindowTests(TestCase):
         self.assertEquals(
             self.display._screen.size, self.window.viewport.viewSize)
 
+
+
+class CheckTerrainTests(TestCase):
+    """
+    Tests for L{Window._checkTerrain}, responsible for issuing L{GetTerrain}
+    requests when the player gets near unknown terrain.
+    """
+    def setUp(self):
+        calls = self.calls = []
+
+        class FakeNetwork(object):
+            def callRemote(self, command, **kw):
+                calls.append((command, kw))
+
+
+        self.clock = Clock()
+        self.environment = Environment(1, self.clock)
+        self.environment.setNetwork(FakeNetwork())
+        self.window = Window(
+            self.environment, clock=self.clock, display=MockDisplay())
+
+        # Chop this down for simplicity in the tests that don't care about it.
+        self.window.CHUNK_OFFSET = Vector(0, 0, 0)
+
+
+    def test_submitTo(self):
+        """
+        L{Window.submitTo} starts a loop which calls L{Window._checkTerrain}.
+        """
+        called = []
+        self.window._checkTerrain = called.append
+        controller = MockController(self.clock)
+        self.window.submitTo(controller)
+        self.assertEquals(called, [controller.player])
+        self.clock.advance(self.window.TERRAIN_CHECK_INTERVAL)
+        self.assertEquals(called, [controller.player] * 2)
+
+
+    def test_stop(self):
+        """
+        L{Window.stop} stops the loop which calls L{Window._checkTerrain}.
+        """
+        self.window.submitTo(MockController(self.clock))
+        self.window.go()
+        self.window.stop()
+        self.assertEquals(len(self.clock.calls), 0)
+
+
+    def test_requestExtendedTerrain(self):
+        """
+        L{Window._checkTerrain} issues L{GetTerrain} requests for the terrain at
+        the player's quantized position if that position is beyond the bounds of
+        the terrain array.
+        """
+        position = Vector(1, 2, 3)
+        player = Player(position, None, self.clock.seconds)
+
+        self.window._checkTerrain(player)
+
+        [(command, kw)] = self.calls
+        self.assertIdentical(command, GetTerrain)
+        self.assertEquals(
+            kw, {
+                'x': quantize(self.window.CHUNK_GRANULARITY.x, position.x),
+                'y': quantize(self.window.CHUNK_GRANULARITY.y, position.y),
+                'z': quantize(self.window.CHUNK_GRANULARITY.z, position.z)})
+
+
+    def test_requestUnknownTerrain(self):
+        """
+        L{Window._checkTerrain} issues L{GetTerrain} requests for the terrain at
+        the player's quantized position if the terrain at that position is
+        marked as L{UNKNOWN}.
+        """
+        position = Vector(1, 2, 3)
+        player = Player(position, None, self.clock.seconds)
+
+        g = self.window.CHUNK_GRANULARITY
+        self.environment.terrain.set(g.x, g.y, g.z, loadTerrainFromString("G"))
+
+        self.window._checkTerrain(player)
+
+        [(command, kw)] = self.calls
+        self.assertIdentical(command, GetTerrain)
+        self.assertEquals(
+            kw, {
+                'x': quantize(g.x, position.x),
+                'y': quantize(g.y, position.y),
+                'z': quantize(g.z, position.z)})
+
+
+    def test_requestNearbyUnknownTerrain(self):
+        """
+        L{Window._checkTerrain} issues L{GetTerrain} requests for the terrain in
+        quantized chunks adjacent to the player's position if the terrain in
+        those chunks is marked as L{UNKNOWN}.
+        """
+        self.window.CHUNK_GRANULARITY = Vector(2, 1, 3)
+        self.window.CHUNK_OFFSET = Vector(1, 1, 1)
+        pos = Vector(3, 4, 5)
+        player = Player(pos, None, self.clock.seconds)
+
+        self.window._checkTerrain(player)
+
+        self.assertEquals(
+            set([(x, y, z)
+                 for x in (0, 2, 4)
+                 for y in (3, 4, 5)
+                 for z in (0, 3, 6)]),
+            set([(c['x'], c['y'], c['z']) for (cmd, c) in self.calls]))
+
+        self.assertEquals(len(self.calls), 3 ** 3)
+
+
+
+    def test_knownTerrain(self):
+        """
+        If the terrain at the player's quantized position is already known, no
+        request for it is issued to the server by L{Window._checkTerrain}.
+        """
+        g = self.window.CHUNK_GRANULARITY = Vector(4, 3, 2)
+
+        position = Vector(123, 321, 213)
+        player = Player(position, None, self.clock.seconds)
+
+        x = "G" * int(g.x)
+        xz = (x + "\n") * int(g.z)
+        xyz = (xz + "\n") * int(g.y)
+
+        self.environment.terrain.set(
+            quantize(g.x, position.x),
+            quantize(g.y, position.y),
+            quantize(g.z, position.z),
+            loadTerrainFromString(xyz))
+
+        self.window._checkTerrain(player)
+
+        self.assertEquals(self.calls, [])
 
 
 

@@ -241,13 +241,9 @@ class UITests(TestCase):
         initialEvents = []
         def gotInitialPlayer(player):
             initialEvents.append(('player', player))
-        def gotTerrain(environment):
-            initialEvents.append(('environment', environment))
         self.ui.gotInitialPlayer = gotInitialPlayer
-        self.ui.gotTerrain = gotTerrain
         self.ui.gotIntroduced(environment)
-        self.assertEqual(initialEvents, [('environment', environment),
-                                         ('player', player)])
+        self.assertEquals(initialEvents, [('player', player)]),
 
 
     def test_gotInitialPlayer(self):
@@ -262,21 +258,6 @@ class UITests(TestCase):
         self.assertTrue(
             isinstance(window.controller, PlayerController))
         self.assertIdentical(window.controller.player, player)
-
-
-    def test_gotTerrain(self):
-        """
-        L{UI.gotTerrain} should pass the terrain it receives on to its
-        environment.
-        """
-        terrain = object()
-        window = self.ui.window = StubWindow(None, None)
-        self.ui.environment = Environment(10, Clock())
-        self.ui.gotTerrain(self.ui.environment)
-        [view] = window.scene._items
-        self.assertTrue(isinstance(view, TerrainView))
-        self.assertIdentical(view.environment, self.ui.environment)
-        self.assertIdentical(view.loader, loadImage)
 
 
     def test_noInitialPlayer(self):

@@ -4,8 +4,6 @@ Functionality related to the shape of the world.
 
 from numpy import array, zeros, empty
 
-from twisted.python.log import msg
-
 from game.vector import Vector
 
 EMPTY, GRASS, MOUNTAIN, DESERT, WATER, UNKNOWN = range(6)
@@ -134,12 +132,15 @@ class SurfaceMesh(object):
     A terrain change observer which constructs a surface mesh of the terrain
     from prism updates.
 
-    @ivar surface: A triangle mesh of the exposed terrain which should be
-        rendered.  Each element of the array contains position and texture
-        information about one vertex of one triangle, as (x, y, z, tx, ty, tz).
+    @ivar _surfaceFactory: A callable which will return a new array with shape
+        (N, 5) for some fairly large N.  Whenever an array is completely filled
+        with vertices, this is called to get a new one.
 
-    @ivar important: An index into C{surface} indicating the end of the useful
-        elements.  Elements beyond this are garbage to be ignored.
+    @ivar _surfaces: A list of two-tuples of arrays holding the triangle mesh of
+        the exposed terrain which should be rendered and an index giving the
+        first unused index in the corresponding array.  Each element of the
+        array contains position and texture information about one vertex of one
+        triangle, as (x, y, z, tx, ty).
 
     @ivar _voxelToSurface: A dictionary mapping the world position of a voxel to
         a pair indicating a slice of C{surface} which is displaying a face of
@@ -152,10 +153,11 @@ class SurfaceMesh(object):
     @ivar _textureExtent: A float indicating the distance between the sides of
         the textures.
     """
-    def __init__(self, terrain, textureOffsets=None, textureExtent=None):
+    def __init__(self, terrain, surfaceFactory, textureOffsets=None,
+                 textureExtent=None):
         self._terrain = terrain
-        self.surface = zeros((1000000, 5), dtype='f')
-        self.important = 0
+        self._surfaceFactory = surfaceFactory
+        self._surfaces = [surfaceFactory()]
         self._voxelToSurface = {}
         self._textureOffsets = textureOffsets
         self._textureExtent = textureExtent
@@ -197,20 +199,28 @@ class SurfaceMesh(object):
 
     def _append(self, key, vertices):
         assert key not in self._voxelToSurface
-        pos = self.important
+        pos = self._surfaces[-1][2]
         # XXX Bounds checking needed here.
-        self.surface[pos:pos + len(vertices)] = vertices
+        self._surfaces[-1][0][pos:pos + len(vertices)] = vertices
         self._voxelToSurface[key] = (pos, len(vertices))
-        self.important += len(vertices)
+        self._surfaces[-1][2] += len(vertices)
 
 
     def _compact(self, x, y, z, face, start, length):
         # The surface mesh array will now end at this index.
-        end = self.important - 6
+        end = self._surfaces[-1][2] - 6
+
+        if start == end:
+            # The vertices being removed by this compaction are at the end of
+            # the important part of the surface mesh array.  That means we can
+            # just subtract from the important marker instead of copying fresh
+            # data on top of these vertices.
+            self._surfaces[-1][2] -= length
+            return
 
         # Find the voxel that owns the vertices at the end of the surface mesh
         # array.
-        mx, my, mz = self.surface[end][:3]
+        mx, my, mz = self._surfaces[-1][1][end][:3]
 
         possibilities = [
             (mx - 1, my - 1, mz,     TOP),
@@ -233,24 +243,19 @@ class SurfaceMesh(object):
         # end of the surface mesh.  Now it's stored wherever we're overwriting.
         self._voxelToSurface[key] = (start, length)
         # Actually overwrite.
-        self.surface[start:start + length] = self.surface[end:self.important]
+        self._surfaces[-1][0][start:start + length] = self._surfaces[-1][1][
+            end:self._surfaces[-1][2]]
         # Note that the surface mesh is shorter now.
-        self.important = end
+        self._surfaces[-1][2] = end
 
 
     def _removeVoxel(self, x, y, z):
         for face in FACES:
             key = (x, y, z, face)
             if key in self._voxelToSurface:
+                # Get rid of the vertices for this face of this voxel.
                 begin, length = self._voxelToSurface.pop(key)
-                if begin + length == self.important:
-                    # If these voxels are at the end, just reduce
-                    # the top marker.
-                    self.important -= length
-                else:
-                    # Otherwise move some vertices from the end to
-                    # overwrite these.
-                    self._compact(x, y, z, face, begin, length)
+                self._compact(x, y, z, face, begin, length)
             else:
                 # If the voxel is missing a face, that's because it has a
                 # neighbor!  Append vertices for that neighbor's revealed face.
@@ -314,6 +319,23 @@ class SurfaceMesh(object):
                         self._makeFace(
                             face,
                             self._terrain.voxels[x, y, z], x, y, z))
+                else:
+                    # If the neighbor is not empty, then one of *its* faces is
+                    # now obscured, remove it.
+                    dx, dy, dz, rface = NEIGHBORS[face]
+                    nx, ny, nz = x + dx, y + dy, z + dz
+                    try:
+                        start, length = self._voxelToSurface.pop((
+                                nx, ny, nz, rface))
+                    except KeyError:
+                        # Except the neighbor's is not in the surface mesh.
+                        # This happens when a bunch of voxels appear at once,
+                        # and we skipped adding the neighbor face because we saw
+                        # this voxel (the one at x, y, z) and knew we'd just
+                        # have to remove it.
+                        pass
+                    else:
+                        self._compact(nx, ny, nz, rface, start, length)
 
 
     def changed(self, position, shape):

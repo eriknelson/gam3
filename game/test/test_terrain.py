@@ -3,7 +3,7 @@
 Tests for L{game.terrain}.
 """
 
-from numpy import array, concatenate
+from numpy import zeros, array, concatenate
 
 from twisted.trial.unittest import TestCase
 
@@ -168,6 +168,20 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
     """
     Tests for L{terrain.SurfaceMesh}.
     """
+    def surfaceFactory(self):
+        """
+        Give back a single pre-created array for the surface mesh to populate.
+        The array is initialized in C{setUp}.
+        """
+        if self.surfaceArray is None:
+            raise Exception(
+                "Already gave out the only surface - "
+                "these tests should only require one.")
+        surfaceArray = self.surfaceArray
+        self.surfaceArray = None
+        return surfaceArray
+
+
     def setUp(self):
         e = self.e = 0.125
 
@@ -185,8 +199,11 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
             MOUNTAIN: (0.5, 0.75),
             GRASS: (0.25, 0.5),
             }
+        vertices = zeros((1000, 5), 'f')
+        self.surfaceArray = self.mesh = [vertices, vertices, 0]
         self.terrain = Terrain()
-        self.surface = SurfaceMesh(self.terrain, self.texCoords, self.e)
+        self.surface = SurfaceMesh(
+            self.terrain, self.surfaceFactory, self.texCoords, self.e)
         self.terrain.addObserver(self.surface.changed)
 
 
@@ -275,7 +292,7 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
         texture = self.textureBase
         s, t = self.texCoords[GRASS]
         self.assertArraysEqual(
-            self.surface.surface[:self.surface.important],
+            self.mesh[0][:self.mesh[2]],
             array([x, y, z, s, t], 'f') + array(vertices + texture, 'f'))
 
         # And it should know where they are.
@@ -356,7 +373,7 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
 
         texture = self.textureBase
         self.assertArraysEqual(
-            self.surface.surface[:self.surface.important],
+            self.mesh[0][:self.mesh[2]],
             array([x, y, z, s, t], 'f') + array(
                 list(_top + texture) + list(_front + texture) +
                 list(_bottom + texture) +list(_back + texture) +
@@ -364,7 +381,7 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
                 'f'))
 
         # Six vertices per face, six faces
-        self.assertEquals(self.surface.important, 36)
+        self.assertEquals(self.mesh[2], 36)
 
 
     def test_unchangedVoxel(self):
@@ -384,7 +401,7 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
         self.test_oneVoxel()
         self.terrain.set(self.x, self.y, self.z, loadTerrainFromString("_"))
 
-        self.assertEquals(self.surface.important, 0)
+        self.assertEquals(self.mesh[2], 0)
 
 
     def test_twoVoxels(self):
@@ -402,7 +419,7 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
 
         texture = self.textureBase
         self.assertArraysEqual(
-            self.surface.surface[:self.surface.important],
+            self.mesh[0][:self.mesh[2]],
             concatenate((
                     # mountain
                     array([x, y, z, ms, mt], 'f') + array(
@@ -415,7 +432,7 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
                         list(_bottom + texture) + list(_back + texture) +
                         list(_right + texture), 'f'))))
         # Six vertices per face, ten faces
-        self.assertEquals(self.surface.important, 60)
+        self.assertEquals(self.mesh[2], 60)
 
 
     def test_removeSecondVoxel(self):
@@ -432,13 +449,14 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
         s, t = self.texCoords[GRASS]
         offset = array([x + 2, y, z, s, t], 'f') + self.textureBase
         self.assertVertices(
-            self.surface,
+            self.mesh[0],
             [(RIGHT, _right + offset),
              (LEFT, _left + offset),
              (BACK, _back + offset),
              (BOTTOM, _bottom + offset),
              (FRONT, _front + offset),
-             (TOP, _top + offset)])
+             (TOP, _top + offset)],
+            36)
 
 
     def test_existingTerrain(self):
@@ -449,24 +467,27 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
         x, y, z = 3, 2, 1
         terrain = Terrain()
         terrain.set(x, y, z, loadTerrainFromString("M"))
-        surface = SurfaceMesh(terrain, self.texCoords, self.e)
+        self.surfaceArray = self.mesh
+        SurfaceMesh(
+            terrain, self.surfaceFactory, self.texCoords, self.e)
         s, t = self.texCoords[MOUNTAIN]
 
         offset = array([x, y, z, s, t], 'f') + self.textureBase
         self.assertVertices(
-            surface,
+            self.mesh[0],
             [(TOP, _top + offset),
              (FRONT, _front + offset),
              (BOTTOM, _bottom + offset),
              (BACK, _back + offset),
              (LEFT, _left + offset),
-             (RIGHT, _right + offset)])
+             (RIGHT, _right + offset)],
+            36)
 
 
-    def assertVertices(self, surface, expected):
+    def assertVertices(self, surface, expected, total):
         pieces = []
-        for i in range(0, surface.important, 6):
-            pieces.append(surface.surface[i:i + 6])
+        for i in range(0, total, 6):
+            pieces.append(surface[i:i + 6])
 
         notFound = []
         for (face, vertices) in expected:
@@ -502,10 +523,41 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
         s, t = self.texCoords[MOUNTAIN]
         offset = array([x + 1, y, z, s, t], 'f') + self.textureBase
         self.assertVertices(
-            self.surface,
+            self.mesh[0],
             [(TOP, _top + offset),
              (FRONT, _front + offset),
              (BOTTOM, _bottom + offset),
              (BACK, _back + offset),
              (LEFT, _left + offset),
-             (RIGHT, _right + offset)])
+             (RIGHT, _right + offset)],
+            36)
+
+
+    def test_obscuredFace(self):
+        """
+        When a voxel becomes non-empty and is adjacent to another non-empty
+        voxel, the vertices for the obscured face of the original voxel are
+        removed from the surface mesh array.
+        """
+        x, y, z = 1, 3, 5
+        self.terrain.set(x, y, z, loadTerrainFromString("_M"))
+        self.terrain.set(x, y, z, loadTerrainFromString("G"))
+
+        gs, gt = self.texCoords[GRASS]
+        ms, mt = self.texCoords[MOUNTAIN]
+        goffset = array([x, y, z, gs, gt], 'f') + self.textureBase
+        moffset = array([x + 1, y, z, ms, mt], 'f') + self.textureBase
+        self.assertVertices(
+            self.mesh[0],
+            [(TOP, _top + goffset),
+             (FRONT, _front + goffset),
+             (BOTTOM, _bottom + goffset),
+             (BACK, _back + goffset),
+             (LEFT, _left + goffset),
+
+             (TOP, _top + moffset),
+             (FRONT, _front + moffset),
+             (BOTTOM, _bottom + moffset),
+             (BACK, _back + moffset),
+             (RIGHT, _right + moffset)],
+            60)

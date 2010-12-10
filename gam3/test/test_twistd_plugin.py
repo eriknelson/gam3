@@ -18,7 +18,7 @@ from twisted.plugins.gam3_twistd import gam3plugin
 from gam3.network import Gam3Factory
 from gam3.world import TCP_SERVICE_NAME, GAM3_SERVICE_NAME, Gam3Service, World
 from game.test.util import ArrayMixin
-from game.terrain import loadTerrainFromString
+from game.terrain import GRASS, MOUNTAIN, DESERT, WATER, Terrain
 
 
 class TwistdPluginTests(TestCase, ArrayMixin):
@@ -108,6 +108,10 @@ class TwistdPluginTests(TestCase, ArrayMixin):
         service = gam3plugin.makeService({
                 "port": 123, 'log-directory': None, 'terrain': terrain})
         gam3 = service.getServiceNamed(GAM3_SERVICE_NAME)
-        self.assertArraysEqual(
-            gam3.world.terrain,
-            loadTerrainFromString("GMDW"))
+        self.assertIsInstance(gam3.world.terrain, Terrain)
+        self.assertEquals(
+            gam3.world.terrain.dict(),
+            {(0, 0, 0): GRASS,
+             (1, 0, 0): MOUNTAIN,
+             (2, 0, 0): DESERT,
+             (3, 0, 0): WATER})
