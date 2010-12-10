@@ -343,6 +343,28 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
         self._compactTest(RIGHT, _right)
 
 
+    def test_compactFailure(self):
+        """
+        If the vertices at the end of the surface mesh array cannot be
+        associated with a face, an error is logged and the array is not changed.
+        """
+        # Stick some nice vertices in there
+        first = self.surface._makeFace(FRONT, GRASS, 1, 2, 3)
+        self.surface._append((1, 2, 3, FRONT), first)
+
+        second = self.surface._makeFace(BACK, GRASS, 3, 2, 1)
+        # Mangle it so it won't be recognized - this is probably a simulation of
+        # a bug somewhere in the terrain module.
+        second[0] = [10, 11, 12, 13, 14]
+        self.surface._append((3, 2, 1, BACK), second)
+
+        self.surface._compact(1, 2, 3, FRONT, 0, 6)
+        self.assertEquals(len(self.flushLoggedErrors()), 1)
+        self.assertArraysEqual(self.surface.surface[:6], first)
+        self.assertArraysEqual(self.surface.surface[6:12], second)
+        self.assertEquals(self.surface.important, 12)
+
+
     def test_oneVoxel(self):
         """
         When there is no other terrain and one non-empty voxel is set, all six
