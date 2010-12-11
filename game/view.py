@@ -605,7 +605,7 @@ class PlayerView(record('player')):
         # Slide back because the pyramid below is centered at 0.5, 0, 0.5
         # instead of at the origin.  Without this it rotates around its corner
         # instead of around its center.
-        glTranslate(-0.5, 1, -0.5)
+        glTranslate(-0.5, 0, -0.5)
 
         glColor(1.0, 1.0, 1.0)
 
