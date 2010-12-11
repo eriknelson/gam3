@@ -9,7 +9,7 @@ from twisted.internet.protocol import ClientFactory, Protocol
 from twisted.internet.defer import succeed
 from twisted.internet.task import Clock
 
-from game.view import Scene, TerrainView, loadImage
+from game.view import Scene
 from game.controller import PlayerController
 from game.network import NetworkController
 from game.environment import Environment

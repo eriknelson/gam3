@@ -6,7 +6,7 @@ from game.vector import Vector
 from game.environment import Environment
 from game.terrain import loadTerrainFromString
 from game.view import (
-    Window, StaticLight, Sphere, Color, TerrainView, PlayerView)
+    Window, StaticLight, Sphere, Color, PlayerView)
 from game.player import Player
 from game.controller import PlayerController
 
