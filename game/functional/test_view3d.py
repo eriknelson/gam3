@@ -6,7 +6,7 @@ from game.vector import Vector
 from game.environment import Environment
 from game.terrain import loadTerrainFromString
 from game.view import (
-    Window, StaticLight, Sphere, Color, TerrainView, PlayerView, loadImage)
+    Window, StaticLight, Sphere, Color, PlayerView)
 from game.player import Player
 from game.controller import PlayerController
 
@@ -144,8 +144,7 @@ class TerrainViewTests(SceneMixin, TestCase):
     def setUp(self):
         SceneMixin.setUp(self)
         self.window.scene.camera.position = Vector(-0.5, 1.1, 5)
-        self.view = TerrainView(self.environment, loadImage)
-        self.window.scene.add(self.view)
+        self.view = self.window.scene._items[0]
 
 
     def test_alone(self):
@@ -197,6 +196,25 @@ class TerrainViewTests(SceneMixin, TestCase):
                 "GMD\n"
                 "MDG\n"
                 "DGM\n"))
+        return self.window.go()
+
+
+    def test_dynamicUpdate(self):
+        """
+        One green cube should appear, then a grey cube to its left, then the
+        green cube should disappear.
+        """
+        self.window.scene.camera.position = Vector(2, 1.1, 5)
+
+        reactor.callLater(
+            1.0, self.terrain.set, 1, 0, 0, loadTerrainFromString("G"))
+
+        reactor.callLater(
+            2.0, self.terrain.set, 0, 0, 0, loadTerrainFromString("M"))
+
+        reactor.callLater(
+            3.0, self.terrain.set, 1, 0, 0, loadTerrainFromString("_"))
+
         return self.window.go()
 
 

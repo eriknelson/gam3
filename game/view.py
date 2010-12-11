@@ -6,6 +6,8 @@ View code!
 
 from __future__ import division
 
+from numpy import zeros
+
 from OpenGL.GL import (
     GL_PROJECTION, GL_MODELVIEW, GL_RGBA, GL_UNSIGNED_BYTE,
     GL_COLOR_MATERIAL, GL_LIGHTING, GL_DEPTH_TEST, GL_LIGHT0, GL_POSITION,
@@ -34,7 +36,10 @@ from epsilon.structlike import record
 
 from game import __file__ as gameFile
 from game.vector import Vector
-from game.terrain import GRASS, MOUNTAIN, DESERT, WATER, SurfaceMesh
+from game.terrain import (
+    UNKNOWN, GRASS, MOUNTAIN, DESERT, WATER, CHUNK_GRANULARITY,
+    SurfaceMesh, SurfaceMeshVertices)
+from game.network import GetTerrain
 
 
 def loadImage(path):
@@ -53,6 +58,19 @@ class Color(record("red green blue")):
     """
     An RGB color.
     """
+
+
+
+def quantize(quantization, value):
+    """
+    Return the nearest integer smaller than C{value} which is a multiple of
+    C{quantization}.
+
+    @type quantization: C{int}
+    @type value: C{int}
+    @rtype: C{int}
+    """
+    return value - value % quantization
 
 
 
@@ -113,7 +131,7 @@ class FollowCamera(record('player')):
         # XXX Put the camera somewhere in the middle-ish of the player model.
         # This is a wild guess for now, camera position data should be available
         # from the model at some later point.
-        glTranslate(-v.x - 0.5, -v.y - 1, -v.z - 0.5)
+        glTranslate(-v.x - 0.5, -v.y - 2, -v.z - 0.5)
 
 
 
@@ -214,6 +232,7 @@ class Viewport(object):
         @return: A two-tuple of ints giving a position in the view coordinate
         system.
         """
+        # XXX Dead code?
         return (
             position[0] - self.modelPosition[0],
             self.viewSize[1] - (position[1] - self.modelPosition[1]))
@@ -257,8 +276,13 @@ class Window(object):
     A top-level PyGame-based window. This acts as a container for
     other view objects.
 
-#     @ivar environment: The L{game.environment.Environment} which is being
-#         displayed.
+    @ivar CHUNK_GRANULARITY: A L{Vector} giving the dimensions of terrain data
+        which will be received from the server.  Keeping this fixed means that
+        only a single coordinate needs to be checked to determine if terrain
+        data is needed for a prism of this size.
+
+    @ivar environment: The L{game.environment.Environment} which is being
+        displayed.
     @ivar clock: Something providing
         L{twisted.internet.interfaces.IReactorTime}.
     @ivar screen: The L{pygame.Surface} which will be drawn to.
@@ -268,23 +292,31 @@ class Window(object):
 
     @ivar display: Something like L{pygame.display}.
     @ivar event: Something like L{pygame.event}.
+
+    @ivar _terrainCheck: A L{LoopingCall} to check check for missing terrain and
+        request it from the server.
     """
     screen = None
+    _terrainCheck = None
+
+    CHUNK_GRANULARITY = CHUNK_GRANULARITY
+
 
     def __init__(self,
                  environment,
                  clock=reactor,
                  display=pygame.display,
                  event=pygame.event):
-        environment.addObserver(self)
         self.viewport = Viewport((0, 0), (800, 600))
+        self.environment = environment
+        self.environment.addObserver(self)
         self.clock = clock
         self.display = display
         self.controller = None
         self.event = event
         self.scene = Scene()
+        self.scene.add(TerrainView(environment, loadImage))
         self.scene.camera = StaticCamera(Vector(0, 0, 0), Vector(0, 0, 0))
-
 
 
     def paint(self):
@@ -317,6 +349,48 @@ class Window(object):
                     pygame.mouse.set_visible(not pygame.mouse.set_visible(True))
 
 
+    # The interval at which to check to see if more terrain data must be
+    # requested.
+    TERRAIN_CHECK_INTERVAL = 2
+
+    # The distance in chunks in each direction to look around the player's
+    # position for more missing terrain to request.
+    CHUNK_OFFSET = Vector(2, 0, 2)
+
+    def _checkTerrain(self, player):
+        """
+        Examine the player's position and the currently known terrain data and
+        sometimes request more terrain data from the server.
+        """
+        terrain = self.environment.terrain
+        network = self.environment.network
+        if network is None:
+            return
+
+        s = player.getPosition()
+
+        g = self.CHUNK_GRANULARITY
+        x = int(quantize(g.x, s.x))
+        y = int(quantize(g.y, s.y))
+        z = int(quantize(g.z, s.z))
+
+        dx = int(self.CHUNK_OFFSET.x * g.x)
+        dy = int(self.CHUNK_OFFSET.y * g.y)
+        dz = int(self.CHUNK_OFFSET.z * g.z)
+        for px in range(x - dx, x + dx + 1, int(g.x)):
+            for py in range(y - dy, y + dy + 1, int(g.y)):
+                for pz in range(z - dz, z + dz + 1, int(g.z)):
+
+                    if px < 0 or py < 0 or pz < 0:
+                        continue
+
+                    if px >= terrain.voxels.shape[0] or \
+                            py >= terrain.voxels.shape[1] or \
+                            pz >= terrain.voxels.shape[2] or \
+                            terrain.voxels[px, py, pz] == UNKNOWN:
+                        # XXX Add an errback
+                        network.callRemote(GetTerrain, x=px, y=py, z=pz)
+
 
     def submitTo(self, controller):
         """
@@ -324,6 +398,10 @@ class Window(object):
         events.
         """
         self.controller = controller
+        self._terrainCheck = LoopingCall(self._checkTerrain, controller.player)
+        self._terrainCheck.clock = self.clock
+        # XXX Needs an errback
+        self._terrainCheck.start(self.TERRAIN_CHECK_INTERVAL)
         # XXX Next line untested
         self.scene.camera = FollowCamera(controller.player)
 
@@ -334,7 +412,7 @@ class Window(object):
 
         @return: A Deferred that fires when this window is closed by the user.
         """
-        pygame.init()
+        self.display.init()
         self.screen = self.display.set_mode(
             self.viewport.viewSize,
             pygame.locals.DOUBLEBUF | pygame.locals.OPENGL)
@@ -354,6 +432,8 @@ class Window(object):
         """
         Stop updating this window and handling events for it.
         """
+        if self._terrainCheck is not None:
+            self._terrainCheck.stop()
         self._inputCall.stop()
 
 
@@ -397,16 +477,26 @@ class TerrainView(object):
 
     _texture = None
 
+    _datapath = FilePath(gameFile).sibling('data')
+
     def __init__(self, environment, loader):
         self._images = {}
         self.loader = loader
+        self._vbos = []
         if environment is not None:
             self._coord, self._ext = self._getTextureForTerrain()
             self.environment = environment
             self._surface = SurfaceMesh(
-                environment.terrain, self._coord, self._ext)
+                environment.terrain, self._surfaceFactory, self._coord,
+                self._ext)
             self.environment.terrain.addObserver(self._surface.changed)
-            self._vbo = VBO(self._surface.surface)
+
+
+    def _surfaceFactory(self):
+        data = zeros((1000000, 5), 'f')
+        result = SurfaceMeshVertices(VBO(data), data, 0)
+        self._vbos.append(result)
+        return result
 
 
     def _getImageForTerrain(self, terrainType):
@@ -418,7 +508,7 @@ class TerrainView(object):
         """
         if terrainType not in self._images:
             image = self.loader(
-                FilePath(gameFile).sibling('data').child(self._files[terrainType]))
+                self._datapath.child(self._files[terrainType]))
             self._images[terrainType] = image
         return self._images[terrainType]
 
@@ -488,14 +578,14 @@ class TerrainView(object):
         glBindTexture(GL_TEXTURE_2D, self._texture)
         glEnableClientState(GL_VERTEX_ARRAY)
         glEnableClientState(GL_TEXTURE_COORD_ARRAY)
-        self._vbo.bind()
-        glVertexPointer(3, GL_FLOAT, 4 * 5, self._vbo)
-        glTexCoordPointer(2, GL_FLOAT, 4 * 5, self._vbo + (4 * 3))
-#         glPushMatrix()
-#         glTranslate(x, y, z)
-        glDrawArrays(GL_TRIANGLES, 0, self._surface.important)
-#         glPopMatrix()
-        self._vbo.unbind()
+        for surface in self._vbos:
+            vbo = surface.update
+            length = surface.important
+            vbo.bind()
+            glVertexPointer(3, GL_FLOAT, 4 * 5, vbo)
+            glTexCoordPointer(2, GL_FLOAT, 4 * 5, vbo + (4 * 3))
+            glDrawArrays(GL_TRIANGLES, 0, length)
+            vbo.unbind()
         glDisableClientState(GL_VERTEX_ARRAY)
         glDisableClientState(GL_TEXTURE_COORD_ARRAY)
         glBindTexture(GL_TEXTURE_2D, 0)

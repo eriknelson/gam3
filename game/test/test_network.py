@@ -13,7 +13,7 @@ from game.test.util import (
 from game.environment import Environment
 from game.network import (Direction, Introduce, SetDirectionOf,
                           NetworkController, NewPlayer, SetMyDirection,
-                          RemovePlayer, SetTerrain, Terrain)
+                          RemovePlayer, GetTerrain, SetTerrain, Terrain)
 from game.direction import FORWARD, BACKWARD, LEFT, RIGHT
 from game.terrain import (
     WATER, GRASS, DESERT, MOUNTAIN, loadTerrainFromString)
@@ -215,6 +215,19 @@ class TerrainArgumentTests(TestCase):
         # Can't compare dicts directly, because numpy arrays are weird.
         self.assertEquals(objects.keys(), ["voxels"])
         self.assertTrue((objects["voxels"] == self.array).all())
+
+
+
+class GetTerrainCommandTests(CommandTestMixin, TestCase):
+    """
+    Tests for L{GetTerrain}.
+    """
+    command = GetTerrain
+
+    argumentObjects = {'x': 2, 'y': 7, 'z': 13}
+    argumentStrings = {'x': '2', 'y': '7', 'z': '13'}
+
+    responseObjects = responseStrings = {}
 
 
 
@@ -484,11 +497,13 @@ class ControllerTests(TestCase, PlayerCreationMixin, ArrayMixin):
 
         self._assertThingsAboutPlayerCreation(
             self.controller.environment, Vector(x, y, z), speed)
-        self.assertTrue(isinstance(self.controller.environment, Environment))
-        self.assertEqual(self.controller.environment.granularity, granularity)
-        self.assertEqual(self.controller.environment.platformClock, self.clock)
-        introduced.addCallback(self.assertIdentical,
-                               self.controller.environment)
+        self.assertIsInstance(self.controller.environment, Environment)
+        self.assertEquals(self.controller.environment.granularity, granularity)
+        self.assertEquals(self.controller.environment.platformClock, self.clock)
+        self.assertIdentical(
+            self.controller.environment.network, self.controller)
+        introduced.addCallback(
+            self.assertIdentical, self.controller.environment)
         return introduced
 
 
@@ -769,3 +784,4 @@ class ControllerTests(TestCase, PlayerCreationMixin, ArrayMixin):
                  (2, 0, 0): GRASS})
         d.addCallback(gotResult)
         return d
+
