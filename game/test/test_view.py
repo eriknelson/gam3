@@ -479,6 +479,9 @@ class TerrainViewTests(TestCase):
         self.assertEqual(
             paths, [FilePath(gameFile).sibling('data').child(result)])
 
+        # Additionally, it is idempotent.
+        self.assertIdentical(image, view._getImageForTerrain(type))
+
 
     def test_getImageForGrass(self):
         """
