@@ -40,19 +40,26 @@ class _Gam3Plugin(object):
 
         @param options: mapping of configuration
         """
+        from pygame.image import load
+
         from gam3.network import Gam3Factory
         from gam3.world import (
             TCP_SERVICE_NAME, GAM3_SERVICE_NAME, Gam3Service, World)
-        from game.terrain import loadTerrainFromString
+        from game.terrain import loadTerrainFromString, loadTerrainFromSurface
         from twisted.python.filepath import FilePath
         from twisted.internet import reactor
         from twisted.application.service import MultiService
         from twisted.protocols.policies import TrafficLoggingFactory
 
         world = World(granularity=100, platformClock=reactor)
-        if options['terrain']:
-            raw = FilePath(options['terrain']).getContent()
-            world.terrain.set(0, 0, 0, loadTerrainFromString(raw))
+        terrain = options['terrain']
+        if terrain:
+            if terrain.endswith('.png'):
+                voxels = loadTerrainFromSurface(load(terrain)).voxels
+            else:
+                raw = FilePath(terrain).getContent()
+                voxels = loadTerrainFromString(raw)
+            world.terrain.set(0, 0, 0, voxels)
 
         service = MultiService()
 

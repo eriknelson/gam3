@@ -7,6 +7,9 @@ from os.path import join
 
 from zope.interface.verify import verifyObject
 
+from pygame import Surface
+from pygame.image import save
+
 from twisted.python.filepath import FilePath
 from twisted.trial.unittest import TestCase
 from twisted.application.service import IServiceMaker
@@ -99,9 +102,10 @@ class TwistdPluginTests(TestCase, ArrayMixin):
         self.assertEqual(world.platformClock, reactor)
 
 
-    def test_terrain(self):
+    def test_loadTextTerrain(self):
         """
-        If the terrain option is specified, terrain data is loaded from it.
+        If the terrain option is specified as a file containing text-based
+        terrain data, terrain data is loaded from it.
         """
         terrain = self.mktemp()
         FilePath(terrain).setContent("GMDW")
@@ -115,3 +119,26 @@ class TwistdPluginTests(TestCase, ArrayMixin):
              (1, 0, 0): MOUNTAIN,
              (2, 0, 0): DESERT,
              (3, 0, 0): WATER})
+
+
+    def test_loadImageTerrain(self):
+        """
+        If the terrain option is specified as a file containing image-based
+        terrain data, terrain data is loaded from it.
+        """
+        temp = FilePath(self.mktemp())
+        temp.makedirs()
+        terrain = temp.child("terrain.png")
+        surface = Surface((2, 1))
+        surface.set_at((0, 0), (1, 0, 0))
+        surface.set_at((1, 0), (3, 0, 0))
+        save(surface, terrain.path)
+
+        service = gam3plugin.makeService({
+                "port": 123, "log-directory": None, "terrain": terrain.path})
+        gam3 = service.getServiceNamed(GAM3_SERVICE_NAME)
+        self.assertEquals(
+            gam3.world.terrain.dict(),
+            {(1, 0, 0): MOUNTAIN, (0, 0, 0): GRASS,
+             (1, 1, 0): MOUNTAIN,
+             (1, 2, 0): GRASS})

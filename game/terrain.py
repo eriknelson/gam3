@@ -48,6 +48,27 @@ def loadTerrainFromString(map):
     return voxels
 
 
+def loadTerrainFromSurface(surface):
+    """
+    Load terrain from the given map image.  The image represents three
+    dimensional terrain data with x varying fastest and z varying slowest and y
+    given by the red component of the pixel data at each position..
+
+    @type surface: L{pygame.Surface}
+
+    @return: A L{Terrain} populated with terrain data from the surface.
+    """
+    result = Terrain()
+    for x in range(surface.get_width()):
+        for z in range(surface.get_height()):
+            r, g, b, a = surface.get_at((x, z))
+            voxels = empty((1, r, 1), 'b')
+            voxels[:] = MOUNTAIN
+            voxels[0, r - 1, 0] = GRASS
+            result.set(x, 0, z, voxels)
+    return result
+
+
 class Terrain(object):
     """
     @ivar voxels:
