@@ -5,6 +5,8 @@ Tests for L{game.terrain}.
 
 from numpy import zeros, array, concatenate
 
+from pygame import Surface
+
 from twisted.trial.unittest import TestCase
 
 from game.test.util import ArrayMixin
@@ -13,6 +15,7 @@ from game.terrain import (
     LEFT, RIGHT, TOP, BOTTOM, FRONT, BACK,
     UNKNOWN, EMPTY, GRASS, MOUNTAIN, DESERT, WATER,
     Terrain, SurfaceMesh, SurfaceMeshVertices, loadTerrainFromString,
+    loadTerrainFromSurface,
     _top, _front, _bottom, _back, _left, _right)
 
 
@@ -584,3 +587,65 @@ class SurfaceMeshTests(TestCase, ArrayMixin):
              (BACK, _back + moffset),
              (RIGHT, _right + moffset)],
             60)
+
+
+
+class LoadTerrainFromSurfaceTests(TestCase):
+    """
+    Tests for L{loadTerrainFromSurface}.
+    """
+    def test_loadEmpty(self):
+        """
+        If an empty surface is passed to L{loadTerrainFromSurface}, a L{Terrain}
+        with no data is returned.
+        """
+        terrain = loadTerrainFromSurface(Surface((0, 0)))
+        self.assertIsInstance(terrain, Terrain)
+        self.assertEquals(terrain.dict(), {})
+
+
+    def test_height(self):
+        """
+        L{loadTerrainFromSurface} uses the red color component to determine how
+        many voxels to stack.
+        """
+        surface = Surface((1, 1))
+        surface.set_at((0, 0), (3, 0, 0))
+        terrain = loadTerrainFromSurface(surface)
+        self.assertEquals(
+            terrain.dict(),
+            {(0, 0, 0): MOUNTAIN,
+             (0, 1, 0): MOUNTAIN,
+             (0, 2, 0): GRASS})
+
+
+    def test_varyingX(self):
+        """
+        L{loadTerrainFromSurface} varies the x coordinate of the loaded terrain
+        with the x coordinate of the image data.
+        """
+        surface = Surface((2, 1))
+        surface.set_at((0, 0), (3, 0, 0))
+        surface.set_at((1, 0), (2, 0, 0))
+        terrain = loadTerrainFromSurface(surface)
+        self.assertEquals(
+            terrain.dict(),
+            {(0, 0, 0): MOUNTAIN, (1, 0, 0): MOUNTAIN,
+             (0, 1, 0): MOUNTAIN, (1, 1, 0): GRASS,
+             (0, 2, 0): GRASS})
+
+
+    def test_varyingZ(self):
+        """
+        L{loadTerrainFromSurface} varies the z coordinate of the loaded terrain
+        with the y coordinate of the image data.
+        """
+        surface = Surface((1, 2))
+        surface.set_at((0, 0), (3, 0, 0))
+        surface.set_at((0, 1), (2, 0, 0))
+        terrain = loadTerrainFromSurface(surface)
+        self.assertEquals(
+            terrain.dict(),
+            {(0, 0, 0): MOUNTAIN, (0, 0, 1): MOUNTAIN,
+             (0, 1, 0): MOUNTAIN, (0, 1, 1): GRASS,
+             (0, 2, 0): GRASS})

@@ -399,7 +399,8 @@ class ControllerTests(TestCase, PlayerCreationMixin, ArrayMixin):
         objects and object identifiers.
         """
         self.controller.addModelObject(self.identifier, self.player)
-        self.assertEqual(
+        self.controller.addModelObject(321, self.makePlayer(Vector(3, 2, 1)))
+        self.assertEquals(
             self.controller.identifierByObject(self.player),
             self.identifier)
 

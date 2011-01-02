@@ -295,6 +295,10 @@ class Window(object):
 
     @ivar _terrainCheck: A L{LoopingCall} to check check for missing terrain and
         request it from the server.
+
+    @ivar _playerViews: A mapping from known L{Player} instances to
+        corresponding L{PlayerView} instances which have been added to the
+        scene.
     """
     screen = None
     _terrainCheck = None
@@ -317,6 +321,7 @@ class Window(object):
         self.scene = Scene()
         self.scene.add(TerrainView(environment, loadImage))
         self.scene.camera = StaticCamera(Vector(0, 0, 0), Vector(0, 0, 0))
+        self._playerViews = {}
 
 
     def paint(self):
@@ -441,17 +446,16 @@ class Window(object):
         """
         Create a L{PlayerView}.
         """
-        self.scene.add(PlayerView(player))
+        self._playerViews[player] = view = PlayerView(player)
+        self.scene.add(view)
 
 
     def playerRemoved(self, player):
         """
         Remove a L{PlayerView}.
         """
-        for view in self.scene._items:
-            if isinstance(view, PlayerView) and view.player is player:
-                self.scene._items.remove(view)
-                return
+        view = self._playerViews.pop(player)
+        self.scene._items.remove(view)
 
 
 
