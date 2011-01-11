@@ -649,3 +649,14 @@ class LoadTerrainFromSurfaceTests(TestCase):
             {(0, 0, 0): MOUNTAIN, (0, 0, 1): MOUNTAIN,
              (0, 1, 0): MOUNTAIN, (0, 1, 1): GRASS,
              (0, 2, 0): GRASS})
+
+
+    def test_bottom(self):
+        """
+        L{loadTerrainFromSurface} places a single C{GRASS} voxel for a
+        zero-valued pixel in the image data.
+        """
+        surface = Surface((1, 1))
+        surface.set_at((0, 0), (0, 0, 0))
+        terrain = loadTerrainFromSurface(surface)
+        self.assertEquals(terrain.dict(), {(0, 0, 0): GRASS})

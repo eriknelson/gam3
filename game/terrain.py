@@ -59,9 +59,15 @@ def loadTerrainFromSurface(surface):
     @return: A L{Terrain} populated with terrain data from the surface.
     """
     result = Terrain()
+    # Force it to be large enough right away, instead of scaling it up in bits
+    # and pieces which is much slower and fragments memory much more.
+    result.set(
+        surface.get_width() - 1, 255, surface.get_height() - 1,
+        empty((1, 1, 1), 'b'))
     for x in range(surface.get_width()):
         for z in range(surface.get_height()):
             r, g, b, a = surface.get_at((x, z))
+            r = max(1, r)
             voxels = empty((1, r, 1), 'b')
             voxels[:] = MOUNTAIN
             voxels[0, r - 1, 0] = GRASS
