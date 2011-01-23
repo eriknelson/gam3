@@ -51,13 +51,27 @@ class MouseInputTests(SceneMixin, TestCase):
     """
     Tests for mouse input.
     """
+    def _movementTest(self, grab):
+        self.window.submitTo(StdoutReportingController(reactor, self.window))
+        if grab:
+            reactor.callLater(0, self.window._handleEvent, Event(MOUSEBUTTONUP))
+        return self.window.go()
+
+
     def test_movement(self):
         """
-        When the mouse moves, the direction of movement is written to stdout.
+        When the mouse is grabbed and moves, the direction of movement is
+        written to stdout.
         """
-        self.window.submitTo(StdoutReportingController(reactor, self.window))
-        reactor.callLater(0, self.window._handleEvent, Event(MOUSEBUTTONUP))
-        return self.window.go()
+        return self._movementTest(True)
+
+
+    def test_noMovement(self):
+        """
+        When the mouse is not grabbed and moves, the movement is ignored (no
+        output is produced).
+        """
+        return self._movementTest(False)
 
 
     def test_grab(self):
