@@ -61,9 +61,11 @@ def loadTerrainFromSurface(surface):
     result = Terrain()
     # Force it to be large enough right away, instead of scaling it up in bits
     # and pieces which is much slower and fragments memory much more.
+    unknown = zeros((1, 1, 1), 'b')
+    unknown[0, 0, 0] = UNKNOWN
     result.set(
         surface.get_width() - 1, 255, surface.get_height() - 1,
-        empty((1, 1, 1), 'b'))
+        unknown)
     for x in range(surface.get_width()):
         for z in range(surface.get_height()):
             r, g, b, a = surface.get_at((x, z))
