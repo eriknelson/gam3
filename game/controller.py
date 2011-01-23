@@ -5,7 +5,9 @@ Input handling.
 """
 
 from pygame import (
-    K_LEFT, K_RIGHT, K_UP, K_DOWN)
+    K_LEFT, K_RIGHT, K_UP, K_DOWN,
+    K_w, K_a, K_s, K_d
+)
 
 from game.direction import (
     FORWARD, BACKWARD, LEFT, RIGHT,
@@ -17,6 +19,10 @@ KEYS_TO_DIRECTIONS = {
     K_RIGHT: RIGHT,
     K_UP: FORWARD,
     K_DOWN: BACKWARD,
+    K_w: FORWARD,
+    K_a: LEFT,
+    K_s: BACKWARD,
+    K_d: RIGHT,
     }
 
 

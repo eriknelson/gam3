@@ -253,7 +253,7 @@ class Viewport(object):
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
         # Field of view, aspect ratio, near clipping, far clipping
-        gluPerspective(60.0, x / y, 0.5, 1000.0)
+        gluPerspective(45.0, x / y, 0.5, 1000.0)
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
 
@@ -335,23 +335,31 @@ class Window(object):
 
     def handleInput(self):
         """
-        Handle currently available pygame input events.
+        Retrieve outstanding pygame input events and dispatch them.
         """
         for event in self.event.get():
-            if event.type == pygame.locals.QUIT or \
-                    event.type == pygame.KEYDOWN and event.key == pygame.K_q:
-                self.stop()
-            elif self.controller is not None:
-                if event.type == pygame.KEYDOWN:
-                    self.controller.keyDown(event.key)
-                elif event.type == pygame.KEYUP:
-                    self.controller.keyUp(event.key)
-                elif event.type == pygame.MOUSEMOTION:
+            self._handleEvent(event)
+
+
+    def _handleEvent(self, event):
+        """
+        Handle a single pygame input event.
+        """
+        if event.type == pygame.locals.QUIT or \
+                event.type == pygame.KEYDOWN and event.key == pygame.K_q:
+            self.stop()
+        elif self.controller is not None:
+            if event.type == pygame.KEYDOWN:
+                self.controller.keyDown(event.key)
+            elif event.type == pygame.KEYUP:
+                self.controller.keyUp(event.key)
+            elif event.type == pygame.MOUSEMOTION:
+                if pygame.event.get_grab():
                     self.controller.mouseMotion(
                         event.pos, event.rel, event.buttons)
-                elif event.type == pygame.MOUSEBUTTONUP:
-                    pygame.event.set_grab(not pygame.event.get_grab())
-                    pygame.mouse.set_visible(not pygame.mouse.set_visible(True))
+            elif event.type == pygame.MOUSEBUTTONUP:
+                pygame.event.set_grab(not pygame.event.get_grab())
+                pygame.mouse.set_visible(not pygame.mouse.set_visible(True))
 
 
     # The interval at which to check to see if more terrain data must be
