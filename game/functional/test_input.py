@@ -1,5 +1,6 @@
 
-from pygame import K_q
+from pygame import K_q, MOUSEBUTTONUP
+from pygame.event import Event
 
 from twisted.trial.unittest import TestCase
 from twisted.internet import reactor
@@ -55,6 +56,7 @@ class MouseInputTests(SceneMixin, TestCase):
         When the mouse moves, the direction of movement is written to stdout.
         """
         self.window.submitTo(StdoutReportingController(reactor, self.window))
+        reactor.callLater(0, self.window._handleEvent, Event(MOUSEBUTTONUP))
         return self.window.go()
 
 
