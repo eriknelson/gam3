@@ -1,9 +1,11 @@
-INTRODUCTION:
+THE GAME
+========
 
 This is a game.  It uses Twisted and Pygame.
 
 
-RUNNING:
+RUNNING
+-------
 
 To run the game server, issue the command:
   twistd gam3
@@ -21,7 +23,8 @@ client.  For example, in a bash shell on Ubuntu:
   PYTHONPATH=. ./bin/network-client localhost 1337
 
 
-DEPENDENCIES:
+DEPENDENCIES
+------------
 
 The game client and server depend on several packages.
  * Twisted - it's Twisted
@@ -41,7 +44,8 @@ or, on UNIX-like systems:
   sudo easy_install twisted  # To install for all users.
 
 
-TESTING:
+TESTING
+-------
 
 This game has a suite of unit tests, which can be run using Twisted's
 trial utility:
