@@ -1,0 +1,41 @@
+INTRODUCTION:
+
+This is a game.  It uses Twisted and Pygame.
+
+
+RUNNING:
+
+To run the game server, issue the command:
+  twistd gam3
+
+This will start twistd, the Twisted daemon, acting as a gam3 server.
+By default, it will run on TCP port 1337.
+
+To run the game client:
+  ./bin/network-client localhost 1337
+
+The network-client script assumes that the game source path is part of
+Python's search path.  If you do not include the current directory in
+your Python path by default, you will need to add it when running the
+client.  For example, in a bash shell on Ubuntu:
+  PYTHONPATH=. ./bin/network-client localhost 1337
+
+
+DEPENDENCIES:
+
+The game client and server depend on several packages.
+ * Twisted - it's Twisted
+ * Pygame - SDL graphics and sound
+ * NumPy - numeric processing
+ * PyOpenGL - accelerated graphics
+ * Epsilon - useful utility package
+
+Each of these can be installed using easy_install.  For information on
+how to get easy_install, see:
+  http://packages.python.org/distribute/easy_install.html
+
+To install each of the prerequisite packages, run easy_install with
+the package name as its argument.  For example, to install Twisted:
+  easy_install twisted
+or, on UNIX-like systems:
+  sudo easy_install twisted  # To install for all users.
