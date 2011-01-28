@@ -46,12 +46,25 @@ class NetworkClient(NetworkClientBase):
         d.addCallback(lambda ignored: self.reactor.stop())
         self.reactor.run()
 
+    def printUsage(self, commandLineArguments):
+        """
+        Print the command line usage of the client.
+        """
+        if len(commandLineArguments) <= 0:
+            name = "NetworkClient"
+        else:
+            name = commandLineArguments[0]
+        print "Game network client usage:"
+        print "%s HOST PORT" % name
 
     def main(self, commandLineArguments):
         """
         Parse the given list of command line arguments and start up
         the Game client.
         """
+        if len(commandLineArguments) < 3:
+            self.printUsage(commandLineArguments)
+            sys.exit(-1)
         host, port = commandLineArguments[1:]
         port = int(port)
         self.run(host, port)
