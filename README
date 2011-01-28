@@ -25,8 +25,8 @@ client.  For example, in a bash shell on Ubuntu:
   PYTHONPATH=. ./bin/network-client localhost 1337
 
 Once the client is running, click inside the Pygame window and wave
-the mouse up and down until you see terrain.  Use the W, A, S, D to
-move around.  Click again to release the mouse.
+the mouse up and down until you see terrain.  Use the W, A, S, D keys
+to move around.  Click again to release the mouse.
 
 
 DEPENDENCIES
