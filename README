@@ -11,7 +11,9 @@ To run the game server, issue the command:
   twistd gam3
 
 This will start twistd, the Twisted daemon, acting as a gam3 server.
-By default, it will run on TCP port 1337.
+By default, it will run on TCP port 1337.  To load a terrain file, use
+the --terrain option:
+  twistd gam3 --terrain terrain/tiny.txt
 
 To run the game client:
   ./bin/network-client localhost 1337
@@ -21,6 +23,10 @@ Python's search path.  If you do not include the current directory in
 your Python path by default, you will need to add it when running the
 client.  For example, in a bash shell on Ubuntu:
   PYTHONPATH=. ./bin/network-client localhost 1337
+
+Once the client is running, click inside the Pygame window and wave
+the mouse up and down until you see terrain.  Use the W, A, S, D to
+move around.  Click again to release the mouse.
 
 
 DEPENDENCIES
