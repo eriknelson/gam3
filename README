@@ -1,0 +1,74 @@
+THE GAME
+========
+
+This is a game.  It uses Twisted and Pygame.
+
+
+RUNNING
+-------
+
+To run the game server, issue the command:
+  twistd gam3
+
+This will start twistd, the Twisted daemon, acting as a gam3 server.
+By default, it will run on TCP port 1337.  To load a terrain file, use
+the --terrain option:
+  twistd gam3 --terrain terrain/tiny.txt
+
+To run the game client:
+  ./bin/network-client localhost 1337
+
+The network-client script assumes that the game source path is part of
+Python's search path.  If you do not include the current directory in
+your Python path by default, you will need to add it when running the
+client.  For example, in a bash shell on Ubuntu:
+  PYTHONPATH=. ./bin/network-client localhost 1337
+
+Once the client is running, click inside the Pygame window and wave
+the mouse up and down until you see terrain.  Use the W, A, S, D keys
+to move around.  Click again to release the mouse.
+
+
+DEPENDENCIES
+------------
+
+The game client and server depend on several packages.
+ * Twisted - it's Twisted
+ * Pygame - SDL graphics and sound
+ * NumPy - numeric processing
+ * PyOpenGL - accelerated graphics
+ * Epsilon - useful utility package
+
+These libraries are packaged for many operating systems.  For example, on
+Debian/Ubuntu systems, you can install several of them with:
+  sudo apt-get install python-twisted python-pygame python-numpy python-opengl
+
+For unpackaged libraries, or on other platforms, you can install using
+easy_install.  For information on how to get easy_install, see:
+  http://packages.python.org/distribute/easy_install.html
+
+To install each of the prerequisite packages, run easy_install with
+the package name as its argument.  For example, to install Twisted:
+  easy_install twisted
+or, on UNIX-like systems:
+  sudo easy_install twisted  # To install for all users.
+
+
+TESTING
+-------
+
+This game has a suite of unit tests, which can be run using Twisted's
+trial utility:
+  trial game.test gam3.test
+
+If all is well, you should see a bunch of [OK] indicators.
+
+You can also run the suite of functional tests, if you are feeling
+particularly adventurous.  Invoke the tests using trial:
+  trial game.functional
+
+Each functional test will create a new window that demonstrates some
+behavior of the game.  Some of them require interactive mouse or
+keyboard input.  After each functional test is complete, the test
+harness will ask whether the demonstrated effect was successful.
+Indicate success by typing y, failure by typing n.
