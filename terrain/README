@@ -1,0 +1,13 @@
+This directory contains sample terrain data to make it easy to launch a server for testing.
+
+There are two terrain file formats.
+
+The first is a text file containing the letters M, G, D, W, and _.  Two
+dimensional rectangles of terrain data can be defined by a group of lines
+consisting of these letters into a terrain file.  Additional dimensions of
+terrain data can be added below such a rectangle by adding a blank line and then
+another similar group of lines.
+
+The second is any image file which can be loaded by pygame.  The red channel of
+the image will be used to define terrain height at each position.  This format
+is still in development and doesn't produce very good results yet.
