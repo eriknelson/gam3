@@ -39,8 +39,12 @@ The game client and server depend on several packages.
  * PyOpenGL - accelerated graphics
  * Epsilon - useful utility package
 
-Each of these can be installed using easy_install.  For information on
-how to get easy_install, see:
+These libraries are packaged for many operating systems.  For example, on
+Debian/Ubuntu systems, you can install several of them with:
+  sudo apt-get install python-twisted python-pygame python-numpy python-opengl
+
+For unpackaged libraries, or on other platforms, you can install using
+easy_install.  For information on how to get easy_install, see:
   http://packages.python.org/distribute/easy_install.html
 
 To install each of the prerequisite packages, run easy_install with
@@ -55,13 +59,13 @@ TESTING
 
 This game has a suite of unit tests, which can be run using Twisted's
 trial utility:
-  trial game/test
+  trial game.test gam3.test
 
 If all is well, you should see a bunch of [OK] indicators.
 
 You can also run the suite of functional tests, if you are feeling
 particularly adventurous.  Invoke the tests using trial:
-  trial game/functional
+  trial game.functional
 
 Each functional test will create a new window that demonstrates some
 behavior of the game.  Some of them require interactive mouse or
