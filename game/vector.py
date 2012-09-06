@@ -30,3 +30,11 @@ class Vector(FancyEqMixin, FancyStrMixin):
             self.x * other,
             self.y * other,
             self.z * other)
+
+
+    def unit(self):
+        """
+        Return a unit vector in the same direction as this vector.
+        """
+        length = (self.x ** 2 + self.y ** 2 + self.z ** 2) ** 0.5
+        return self * (1.0 / length)

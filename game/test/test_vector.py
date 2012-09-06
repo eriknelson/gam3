@@ -64,3 +64,14 @@ class VectorTests(TestCase):
         self.assertTrue(v1 == v2)
         v3 = Vector(1, 2, 4)
         self.assertFalse(v1 == v3)
+
+
+    def test_unit(self):
+        """
+        L{Vector.unit} returns a L{Vector} in the same direction as the
+        original, but with magnitude 1.
+        """
+        v = Vector(1, 2, 3)
+        u = v.unit()
+        scale = (1 ** 2 + 2 ** 2 + 3 ** 2) ** 0.5
+        self.assertEquals(u, Vector(1 / scale, 2 / scale, 3 / scale))
