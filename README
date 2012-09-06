@@ -1,7 +1,7 @@
 THE GAME
 ========
 
-This is a game.  It uses Twisted and Pygame.
+This is a game.  It uses Twisted, pygame, and OpenGL.
 
 
 RUNNING
@@ -33,11 +33,11 @@ DEPENDENCIES
 ------------
 
 The game client and server depend on several packages.
- * Twisted - it's Twisted
- * Pygame - SDL graphics and sound
- * NumPy - numeric processing
- * PyOpenGL - accelerated graphics
- * Epsilon - useful utility package
+ * Twisted - it's Twisted           <http://twistedmatrix.com/>
+ * Pygame - SDL graphics and sound  <http://www.pygame.org/>
+ * NumPy - numeric processing       <http://numpy.scipy.org/>
+ * PyOpenGL - accelerated graphics  <http://pyopengl.sourceforge.net/>
+ * Epsilon - useful utility package <http://launchpad.net/divmod.org/>
 
 These libraries are packaged for many operating systems.  For example, on
 Debian/Ubuntu systems, you can install several of them with:
