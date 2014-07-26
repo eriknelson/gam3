@@ -2,8 +2,11 @@ Epsilon==0.7.0
 Twisted==14.0.0
 cffi==0.8.6
 cryptography==0.5.2
+epydoc==3.0.1
+numpy==1.8.1
 pyOpenSSL==0.14
 pycparser==2.10
+pygame==1.9.2a0
 six==1.7.3
 wsgiref==0.1.2
 zope.interface==4.1.1
