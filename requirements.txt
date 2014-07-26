@@ -1,0 +1,9 @@
+Epsilon==0.7.0
+Twisted==14.0.0
+cffi==0.8.6
+cryptography==0.5.2
+pyOpenSSL==0.14
+pycparser==2.10
+six==1.7.3
+wsgiref==0.1.2
+zope.interface==4.1.1
