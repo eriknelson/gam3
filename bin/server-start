@@ -1,5 +1,5 @@
 #!/usr/bin/python
-from gam3.world.import World
+from gam3.world import World
 
 world = World()
 world.start()
